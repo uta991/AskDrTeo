@@ -178,3 +178,36 @@ npm start
 | საკუთარი როლის/სტატუსის შეცვლა აკრძალულია | თვითდაბლოკვის თავიდან აცილება |
 | როლის ცვლილებისას ყველა სესია უქმდება | ძველი ტოკენი ძველ უფლებებს ატარებს |
 | პაკეტის გაუქმებისას → ნაგულისხმევი პაკეტი | მომხმარებელი უპაკეტოდ არ რჩება |
+
+---
+
+## ხვალ გაშვება (3 ბრძანება)
+
+```bash
+# 1. ბაზა — თუ არ ეშვება ავტომატურად
+brew services start postgresql@17
+
+# 2. Backend
+cd apps/api && npm run start:dev
+
+# 3. Mobile (ცალკე ტერმინალში)
+cd apps/mobile && npx expo start --ios
+```
+
+### სატესტო ანგარიშები
+
+| როლი | ელ. ფოსტა | პაროლი |
+|---|---|---|
+| Super Admin | `admin2@example.com` | `123456` |
+| Super Admin | `admin3@example.com` | `Str0ngPass` |
+| Admin | `admin@example.com` | `Admin1234` |
+| მშობელი | `nino@example.ge` | `Test1234` |
+
+SMS კოდი backend-ის ტერმინალში იბეჭდება (`SMS_PROVIDER=console`).
+
+### რა დარჩა
+
+- პრომო კოდების ეკრანი ადმინის პანელში (backend მზადაა)
+- პრომო კოდის ველი მშობლის პროფილში (backend მზადაა)
+- ჩატი, ვიდეო ბიბლიოთეკა, გადახდის provider
+- Apple Sign-In development build-ზე შესამოწმებელი
