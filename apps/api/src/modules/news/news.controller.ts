@@ -1,0 +1,70 @@
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Roles } from '@/common/decorators/roles.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '@/common/decorators/current-user.decorator';
+import { NewsService } from './news.service';
+import { CreateNewsDto, UpdateNewsDto } from './dto/news.dto';
+
+@ApiTags('news')
+@Controller('news')
+export class NewsController {
+  constructor(private readonly news: NewsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'გამოქვეყნებული სიახლეები — მთავარი ეკრანის ლენტი' })
+  list() {
+    return this.news.listPublished();
+  }
+}
+
+/**
+ * სიახლეების მართვა.
+ *
+ * ოპერატორს მხოლოდ ტექსტური შეტყობინების გაგზავნა შეუძლია — ვიდეოს ან
+ * ქავერის მიბმა ადმინის უფლებაა. სერვისი ამას თავად ამოწმებს, რადგან
+ * როლი ერთ ენდპოინტზე ორ სხვადასხვა ქცევას განსაზღვრავს.
+ */
+@ApiTags('admin/news')
+@Roles(UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+@Controller('admin/news')
+export class AdminNewsController {
+  constructor(private readonly news: NewsService) {}
+
+  @Get()
+  listAll(@Query('page') page?: number, @Query('perPage') perPage?: number) {
+    return this.news.listAll(page, perPage);
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: 'ახალი სიახლე',
+    description: 'publishNow: true — შექმნისთანავე ქვეყნდება და შეტყობინებები იგზავნება.',
+  })
+  create(@Body() dto: CreateNewsDto, @CurrentUser() actor: AuthenticatedUser) {
+    return this.news.create(dto, actor.id, actor.role);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateNewsDto,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.news.update(id, dto, actorId);
+  }
+
+  @Patch(':id/publish')
+  @ApiOperation({ summary: 'გამოქვეყნება და შეტყობინებების დაგზავნა' })
+  publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.news.publish(id, actorId);
+  }
+
+  @Patch(':id/archive')
+  archive(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.news.archive(id, actorId);
+  }
+}

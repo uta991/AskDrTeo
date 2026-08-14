@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.expo/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+
+# ატვირთული ფაილები — რეპოზიტორიაში არ ინახება
+apps/api/uploads/
+
+# გარემოს ცვლადები (შეიცავს პაროლებსა და გასაღებებს)
+.env
+.env.*
+!.env.example

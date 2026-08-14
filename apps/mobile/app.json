@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "BabyCare",
+    "slug": "baby-pediatry",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "babycare",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#EAF4FF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ge.babycare.app",
+      "usesAppleSignIn": true
+    },
+    "android": {
+      "package": "ge.babycare.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#EAF4FF"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "\u10d0\u10de\u10da\u10d8\u10d9\u10d0\u10ea\u10d8\u10d0\u10e1 \u10d1\u10d0\u10d5\u10e8\u10d5\u10d8\u10e1 \u10e4\u10dd\u10e2\u10dd\u10e1 \u10d0\u10e1\u10d0\u10e0\u10e9\u10d4\u10d5\u10d0\u10d3 \u10e1\u10ed\u10d8\u10e0\u10d3\u10d4\u10d1\u10d0 \u10d2\u10d0\u10da\u10d4\u10e0\u10d4\u10d0\u10d6\u10d4 \u10ec\u10d5\u10d3\u10dd\u10db\u10d0."
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:3000/api/v1",
+      "googleClientIds": {
+        "ios": "",
+        "android": "",
+        "web": ""
+      }
+    }
+  }
+}

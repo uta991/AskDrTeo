@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes prisma@6 validate --schema prisma/schema.prisma)",
+      "Bash(DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npx --yes prisma@6 validate --schema prisma/schema.prisma)",
+      "Bash(DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npx --yes prisma@6 format --schema prisma/schema.prisma)",
+      "Bash(npm install *)",
+      "Bash(DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npx prisma generate)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/claude-501/-Users-utabuziashvili-Desktop-baby-pediatry/c9092c82-d102-4107-bf65-0b91272b0338/scratchpad/**)",
+      "Bash(xcrun simctl *)",
+      "Bash(xcode-select -p)",
+      "Bash(npm view *)",
+      "Bash(npx expo *)",
+      "Bash(kill 55736)",
+      "Bash(pkill -f \"expo start\")",
+      "Bash(lsof -ti:8081)",
+      "Bash(xargs -r kill -9)",
+      "Bash(node -e \"const p=require\\('./node_modules/expo/package.json'\\); console.log\\(p.version\\); console.log\\(JSON.stringify\\(p.dependencies,null,1\\)\\)\")",
+      "Bash(pkill -f \"expo/bin\")"
+    ]
+  }
+}

@@ -1,0 +1,893 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Baby Pediatry — მონაცემთა ბაზის სქემა
+// PostgreSQL + Prisma
+//
+// მთავარი პრინციპი: პაკეტები, ფასები და უფლებები კოდში არ არის ჩაშენებული.
+// ყველაფერს Super Admin მართავს ბაზიდან (Feature / Plan / PlanFeature).
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. მომხმარებლები, როლები, ავთენტიფიკაცია
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum UserRole {
+  PARENT
+  OPERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model User {
+  id           String     @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String?    @unique
+  phone        String?    @unique // E.164 ფორმატი: +9955XXXXXXXX
+  passwordHash String? // null = მხოლოდ სოციალური ავტორიზაცია
+  role         UserRole   @default(PARENT)
+  status       UserStatus @default(PENDING_VERIFICATION)
+
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  avatarUrl       String?
+  locale          String    @default("ka")
+  timezone        String    @default("Asia/Tbilisi")
+
+  acceptedTermsAt    DateTime?
+  termsVersion       String?
+  marketingConsentAt DateTime?
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  identities      AuthIdentity[]
+  sessions        Session[]
+  otpCodes        OtpCode[]
+  children        Child[]
+  subscriptions   Subscription[]
+  payments        Payment[]
+  watchProgress   WatchProgress[]
+  videoViews      VideoView[]
+  favorites       VideoFavorite[]
+  devices         Device[]
+  notifications   Notification[]
+  smsMessages     SmsMessage[]
+  auditLogs       AuditLog[]         @relation("AuditActor")
+  newsPosts       NewsPost[]         @relation("NewsAuthor")
+  promoCodes      PromoCode[]        @relation("PromoAuthor")
+  promoRedemptions PromoRedemption[]
+  conversations   ConversationUser[]
+  messages        Message[]
+  operatorProfile OperatorProfile?
+
+  @@index([role, status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ოპერატორის დამატებითი ინფორმაცია (ექიმი / კონსულტანტი)
+model OperatorProfile {
+  id             String  @id @default(uuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String?
+  bio            String?
+  isAvailable    Boolean @default(true)
+  maxActiveChats Int     @default(20)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("operator_profiles")
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  APPLE
+}
+
+// სოციალური ავტორიზაციის მიბმა — ერთ user-ს რამდენიმე provider შეიძლება ჰქონდეს
+model AuthIdentity {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       AuthProvider
+  providerUserId String
+  email          String?
+  createdAt      DateTime     @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("auth_identities")
+}
+
+// Refresh token სესიები — logout / "ყველა მოწყობილობიდან გასვლა"-სთვის
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String    @unique
+  deviceId         String?
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+  @@map("sessions")
+}
+
+enum OtpPurpose {
+  PHONE_VERIFICATION
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  LOGIN
+}
+
+model OtpCode {
+  id          String     @id @default(uuid())
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination String // ტელეფონი ან ელ. ფოსტა
+  codeHash    String
+  purpose     OtpPurpose
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([destination, purpose, consumedAt])
+  @@map("otp_codes")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. ბავშვის პროფილი
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum Gender {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
+model Child {
+  id        String   @id @default(uuid())
+  parentId  String
+  parent    User     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String?
+  birthDate DateTime
+  gender    Gender   @default(UNSPECIFIED)
+  avatarUrl String?
+
+  /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
+  gestationalWeek Int?
+  birthWeight     Decimal? @db.Decimal(5, 2) // კგ
+  birthHeight     Decimal? @db.Decimal(5, 2) // სმ
+
+  /// მშობლების მონაცემები — მემკვიდრეობითი რისკებისა და ბარათის იდენტიფიკაციისთვის
+  motherFirstName String?
+  motherLastName  String?
+  motherBirthDate DateTime?
+  fatherFirstName String?
+  fatherLastName  String?
+  fatherBirthDate DateTime?
+
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([parentId])
+  @@map("children")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. ფუნქციები, პაკეტები, გამოწერები  ← სისტემის გული
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum FeatureType {
+  BOOLEAN // ჩართული / გამორთული (მაგ. chat_with_operator)
+  LIMIT // რიცხვითი ლიმიტი (მაგ. max_children = 3)
+  ACCESS // კონტენტზე წვდომა (მაგ. video_category:newborn)
+}
+
+// ფუნქციების კატალოგი. ახალი ფუნქცია = ახალი ჩანაწერი, კოდის ცვლილების გარეშე.
+// კოდში მხოლოდ key-ს ვამოწმებთ: entitlements.can('chat_with_operator')
+model Feature {
+  id           String      @id @default(uuid())
+  key          String      @unique // snake_case, მუდმივი იდენტიფიკატორი
+  name         String
+  description  String?
+  type         FeatureType @default(BOOLEAN)
+  unit         String? // LIMIT-ისთვის: "videos/month", "children"
+  defaultValue String? // უფასო მომხმარებლის ნაგულისხმევი მნიშვნელობა
+  isActive     Boolean     @default(true)
+  sortOrder    Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  plans PlanFeature[]
+
+  @@map("features")
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model Plan {
+  id          String     @id @default(uuid())
+  code        String     @unique // "free", "standard", "premium"
+  name        String
+  description String?
+  status      PlanStatus @default(DRAFT)
+  isFree      Boolean    @default(false)
+  isDefault   Boolean    @default(false) // ახალი მომხმარებლის ავტომატური პაკეტი
+  trialDays   Int        @default(0)
+
+  // ვიზუალი — Super Admin მართავს, აპლიკაცია მხოლოდ ხატავს
+  badge     String? // "პოპულარული"
+  colorHex  String?
+  iconUrl   String?
+  highlight Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  prices        PlanPrice[]
+  features      PlanFeature[]
+  subscriptions Subscription[]
+  videoAccess   VideoPlanAccess[]
+  promoCodes    PromoCode[]
+
+  @@index([status])
+  @@map("plans")
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+  ONE_TIME
+}
+
+// ერთ პაკეტს შეიძლება ჰქონდეს რამდენიმე ფასი (თვიური / წლიური / სხვა ვალუტა)
+model PlanPrice {
+  id            String          @id @default(uuid())
+  planId        String
+  plan          Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  currency      String          @default("GEL")
+  amountMinor   Int // თეთრებში — მცურავი წერტილი ფულთან არასდროს
+  interval      BillingInterval @default(MONTH)
+  intervalCount Int             @default(1)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  subscriptions Subscription[]
+
+  @@unique([planId, currency, interval, intervalCount])
+  @@map("plan_prices")
+}
+
+// პაკეტი ↔ ფუნქცია. აქ წყდება "რა შედის პაკეტში".
+model PlanFeature {
+  id        String  @id @default(uuid())
+  planId    String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureId String
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  enabled   Boolean @default(true)
+  value     String? // LIMIT-ისთვის: "3", "unlimited"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, featureId])
+  @@map("plan_features")
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        Plan               @relation(fields: [planId], references: [id])
+  planPriceId String?
+  planPrice   PlanPrice?         @relation(fields: [planPriceId], references: [id])
+  status      SubscriptionStatus @default(ACTIVE)
+
+  startedAt          DateTime  @default(now())
+  currentPeriodStart DateTime  @default(now())
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  canceledAt         DateTime?
+  cancelReason       String?
+
+  // ხელით გაცემული გამოწერა (ადმინის მიერ) — ფასიანი გადახდის გარეშე
+  grantedByUserId String?
+  grantedNote     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([userId, status])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3.1 პრომო კოდები
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum PromoType {
+  /// ფასდაკლება პროცენტში
+  DISCOUNT
+  /// კონკრეტული პაკეტი უფასოდ, გარკვეული ვადით
+  FREE_PLAN
+}
+
+model PromoCode {
+  id          String    @id @default(uuid())
+  code        String    @unique // მაგ: "BABY20"
+  type        PromoType
+  description String?
+
+  /// DISCOUNT-ისთვის: 1–100
+  discountPercent Int?
+
+  /// FREE_PLAN-ისთვის: რომელი პაკეტი და რამდენი დღით
+  planId   String?
+  plan     Plan?   @relation(fields: [planId], references: [id], onDelete: SetNull)
+  freeDays Int?
+
+  /// კოდის მოქმედების ვადა
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+
+  /// გამოყენების ლიმიტი — null ნიშნავს ულიმიტოს
+  maxRedemptions Int?
+  redeemedCount  Int  @default(0)
+  /// ერთ მომხმარებელს ერთხელ
+  oncePerUser Boolean @default(true)
+
+  isActive    Boolean @default(true)
+  createdById String?
+  createdBy   User?   @relation("PromoAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  redemptions PromoRedemption[]
+
+  @@index([isActive, validUntil])
+  @@map("promo_codes")
+}
+
+model PromoRedemption {
+  id      String    @id @default(uuid())
+  promoId String
+  promo   PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?
+  createdAt      DateTime @default(now())
+
+  @@unique([promoId, userId])
+  @@index([userId])
+  @@map("promo_redemptions")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. გადახდები — ჩარჩო მზადაა, provider მოგვიანებით ჩაერთვება
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum PaymentProvider {
+  MANUAL
+  BOG
+  TBC
+  STRIPE
+  APPLE_IAP
+  GOOGLE_PLAY
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+model Payment {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  subscriptionId String?
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
+  provider       PaymentProvider @default(MANUAL)
+  status         PaymentStatus   @default(PENDING)
+  currency       String          @default("GEL")
+  amountMinor    Int
+
+  providerPaymentId String? @unique
+  failureReason     String?
+  receiptUrl        String?
+  metadata          Json?
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@map("payments")
+}
+
+// გადამხდელი სისტემების webhook-ები — იდემპოტენტურობისთვის
+model PaymentWebhookEvent {
+  id          String          @id @default(uuid())
+  provider    PaymentProvider
+  externalId  String
+  payload     Json
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime        @default(now())
+
+  @@unique([provider, externalId])
+  @@map("payment_webhook_events")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. ვიდეო კონტენტი (Netflix-ის ლოგიკა)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model VideoCategory {
+  id          String          @id @default(uuid())
+  slug        String          @unique
+  name        String
+  description String?
+  coverUrl    String?
+  parentId    String?
+  parent      VideoCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    VideoCategory[] @relation("CategoryTree")
+  isActive    Boolean         @default(true)
+  sortOrder   Int             @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  videos Video[]
+
+  @@index([parentId])
+  @@map("video_categories")
+}
+
+enum VideoStatus {
+  DRAFT
+  PROCESSING
+  PUBLISHED
+  ARCHIVED
+}
+
+// ვიდეოზე წვდომის წესი — არ არის კოდში ჩაშენებული
+enum VideoAccessType {
+  FREE // ყველასთვის
+  AUTHENTICATED // ავტორიზებულებისთვის
+  SUBSCRIPTION // ნებისმიერი აქტიური ფასიანი გამოწერით
+  SPECIFIC_PLANS // მხოლოდ VideoPlanAccess-ში ჩამოთვლილი პაკეტებით
+}
+
+enum StorageProvider {
+  MUX
+  CLOUDFLARE_STREAM
+  BUNNY
+  S3_CLOUDFRONT
+}
+
+model Video {
+  id          String         @id @default(uuid())
+  slug        String         @unique
+  title       String
+  description String?
+  categoryId  String?
+  category    VideoCategory? @relation(fields: [categoryId], references: [id])
+  status      VideoStatus    @default(DRAFT)
+
+  // მედია — ფაილი backend სერვერზე არასდროს ინახება
+  provider        StorageProvider @default(MUX)
+  providerAssetId String?
+  playbackId      String?
+  thumbnailUrl    String?
+  previewUrl      String? // მოკლე hover-preview
+  durationSec     Int             @default(0)
+
+  accessType VideoAccessType @default(SUBSCRIPTION)
+
+  // ასაკობრივი მიზნობრიობა — ბავშვის ასაკის მიხედვით რეკომენდაციისთვის
+  ageMinMonths Int?
+  ageMaxMonths Int?
+
+  tags       String[] @default([])
+  isFeatured Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  viewCount  Int      @default(0)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  planAccess VideoPlanAccess[]
+  newsPosts  NewsPost[]
+  progress   WatchProgress[]
+  views      VideoView[]
+  favorites  VideoFavorite[]
+
+  @@index([status, categoryId])
+  @@index([isFeatured, sortOrder])
+  @@map("videos")
+}
+
+// SPECIFIC_PLANS-ისთვის: რომელი პაკეტი ხედავს რომელ ვიდეოს
+model VideoPlanAccess {
+  id      String @id @default(uuid())
+  videoId String
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  planId  String
+  plan    Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, planId])
+  @@map("video_plan_access")
+}
+
+// "გააგრძელე იქიდან სადაც შეწყვიტე"
+model WatchProgress {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId       String
+  video         Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  positionSec   Int      @default(0)
+  percent       Int      @default(0)
+  isCompleted   Boolean  @default(false)
+  lastWatchedAt DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@index([userId, lastWatchedAt])
+  @@map("watch_progress")
+}
+
+// ნახვების ისტორია — ანალიტიკისთვის (WatchProgress-ისგან განსხვავებით append-only)
+model VideoView {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId    String
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  watchedSec Int      @default(0)
+  deviceId   String?
+  startedAt  DateTime @default(now())
+
+  @@index([videoId, startedAt])
+  @@index([userId, startedAt])
+  @@map("video_views")
+}
+
+model VideoFavorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@map("video_favorites")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5.1 სიახლეები — ადმინის განცხადებები მშობლებისთვის
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model NewsPost {
+  id      String     @id @default(uuid())
+  title   String
+  body    String
+  status  NewsStatus @default(DRAFT)
+  coverUrl String?
+
+  /// სურვილისამებრ მიბმული ვიდეო
+  videoId String?
+  video   Video?  @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+  /// true — გამოქვეყნებისას მშობლებს push/in-app შეტყობინება გაეგზავნათ
+  notify Boolean @default(true)
+  /// რამდენ მომხმარებელს გაეგზავნა — ადმინს შედეგი უნდა ხედავდეს
+  notifiedCount Int @default(0)
+
+  authorId String?
+  author   User?   @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([status, publishedAt])
+  @@map("news_posts")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. ჩატი (მშობელი ↔ ოპერატორი), realtime WebSocket-ით
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ConversationStatus {
+  OPEN
+  ASSIGNED
+  RESOLVED
+  CLOSED
+}
+
+model Conversation {
+  id                 String             @id @default(uuid())
+  subject            String?
+  status             ConversationStatus @default(OPEN)
+  assignedOperatorId String?
+  lastMessageAt      DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  participants ConversationUser[]
+  messages     Message[]
+
+  @@index([status, lastMessageAt])
+  @@index([assignedOperatorId, status])
+  @@map("conversations")
+}
+
+model ConversationUser {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  isMuted        Boolean      @default(false)
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_users")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  AUDIO
+  SYSTEM
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  type           MessageType  @default(TEXT)
+  body           String?
+  attachmentUrl  String?
+  attachmentMeta Json?
+
+  editedAt  DateTime?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. Push Notification და SMS
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+model Device {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform    DevicePlatform
+  pushToken   String         @unique // Expo push token / FCM
+  deviceModel String?
+  appVersion  String?
+  isActive    Boolean        @default(true)
+  lastSeenAt  DateTime       @default(now())
+  createdAt   DateTime       @default(now())
+
+  @@index([userId, isActive])
+  @@map("devices")
+}
+
+enum NotificationChannel {
+  PUSH
+  IN_APP
+  EMAIL
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+// შაბლონები — ტექსტი ბაზაშია, Admin ცვლის deploy-ის გარეშე
+model NotificationTemplate {
+  id        String              @id @default(uuid())
+  key       String              @unique // "subscription_expiring", "new_video"
+  title     String
+  body      String // {{firstName}} სტილის placeholder-ები
+  channel   NotificationChannel @default(PUSH)
+  isActive  Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@map("notification_templates")
+}
+
+model Notification {
+  id          String              @id @default(uuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     NotificationChannel @default(PUSH)
+  status      NotificationStatus  @default(QUEUED)
+  title       String
+  body        String
+  data        Json? // deep link: { screen: "VideoDetail", videoId: "..." }
+  templateKey String?
+  error       String?
+
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, status, createdAt])
+  @@map("notifications")
+}
+
+enum SmsStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model SmsTemplate {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  body      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sms_templates")
+}
+
+model SmsMessage {
+  id          String    @id @default(uuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  phone       String
+  body        String
+  templateKey String?
+  provider    String? // "magti", "geosms", "twilio"
+  providerRef String?
+  status      SmsStatus @default(QUEUED)
+  costMinor   Int?
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([phone, createdAt])
+  @@index([status])
+  @@map("sms_messages")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. Audit Log და სისტემური პარამეტრები
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  GRANT
+  REVOKE
+  PUBLISH
+  EXPORT
+}
+
+// ვინ, რა, როდის შეცვალა — ყველა ადმინისეული მოქმედება აქ ჩაიწერება
+model AuditLog {
+  id          String      @id @default(uuid())
+  actorId     String?
+  actor       User?       @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      AuditAction
+  entityType  String // "Plan", "Video", "User"
+  entityId    String?
+  before      Json?
+  after       Json?
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+// გლობალური პარამეტრები (მინიმალური აპ-ვერსია, maintenance mode, კონტაქტები)
+model AppSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  isPublic    Boolean  @default(false) // true = მობილურ აპს გადაეცემა
+  updatedAt   DateTime @updatedAt
+
+  @@map("app_settings")
+}
