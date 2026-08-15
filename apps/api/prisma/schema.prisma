@@ -613,6 +613,14 @@ model MediaAsset {
   /// რბილი წაშლა — ფიზიკურად background-ით იშლება
   deletedAt DateTime?
 
+  /// ფაილი პროვაიდერიდან წაიშალა. ჩანაწერი ბაზაში რჩება —
+  /// audit-სა და მიმართვების მთლიანობისთვის
+  purgedAt         DateTime?
+  purgeAttempts    Int       @default(0)
+  /// შემდეგი მცდელობის დრო — exponential backoff
+  purgeNextRetryAt DateTime?
+  purgeLastError   String?
+
   events          MediaProviderEvent[]
   videos          Video[]           @relation("VideoAsset")
   childAvatars    Child[]           @relation("ChildAvatar")
@@ -621,6 +629,8 @@ model MediaAsset {
 
   @@index([ownerId, source])
   @@index([status, deletedAt])
+  /// worker-ის რიგი — წაშლილი, ჯერ გაუწმენდავი ფაილები
+  @@index([deletedAt, purgedAt, purgeNextRetryAt])
   @@map("media_assets")
 }
 

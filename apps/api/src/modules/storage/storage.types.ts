@@ -7,6 +7,19 @@
  * ხელუხლებელი რჩება.
  */
 
+/**
+ * ფაილი პროვაიდერთან აღარ არსებობს.
+ *
+ * წაშლისას ეს წარმატებაა, არა შეცდომა — შედეგი იგივეა და cleanup
+ * იდემპოტენტური უნდა იყოს.
+ */
+export class StorageNotFoundError extends Error {
+  constructor(key: string) {
+    super(`ფაილი პროვაიდერთან ვერ მოიძებნა: ${key}`);
+    this.name = 'StorageNotFoundError';
+  }
+}
+
 export interface StoredFile {
   /** საჯარო მისამართი — მხოლოდ isPublic ატვირთვისას, სხვა შემთხვევაში null */
   url: string | null;

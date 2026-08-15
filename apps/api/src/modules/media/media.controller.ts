@@ -19,6 +19,8 @@ import {
 } from '@/common/decorators/current-user.decorator';
 import { MediaService } from './media.service';
 import { UploadPolicyService } from './upload-policy.service';
+import { MediaCleanupService } from './media-cleanup.service';
+import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 
 /** multer-ის დროებითი საქაღალდე — საბოლოო ადგილს პროვაიდერი წყვეტს. */
 const TMP_DIR = join(tmpdir(), 'askdrteo-uploads');
@@ -45,7 +47,20 @@ export class MediaController {
   constructor(
     private readonly media: MediaService,
     private readonly policy: UploadPolicyService,
+    private readonly cleanup: MediaCleanupService,
   ) {}
+
+  @Post('purge')
+  @RequirePermission('media.delete')
+  @ApiOperation({
+    summary: 'გაწმენდის ხელით გაშვება',
+    description:
+      'ჩვეულებრივ ავტომატურად მუშაობს 10 წუთში ერთხელ. ' +
+      'ეს ენდპოინტი დიაგნოსტიკისა და ხელით გაშვებისთვისაა.',
+  })
+  runCleanup() {
+    return this.cleanup.purgeBatch();
+  }
 
   @Post('avatar')
   @ApiOperation({

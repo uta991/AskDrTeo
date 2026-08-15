@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { createReadStream, rmSync, statSync } from 'node:fs';
+import { StorageNotFoundError } from '../storage.types';
 import type {
   UploadVideoInput,
   UploadedVideo,
@@ -126,6 +127,9 @@ export class BunnyVideoProvider implements VideoStorageProvider {
       headers: { AccessKey: this.apiKey, ...(init.headers ?? {}) },
     } as RequestInit);
 
+    if (res.status === 404) {
+      throw new StorageNotFoundError(path);
+    }
     if (!res.ok) {
       throw new Error(`Bunny Stream: ${res.status} ${await res.text()}`);
     }
