@@ -163,6 +163,59 @@ model OtpCode {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 1.5 უფლებები — როლი მხოლოდ უფლებების ნაკრებია
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * უფლებების კატალოგი.
+ *
+ * კოდი როლს არ ამოწმებს — მხოლოდ უფლების key-ს:
+ *   permissions.assert(userId, 'video.create')
+ *
+ * ასე Super Admin-ს პანელიდან შეუძლია ოპერატორს chat.reply დაუტოვოს
+ * და subscription.manage ჩამოართვას, კოდის შეხების გარეშე.
+ */
+model Permission {
+  id          String  @id @default(uuid())
+  /// "video.create", "chat.reply" — მუდმივი იდენტიფიკატორი
+  key         String  @unique
+  /// ჯგუფი ინტერფეისისთვის: "video", "chat", "user"
+  group       String
+  name        String
+  description String?
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@index([group, sortOrder])
+  @@map("permissions")
+}
+
+/**
+ * როლი ↔ უფლება.
+ *
+ * SUPER_ADMIN აქ განზრახ არ მონაწილეობს: მას ყველა უფლება
+ * ავტომატურად აქვს. თუ ბაზაზე იქნებოდა დამოკიდებული, ახალი უფლების
+ * დამატებისას seed-ში მისი მიბმის დავიწყება Super Admin-ს საკუთარ
+ * სისტემაში შეზღუდავდა.
+ */
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         UserRole
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  grantedById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@map("role_permissions")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 2. ბავშვის პროფილი
 // ═══════════════════════════════════════════════════════════════════════════
 

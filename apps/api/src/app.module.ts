@@ -7,6 +7,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { FeatureGuard } from './common/guards/feature.guard';
+import { PermissionGuard } from './common/guards/permission.guard';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
@@ -17,6 +18,7 @@ import { NewsModule } from './modules/news/news.module';
 import { PromoModule } from './modules/promo/promo.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { SmsModule } from './modules/sms/sms.module';
 
@@ -27,6 +29,7 @@ import { SmsModule } from './modules/sms/sms.module';
     PrismaModule,
     AuditModule,
     EntitlementsModule,
+    PermissionsModule,
     AuthModule,
     AdminUsersModule,
     PlansModule,
@@ -44,6 +47,7 @@ import { SmsModule } from './modules/sms/sms.module';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_GUARD, useClass: FeatureGuard },
   ],
 })

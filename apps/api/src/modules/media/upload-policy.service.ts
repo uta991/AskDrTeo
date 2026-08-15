@@ -1,7 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { MediaType, UserRole } from '@prisma/client';
 import { openSync, readSync, closeSync, rmSync, statSync } from 'node:fs';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { PermissionsService } from '../permissions/permissions.service';
+import type { PermissionKey } from '../permissions/permission-catalog';
 
 /** ატვირთვის კატეგორია — თითოეულს ცალკე ლიმიტი და დასაშვები ტიპები აქვს. */
 export type UploadKind = 'image' | 'video' | 'document';
@@ -15,6 +17,8 @@ interface KindRules {
   mediaType: MediaType;
   /** დასაშვები MIME ტიპები — გაფართოებას არ ვენდობით */
   allowedMime: string[];
+  /** საჭირო უფლება; undefined — ყველა ავტორიზებულს შეუძლია */
+  permission?: PermissionKey;
 }
 
 /**
@@ -37,6 +41,7 @@ const RULES: Record<UploadKind, KindRules> = {
     hardCapMb: 2048,
     mediaType: MediaType.VIDEO,
     allowedMime: ['video/mp4', 'video/quicktime'],
+    permission: 'video.create',
   },
   document: {
     feature: 'max_upload_mb_document',
@@ -80,7 +85,10 @@ export interface UploadActor {
 export class UploadPolicyService {
   private readonly logger = new Logger(UploadPolicyService.name);
 
-  constructor(private readonly entitlements: EntitlementsService) {}
+  constructor(
+    private readonly entitlements: EntitlementsService,
+    private readonly permissions: PermissionsService,
+  ) {}
 
   /** ყველაზე დიდი შესაძლო ზომა — multer-ის სტატიკური ჭერისთვის. */
   static maxBytesFor(kind: UploadKind): number {
@@ -103,7 +111,7 @@ export class UploadPolicyService {
     const rules = RULES[kind];
 
     try {
-      this.assertPermission(kind, actor);
+      await this.assertPermission(rules, actor);
       const limitMb = await this.resolveLimitMb(rules, actor);
       this.assertMime(file, rules);
       this.assertSize(file, limitMb);
@@ -113,14 +121,15 @@ export class UploadPolicyService {
     }
   }
 
-  /** 1. უფლება — ვიდეოს ატვირთვა კონტენტის მართვაა. */
-  private assertPermission(kind: UploadKind, actor: UploadActor): void {
-    if (kind !== 'video') return;
-
-    const allowed: UserRole[] = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
-    if (!allowed.includes(actor.role)) {
-      throw new ForbiddenException('ვიდეოს ატვირთვა თქვენს როლს არ შეუძლია');
-    }
+  /**
+   * 1. უფლება.
+   *
+   * როლი აქ აღარ ფიგურირებს — რომელ როლს შეუძლია ვიდეოს ატვირთვა,
+   * ბაზაში წყდება და Super Admin-ს პანელიდან იცვლება.
+   */
+  private async assertPermission(rules: KindRules, actor: UploadActor): Promise<void> {
+    if (!rules.permission) return;
+    await this.permissions.assert(actor.id, rules.permission);
   }
 
   /**

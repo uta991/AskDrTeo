@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import {
   CurrentUser,
   type AuthenticatedUser,
@@ -29,17 +28,18 @@ export class NewsController {
  * როლი ერთ ენდპოინტზე ორ სხვადასხვა ქცევას განსაზღვრავს.
  */
 @ApiTags('admin/news')
-@Roles(UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
 @Controller('admin/news')
 export class AdminNewsController {
   constructor(private readonly news: NewsService) {}
 
   @Get()
+  @RequirePermission('admin.view')
   listAll(@Query('page') page?: number, @Query('perPage') perPage?: number) {
     return this.news.listAll(page, perPage);
   }
 
   @Post()
+  @RequirePermission('notification.send')
   @ApiOperation({
     summary: 'ახალი სიახლე',
     description: 'publishNow: true — შექმნისთანავე ქვეყნდება და შეტყობინებები იგზავნება.',
@@ -58,6 +58,7 @@ export class AdminNewsController {
   }
 
   @Patch(':id/publish')
+  @RequirePermission('notification.send')
   @ApiOperation({ summary: 'გამოქვეყნება და შეტყობინებების დაგზავნა' })
   publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
     return this.news.publish(id, actorId);

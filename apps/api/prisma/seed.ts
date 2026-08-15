@@ -1,4 +1,5 @@
-import { FeatureType, PlanStatus, PrismaClient, BillingInterval } from '@prisma/client';
+import { FeatureType, PlanStatus, PrismaClient, BillingInterval, UserRole } from '@prisma/client';
+import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from '../src/modules/permissions/permission-catalog';
 
 const prisma = new PrismaClient();
 
@@ -195,6 +196,31 @@ async function main(): Promise<void> {
     });
   }
   console.log(`✓ ${CATEGORIES.length} ვიდეო კატეგორია`);
+
+  for (const [i, permission] of PERMISSIONS.entries()) {
+    await prisma.permission.upsert({
+      where: { key: permission.key },
+      update: { name: permission.name, group: permission.group, sortOrder: i },
+      create: { ...permission, sortOrder: i },
+    });
+  }
+  console.log(`✓ ${PERMISSIONS.length} უფლება`);
+
+  // ნაგულისხმევი მიბმები — არსებულს არ ვცვლით, რომ ადმინის ხელით
+  // გაკეთებული ცვლილებები seed-ის ხელახლა გაშვებამ არ წაშალოს
+  for (const [role, keys] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
+    for (const key of keys) {
+      const permission = await prisma.permission.findUniqueOrThrow({ where: { key } });
+      await prisma.rolePermission.upsert({
+        where: {
+          role_permissionId: { role: role as UserRole, permissionId: permission.id },
+        },
+        update: {},
+        create: { role: role as UserRole, permissionId: permission.id },
+      });
+    }
+  }
+  console.log('✓ როლების ნაგულისხმევი უფლებები');
 
   for (const s of SETTINGS) {
     await prisma.appSetting.upsert({

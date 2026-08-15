@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { PromoService } from './promo.service';
 import { CreatePromoDto, RedeemPromoDto, UpdatePromoDto } from './dto/promo.dto';
@@ -22,17 +21,18 @@ export class PromoController {
 }
 
 @ApiTags('admin/promo')
-@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
 @Controller('admin/promo')
 export class AdminPromoController {
   constructor(private readonly promo: PromoService) {}
 
   @Get()
+  @RequirePermission('subscription.view')
   list() {
     return this.promo.list();
   }
 
   @Post()
+  @RequirePermission('subscription.manage')
   @ApiOperation({ summary: 'პრომო კოდის შექმნა' })
   create(@Body() dto: CreatePromoDto, @CurrentUser('id') actorId: string) {
     return this.promo.create(dto, actorId);

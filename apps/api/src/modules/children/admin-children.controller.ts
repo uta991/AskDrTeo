@@ -1,5 +1,4 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -11,7 +10,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { ChildrenService } from './children.service';
 
 export class ListChildrenQueryDto {
@@ -43,7 +42,7 @@ export class ListChildrenQueryDto {
  * ჩატში მიმართვისას უნდა იცოდეს, ვისთან საუბრობს.
  */
 @ApiTags('admin/children')
-@Roles(UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+@RequirePermission('child.view')
 @Controller('admin/children')
 export class AdminChildrenController {
   constructor(private readonly children: ChildrenService) {}
