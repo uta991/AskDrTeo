@@ -13,7 +13,15 @@ import { AuditService } from '../audit/audit.service';
 import { CreateNewsDto, UpdateNewsDto } from './dto/news.dto';
 
 const NEWS_INCLUDE = {
-  video: { select: { id: true, title: true, thumbnailUrl: true, playbackId: true } },
+  video: {
+    select: {
+      id: true,
+      title: true,
+      // ფაილის მისამართები MediaAsset-შია — Video მხოლოდ ბიზნეს-ინფორმაციაა
+      mediaAsset: { select: { playbackId: true, duration: true, status: true } },
+      thumbnailAsset: { select: { publicUrl: true } },
+    },
+  },
   author: { select: { id: true, firstName: true, lastName: true } },
 } satisfies Prisma.NewsPostInclude;
 

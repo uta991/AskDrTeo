@@ -69,7 +69,7 @@ export class MediaController {
     @CurrentUser('id') userId: string,
   ) {
     if (!file) throw new BadRequestException('ფაილი არ არის მიმაგრებული');
-    return this.media.uploadAvatar(file);
+    return this.media.uploadImage(file, userId);
   }
 
   @Post('video')
@@ -101,8 +101,9 @@ export class MediaController {
   uploadVideo(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('title') title: string | undefined,
+    @CurrentUser('id') userId: string,
   ) {
     if (!file) throw new BadRequestException('ფაილი არ არის მიმაგრებული');
-    return this.media.createVideoFromUpload(file, title);
+    return this.media.createVideoFromUpload(file, title, userId);
   }
 }

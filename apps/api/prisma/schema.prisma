@@ -74,6 +74,7 @@ model User {
   newsPosts       NewsPost[]         @relation("NewsAuthor")
   promoCodes      PromoCode[]        @relation("PromoAuthor")
   promoRedemptions PromoRedemption[]
+  mediaAssets      MediaAsset[]
   conversations   ConversationUser[]
   messages        Message[]
   operatorProfile OperatorProfile?
@@ -476,6 +477,79 @@ model PaymentWebhookEvent {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 4.5 მედია — ერთი ცენტრალური მოდელი ყველა ფაილისთვის
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+/// საიდან მოვიდა ფაილი — წვდომის წესები წყაროზეა დამოკიდებული
+enum MediaSource {
+  ADMIN
+  CHAT
+  PROFILE
+  OTHER
+}
+
+enum MediaStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+/**
+ * ფაილის მეტამონაცემები. თავად ფაილი ბაზაში არასდროს ინახება —
+ * მხოლოდ მისამართი პროვაიდერთან.
+ *
+ * ერთი მოდელი ყველა ტიპისთვის: ავატარი, ჩატის დანართი, ადმინის ვიდეო.
+ * ასე ატვირთვის, წაშლისა და ლიმიტების ლოგიკა ერთ ადგილასაა.
+ */
+model MediaAsset {
+  id      String      @id @default(uuid())
+  ownerId String?
+  owner   User?       @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  type    MediaType
+  source  MediaSource @default(OTHER)
+  status  MediaStatus @default(READY)
+
+  /// R2 | BUNNY — რომელ საცავშია
+  provider StorageProvider
+
+  /// R2-ის ობიექტის key ან Bunny-ის asset id
+  storageKey String
+  /// დასაკრავი იდენტიფიკატორი (ვიდეოსთვის)
+  playbackId String?
+  /// საჯარო მისამართი — მხოლოდ არაკონფიდენციალურ ფაილებზე
+  publicUrl  String?
+
+  mimeType String
+  sizeBytes Int?
+  width    Int?
+  height   Int?
+  /// წამებში — ვიდეოსა და აუდიოსთვის
+  duration Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  /// რბილი წაშლა — ფიზიკურად background-ით იშლება
+  deletedAt DateTime?
+
+  videos          Video[]           @relation("VideoAsset")
+  thumbnailFor    Video[]           @relation("VideoThumbnail")
+  attachments     MessageAttachment[]
+
+  @@index([ownerId, source])
+  @@index([status, deletedAt])
+  @@map("media_assets")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 5. ვიდეო კონტენტი (Netflix-ის ლოგიკა)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -516,6 +590,7 @@ enum VideoAccessType {
 }
 
 enum StorageProvider {
+  R2
   MUX
   CLOUDFLARE_STREAM
   BUNNY
@@ -531,13 +606,14 @@ model Video {
   category    VideoCategory? @relation(fields: [categoryId], references: [id])
   status      VideoStatus    @default(DRAFT)
 
-  // მედია — ფაილი backend სერვერზე არასდროს ინახება
-  provider        StorageProvider @default(MUX)
-  providerAssetId String?
-  playbackId      String?
-  thumbnailUrl    String?
-  previewUrl      String? // მოკლე hover-preview
-  durationSec     Int             @default(0)
+  /// ფაილი MediaAsset-შია — Video მხოლოდ ბიზნეს-ინფორმაციას ატარებს
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation("VideoAsset", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  thumbnailAssetId String?
+  thumbnailAsset   MediaAsset? @relation("VideoThumbnail", fields: [thumbnailAssetId], references: [id], onDelete: SetNull)
+
+  previewUrl String? // მოკლე hover-preview
 
   accessType VideoAccessType @default(SUBSCRIPTION)
 
@@ -721,15 +797,38 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
   type           MessageType  @default(TEXT)
   body           String?
-  attachmentUrl  String?
-  attachmentMeta Json?
 
   editedAt  DateTime?
   deletedAt DateTime?
   createdAt DateTime  @default(now())
 
+  attachments MessageAttachment[]
+
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+/**
+ * შეტყობინების დანართები.
+ *
+ * ცალკე ცხრილია იმიტომ, რომ ერთ შეტყობინებაში შეიძლება იყოს ტექსტი,
+ * რამდენიმე ფოტო, ვიდეო და დოკუმენტი ერთდროულად. ერთი `attachmentUrl`
+ * ველი ამას ვერ დაიტევდა და მოგვიანებით ბაზის გადაკეთებას მოითხოვდა.
+ */
+model MessageAttachment {
+  id        String     @id @default(uuid())
+  messageId String
+  message   Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  assetId   String
+  asset     MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  /// ჩვენების რიგი შეტყობინების შიგნით
+  position  Int        @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, assetId])
+  @@index([assetId])
+  @@map("message_attachments")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
