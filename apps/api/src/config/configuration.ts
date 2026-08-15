@@ -27,6 +27,27 @@ export interface AppConfig {
     /** Bundle ID-ები / Services ID-ები, რომლებიც identityToken-ის `aud`-ში დაიშვება */
     clientIds: string[];
   };
+  storage: {
+    /** "local" | "r2" */
+    fileDriver: string;
+    /** "local" | "bunny" */
+    videoDriver: string;
+    r2: {
+      accountId?: string;
+      bucket?: string;
+      accessKeyId?: string;
+      secretAccessKey?: string;
+      /** bucket-ის საჯარო დომენი */
+      publicUrl?: string;
+    };
+    bunny: {
+      libraryId?: string;
+      apiKey?: string;
+      cdnHost?: string;
+      /** token authentication-ის გასაღები — ხელმოწერილი ბმულებისთვის */
+      tokenKey?: string;
+    };
+  };
 }
 
 function csv(value: string | undefined): string[] {
@@ -62,5 +83,22 @@ export default (): AppConfig => ({
   },
   apple: {
     clientIds: csv(process.env.APPLE_CLIENT_IDS),
+  },
+  storage: {
+    fileDriver: process.env.FILE_STORAGE_DRIVER ?? 'local',
+    videoDriver: process.env.VIDEO_STORAGE_DRIVER ?? 'local',
+    r2: {
+      accountId: process.env.R2_ACCOUNT_ID,
+      bucket: process.env.R2_BUCKET,
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+      publicUrl: process.env.R2_PUBLIC_URL,
+    },
+    bunny: {
+      libraryId: process.env.BUNNY_LIBRARY_ID,
+      apiKey: process.env.BUNNY_API_KEY,
+      cdnHost: process.env.BUNNY_CDN_HOST,
+      tokenKey: process.env.BUNNY_TOKEN_KEY,
+    },
   },
 });

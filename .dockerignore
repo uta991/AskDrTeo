@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+apps/api/dist
+apps/api/uploads
+.git
+*.log
+.DS_Store

@@ -14,7 +14,14 @@ import { diskStorage } from 'multer';
 import { randomBytes } from 'node:crypto';
 import { extname } from 'node:path';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { MediaService, UPLOAD_DIR } from './media.service';
+import { MediaService } from './media.service';
+import { mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+/** multer-ის დროებითი საქაღალდე — საბოლოო ადგილს პროვაიდერი წყვეტს. */
+const TMP_DIR = join(tmpdir(), 'askdrteo-uploads');
+mkdirSync(TMP_DIR, { recursive: true });
 
 const ALLOWED = ['.jpg', '.jpeg', '.png', '.webp'];
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -38,10 +45,10 @@ export class MediaController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
+      // multer მხოლოდ დროებით ინახავს; საბოლოო ადგილს პროვაიდერი წყვეტს
       storage: diskStorage({
-        destination: UPLOAD_DIR,
+        destination: TMP_DIR,
         filename: (_req, file, cb) => {
-          // ორიგინალი სახელი არ გამოიყენება — path traversal-ის რისკია
           const ext = extname(file.originalname).toLowerCase();
           cb(null, `${randomBytes(16).toString('hex')}${ext}`);
         },
@@ -62,7 +69,7 @@ export class MediaController {
     @CurrentUser('id') userId: string,
   ) {
     if (!file) throw new BadRequestException('ფაილი არ არის მიმაგრებული');
-    return this.media.toPublicUrl(file.filename, userId);
+    return this.media.uploadAvatar(file);
   }
 
   @Post('video')
@@ -74,7 +81,7 @@ export class MediaController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: UPLOAD_DIR,
+        destination: TMP_DIR,
         filename: (_req, file, cb) => {
           const ext = extname(file.originalname).toLowerCase();
           cb(null, `${randomBytes(16).toString('hex')}${ext}`);
@@ -94,9 +101,8 @@ export class MediaController {
   uploadVideo(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('title') title: string | undefined,
-    @CurrentUser('id') userId: string,
   ) {
     if (!file) throw new BadRequestException('ფაილი არ არის მიმაგრებული');
-    return this.media.createVideoFromUpload(file.filename, title, userId);
+    return this.media.createVideoFromUpload(file, title);
   }
 }

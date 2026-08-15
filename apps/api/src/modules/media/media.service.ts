@@ -1,55 +1,85 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { StorageProvider, VideoStatus } from '@prisma/client';
+import { extname } from 'node:path';
 import { PrismaService } from '@/common/prisma/prisma.service';
-import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  FILE_STORAGE,
+  VIDEO_STORAGE,
+  type FileStorageProvider,
+  type VideoStorageProvider,
+} from '../storage/storage.types';
 
-/** ატვირთვების საქაღალდე პროექტის ფესვთან. */
-export const UPLOAD_DIR = join(process.cwd(), 'uploads');
-
+/**
+ * მედიის სერვისი.
+ *
+ * კონკრეტული საცავი აქ არსად ფიგურირებს — მხოლოდ ინტერფეისები.
+ * R2-დან S3-ზე ან Bunny-დან Mux-ზე გადასვლა ამ ფაილს არ შეეხება.
+ */
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
 
   constructor(
-    private readonly config: ConfigService,
     private readonly prisma: PrismaService,
-  ) {
-    // საქაღალდე პირველივე გაშვებაზე უნდა არსებობდეს, თორემ multer ჩავარდება
-    mkdirSync(UPLOAD_DIR, { recursive: true });
-  }
+    @Inject(FILE_STORAGE) private readonly files: FileStorageProvider,
+    @Inject(VIDEO_STORAGE) private readonly videos: VideoStorageProvider,
+  ) {}
 
-  toPublicUrl(filename: string, userId: string): { url: string } {
-    const base = this.config.get<string>('publicUrl', 'http://localhost:3000');
-    const url = `${base}/uploads/${filename}`;
+  async uploadAvatar(file: Express.Multer.File, folder = 'avatars') {
+    const stored = await this.files.upload({
+      path: file.path,
+      extension: extname(file.originalname).toLowerCase(),
+      contentType: file.mimetype,
+      folder,
+    });
 
-    this.logger.log(`ატვირთვა: ${filename} (user ${userId})`);
-    return { url };
+    return { url: stored.url, key: stored.key };
   }
 
   /**
-   * ატვირთული ფაილიდან Video ჩანაწერი.
+   * ვიდეოს ატვირთვა და Video ჩანაწერის შექმნა.
    *
-   * slug-ს ფაილის სახელიდან ვიღებთ — უნიკალურია და ხელით შეყვანა
-   * ადმინს ზედმეტ ნაბიჯს ჰმატებდა.
+   * `providerAssetId` და `playbackId` ცალკე ინახება: პირველი პროვაიდერთან
+   * მართვისთვისაა (წაშლა), მეორე — დაკვრისთვის. სხვა პროვაიდერზე
+   * გადასვლისას ორივე თავისით ჯდება ადგილზე.
    */
-  async createVideoFromUpload(filename: string, title: string | undefined, userId: string) {
-    const { url } = this.toPublicUrl(filename, userId);
-    const slug = filename.replace(/\.[^.]+$/, '');
+  async createVideoFromUpload(file: Express.Multer.File, title: string | undefined) {
+    const uploaded = await this.videos.upload({
+      path: file.path,
+      title: title?.trim() || 'ვიდეო',
+      contentType: file.mimetype,
+    });
+
+    const slug = uploaded.assetId.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 40);
 
     const video = await this.prisma.video.create({
       data: {
-        slug,
+        slug: `${slug}-${Date.now().toString(36)}`,
         title: title?.trim() || 'ვიდეო',
-        provider: StorageProvider.S3_CLOUDFRONT,
-        playbackId: url,
+        provider: this.providerEnum(),
+        providerAssetId: uploaded.assetId,
+        playbackId: uploaded.playbackId,
+        thumbnailUrl: uploaded.thumbnailUrl,
+        durationSec: uploaded.durationSec,
         status: VideoStatus.PUBLISHED,
         publishedAt: new Date(),
       },
-      select: { id: true, title: true, playbackId: true },
+      select: { id: true, title: true, thumbnailUrl: true },
     });
 
-    return { videoId: video.id, title: video.title, url: video.playbackId };
+    this.logger.log(`ვიდეო შეიქმნა: ${video.id} (${this.videos.name})`);
+    return { videoId: video.id, title: video.title, thumbnailUrl: video.thumbnailUrl };
+  }
+
+  /** დაკვრის ბმული — ვადით, რომ გაზიარებით პაკეტს გვერდი არ აუარონ. */
+  playbackUrl(playbackId: string, expiresInSec = 3600): Promise<string> {
+    return this.videos.playbackUrl(playbackId, expiresInSec);
+  }
+
+  /** მიმდინარე პროვაიდერი ბაზის enum-ში. */
+  private providerEnum(): StorageProvider {
+    return this.videos.name === 'bunny'
+      ? StorageProvider.BUNNY
+      : StorageProvider.S3_CLOUDFRONT;
   }
 }

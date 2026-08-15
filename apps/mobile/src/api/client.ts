@@ -1,3 +1,4 @@
+import { NativeModules } from 'react-native';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
@@ -15,10 +16,28 @@ function resolveApiUrl(): string {
   // პროდაქშენში ან როცა მისამართი ცალსახად მითითებულია — ისე ვტოვებთ
   if (configured && !configured.includes('localhost')) return configured;
 
-  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  const host = devServerHost();
   if (host) return `http://${host}:3000/api/v1`;
 
   return configured ?? 'http://localhost:3000/api/v1';
+}
+
+/**
+ * დეველოპმენტ-სერვერის (Metro) ჰოსტი.
+ *
+ * `scriptURL` ყოველთვის სახეზეა debug ბილდში — სწორედ იქიდან ჩამოიტვირთა
+ * JS. `expoConfig.hostUri` კი მხოლოდ Expo Go-შია, ნატიურ ბილდში ცარიელია
+ * და მისამართი localhost-ზე ვარდებოდა.
+ */
+function devServerHost(): string | null {
+  const scriptURL = NativeModules.SourceCode?.getConstants?.().scriptURL as string | undefined;
+
+  const fromScript = scriptURL?.match(/^https?:\/\/([^/:]+)/)?.[1];
+  if (fromScript && fromScript !== 'localhost' && fromScript !== '127.0.0.1') {
+    return fromScript;
+  }
+
+  return Constants.expoConfig?.hostUri?.split(':')[0] ?? null;
 }
 
 const API_URL = resolveApiUrl();

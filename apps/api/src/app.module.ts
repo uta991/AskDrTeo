@@ -16,6 +16,7 @@ import { MediaModule } from './modules/media/media.module';
 import { NewsModule } from './modules/news/news.module';
 import { PromoModule } from './modules/promo/promo.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { StorageModule } from './modules/storage/storage.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { SmsModule } from './modules/sms/sms.module';
 
@@ -30,6 +31,7 @@ import { SmsModule } from './modules/sms/sms.module';
     AdminUsersModule,
     PlansModule,
     ChildrenModule,
+    StorageModule,
     MediaModule,
     NewsModule,
     PromoModule,
