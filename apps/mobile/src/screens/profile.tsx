@@ -15,6 +15,8 @@ import { useChildren } from '@/features/children/children.store';
 import { useEntitlements } from '@/features/entitlements/entitlements.store';
 import { usePlans } from '@/features/plans/plans.store';
 import { StaffSection } from '@/screens/admin/staff';
+import { PromoSection } from '@/screens/admin/promo';
+import { PromoRedeem } from '@/components/PromoRedeem';
 
 export function ProfileTab() {
   const insets = useSafeAreaInsets();
@@ -26,6 +28,7 @@ export function ProfileTab() {
   const loadPlans = usePlans((state) => state.load);
 
   const isStaff = !!user && user.role !== 'PARENT';
+  const canManagePromo = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const missingChild = !isStaff && children.length === 0;
 
   useEffect(() => {
@@ -104,7 +107,12 @@ export function ProfileTab() {
           />
         </AuthCard>
 
+        {/* პრომო კოდი პაკეტების ზემოთ — ის შეიძლება პაკეტს ცვლიდეს */}
+        {!isStaff && <PromoRedeem />}
         {!isStaff && <PlanPicker currentPlanCode={snapshot?.planCode ?? null} />}
+
+        {/* პრომო კოდების მართვა — ოპერატორს არ ეკუთვნის */}
+        {canManagePromo && <PromoSection />}
 
         {/* შიდა მომხმარებლები — მხოლოდ პერსონალს */}
         {isStaff && <StaffSection />}

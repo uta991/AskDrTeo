@@ -1,8 +1,27 @@
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:3000/api/v1';
+/**
+ * API-ის მისამართი.
+ *
+ * ფიზიკურ ტელეფონზე `localhost` თავად ტელეფონს ნიშნავს, არა კომპიუტერს —
+ * ამიტომ დეველოპმენტში Metro-ს მისამართიდან ვიღებთ კომპიუტერის IP-ს.
+ * ასე ერთი და იგივე კოდი მუშაობს სიმულატორზეც და ტელეფონზეც, IP-ის
+ * ხელით ჩაწერის გარეშე (Wi-Fi ქსელი საერთო უნდა იყოს).
+ */
+function resolveApiUrl(): string {
+  const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+
+  // პროდაქშენში ან როცა მისამართი ცალსახად მითითებულია — ისე ვტოვებთ
+  if (configured && !configured.includes('localhost')) return configured;
+
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (host) return `http://${host}:3000/api/v1`;
+
+  return configured ?? 'http://localhost:3000/api/v1';
+}
+
+const API_URL = resolveApiUrl();
 
 const ACCESS_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';

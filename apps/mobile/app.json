@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "BabyCare",
-    "slug": "baby-pediatry",
+    "name": "AskDrTeo",
+    "slug": "askdrteo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "babycare",
+    "scheme": "askdrteo",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,11 +13,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ge.babycare.app",
+      "bundleIdentifier": "ge.askdrteo.app",
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "ge.babycare.app",
+      "package": "ge.askdrteo.app",
       "adaptiveIcon": {
         "backgroundColor": "#EAF4FF"
       }
