@@ -63,10 +63,27 @@ export interface UploadVideoInput {
  * ხარისხი და დაცული დაკვრა სჭირდება — ეს ჩვეულებრივი ფაილის საცავს
  * არ აქვს და არც უნდა ჰქონდეს.
  */
+export interface VideoDetails {
+  durationSec: number;
+  width: number | null;
+  height: number | null;
+  thumbnailUrl: string | null;
+  /** true — transcoding დასრულებულია */
+  ready: boolean;
+}
+
 export interface VideoStorageProvider {
   readonly name: string;
   upload(input: UploadVideoInput): Promise<UploadedVideo>;
   remove(assetId: string): Promise<void>;
+
+  /**
+   * ვიდეოს მეტამონაცემები პროვაიდერიდან.
+   *
+   * webhook მხოლოდ სტატუსს გვატყობინებს — ხანგრძლივობა და thumbnail
+   * ცალკე უნდა წამოვიღოთ.
+   */
+  details(assetId: string): Promise<VideoDetails | null>;
   /**
    * დაცული დაკვრის მისამართი.
    * ხელმოწერილი ბმული ვადით — რომ ბმულის გაზიარებით პაკეტს არ გვერდი

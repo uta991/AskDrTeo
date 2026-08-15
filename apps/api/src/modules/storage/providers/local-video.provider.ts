@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import type {
   UploadVideoInput,
   UploadedVideo,
+  VideoDetails,
   VideoStorageProvider,
 } from '../storage.types';
 import { UPLOAD_DIR } from './local-file.provider';
@@ -44,6 +45,11 @@ export class LocalVideoProvider implements VideoStorageProvider {
 
   async remove(assetId: string): Promise<void> {
     rmSync(join(UPLOAD_DIR, 'videos', assetId), { force: true });
+  }
+
+  async details(): Promise<VideoDetails> {
+    // ლოკალურად transcoding არ არის — ფაილი ატვირთვისთანავე მზადაა
+    return { durationSec: 0, width: null, height: null, thumbnailUrl: null, ready: true };
   }
 
   async playbackUrl(playbackId: string): Promise<string> {

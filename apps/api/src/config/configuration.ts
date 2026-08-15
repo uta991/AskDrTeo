@@ -46,6 +46,8 @@ export interface AppConfig {
       cdnHost?: string;
       /** token authentication-ის გასაღები — ხელმოწერილი ბმულებისთვის */
       tokenKey?: string;
+      /** webhook-ის საიდუმლო — ჩვენ ვქმნით და Bunny-ს მისამართში ვაწვდით */
+      webhookSecret?: string;
     };
   };
 }
@@ -99,6 +101,7 @@ export default (): AppConfig => ({
       apiKey: process.env.BUNNY_API_KEY,
       cdnHost: process.env.BUNNY_CDN_HOST,
       tokenKey: process.env.BUNNY_TOKEN_KEY,
+      webhookSecret: process.env.BUNNY_WEBHOOK_SECRET,
     },
   },
 });

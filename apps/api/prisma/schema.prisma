@@ -550,11 +550,17 @@ model MediaAsset {
   /// წამებში — ვიდეოსა და აუდიოსთვის
   duration Int?
 
+  /// პროვაიდერისგან ბოლო მოვლენის დრო — debugging-ისთვის
+  lastProviderEventAt DateTime?
+  /// ჩავარდნის მიზეზი, თუ status = FAILED
+  failureReason String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   /// რბილი წაშლა — ფიზიკურად background-ით იშლება
   deletedAt DateTime?
 
+  events          MediaProviderEvent[]
   videos          Video[]           @relation("VideoAsset")
   childAvatars    Child[]           @relation("ChildAvatar")
   thumbnailFor    Video[]           @relation("VideoThumbnail")
@@ -563,6 +569,34 @@ model MediaAsset {
   @@index([ownerId, source])
   @@index([status, deletedAt])
   @@map("media_assets")
+}
+
+/**
+ * პროვაიდერის მოვლენების ჟურნალი.
+ *
+ * ორი დანიშნულება აქვს:
+ *  1. idempotency — ერთი და იგივე მოვლენა რამდენჯერაც მოვა, ერთხელ
+ *     დამუშავდება. `@@unique` სწორედ ამას იცავს.
+ *  2. debugging — ჩანს, რა და როდის მოვიდა პროვაიდერისგან.
+ */
+model MediaProviderEvent {
+  id       String          @id @default(uuid())
+  assetId  String?
+  asset    MediaAsset?     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  provider StorageProvider
+
+  /// პროვაიდერის მოვლენის იდენტიფიკატორი (guid + status)
+  externalId String
+  eventType  String
+  payload    Json
+
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, externalId])
+  @@index([assetId, createdAt])
+  @@map("media_provider_events")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

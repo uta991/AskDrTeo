@@ -5,14 +5,22 @@ import { createReadStream, rmSync, statSync } from 'node:fs';
 import type {
   UploadVideoInput,
   UploadedVideo,
+  VideoDetails,
   VideoStorageProvider,
 } from '../storage.types';
 
 interface BunnyVideo {
   guid: string;
   length: number;
+  width?: number;
+  height?: number;
   thumbnailFileName?: string;
+  /** 3 = Finished, 4 = Resolution finished — ორივე დასრულებულად ითვლება */
+  status?: number;
 }
+
+/** Bunny-ს სტატუსები, რომლებზეც ვიდეო დაკვრადია. */
+const READY_STATUSES = [3, 4];
 
 /**
  * Bunny Stream — ვიდეოს transcoding და ადაპტური დაკვრა.
@@ -72,6 +80,19 @@ export class BunnyVideoProvider implements VideoStorageProvider {
 
   async remove(assetId: string): Promise<void> {
     await this.request(`videos/${assetId}`, { method: 'DELETE' });
+  }
+
+  async details(assetId: string): Promise<VideoDetails | null> {
+    const video = await this.request<BunnyVideo>(`videos/${assetId}`).catch(() => null);
+    if (!video) return null;
+
+    return {
+      durationSec: video.length ?? 0,
+      width: video.width ?? null,
+      height: video.height ?? null,
+      thumbnailUrl: `https://${this.cdnHost}/${video.guid}/${video.thumbnailFileName ?? 'thumbnail.jpg'}`,
+      ready: READY_STATUSES.includes(video.status ?? -1),
+    };
   }
 
   /**
