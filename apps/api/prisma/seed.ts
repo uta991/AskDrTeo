@@ -18,6 +18,11 @@ const FEATURES = [
   { key: 'growth_tracking', name: 'ზრდის დინამიკა', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'vaccination_calendar', name: 'აცრების კალენდარი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
   { key: 'ad_free', name: 'რეკლამის გარეშე', type: FeatureType.BOOLEAN, defaultValue: 'false' },
+  // ატვირთვის ლიმიტები ტიპების მიხედვით — ერთი საერთო რიცხვი 5MB-ს
+  // ფოტოსთვის გონივრულს ხდიდა, ვიდეოსთვის კი უაზროს
+  { key: 'max_upload_mb_image', name: 'სურათის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '5' },
+  { key: 'max_upload_mb_video', name: 'ვიდეოს მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '200' },
+  { key: 'max_upload_mb_document', name: 'დოკუმენტის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '10' },
 ];
 
 const PLANS = [
@@ -36,6 +41,8 @@ const PLANS = [
       chat_with_operator: false,
       chat_priority: false,
       max_children: '1',
+      max_upload_mb_image: '5',
+      max_upload_mb_document: '5',
       growth_tracking: false,
       vaccination_calendar: true,
       ad_free: false,
@@ -60,6 +67,8 @@ const PLANS = [
       chat_with_operator: true,
       chat_priority: false,
       max_children: '3',
+      max_upload_mb_image: '10',
+      max_upload_mb_document: '20',
       growth_tracking: true,
       vaccination_calendar: true,
       ad_free: true,
@@ -81,6 +90,8 @@ const PLANS = [
       chat_with_operator: true,
       chat_priority: true,
       max_children: '5',
+      max_upload_mb_image: '20',
+      max_upload_mb_document: '50',
       growth_tracking: true,
       vaccination_calendar: true,
       ad_free: true,
@@ -102,6 +113,8 @@ const PLANS = [
       chat_with_operator: true,
       chat_priority: true,
       max_children: 'unlimited',
+      max_upload_mb_image: '25',
+      max_upload_mb_document: '100',
       growth_tracking: true,
       vaccination_calendar: true,
       ad_free: true,
