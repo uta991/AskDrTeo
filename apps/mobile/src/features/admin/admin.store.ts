@@ -65,6 +65,15 @@ export interface PromoCode {
   plan: { code: string; name: string } | null;
 }
 
+/**
+ * რამდენ ხანს ითვლება ჩატვირთული მონაცემი ახლად.
+ *
+ * ეკრანებს შორის გადაფურცვლა კომპონენტს ხელახლა ამონტაჟებს და ყოველ
+ * ჯერზე მოთხოვნა მიდიოდა — სია თვალსაჩინოდ ციმციმებდა. ამ ვადაში
+ * განმეორებითი გამოძახება იგნორირდება.
+ */
+const STALE_AFTER_MS = 5 * 60 * 1000;
+
 interface AdminState {
   overview: Overview | null;
   financial: Financial | null;
@@ -74,15 +83,17 @@ interface AdminState {
   news: NewsPost[];
   promos: PromoCode[];
   loading: boolean;
+  /** ბოლო წარმატებული ჩატვირთვის დრო, სექციების მიხედვით */
+  loadedAt: Partial<Record<'dashboard' | 'users' | 'staff' | 'news' | 'promos', number>>;
 
-  loadDashboard: () => Promise<void>;
-  loadUsers: (search?: string) => Promise<void>;
-  loadStaff: () => Promise<void>;
+  loadDashboard: (force?: boolean) => Promise<void>;
+  loadUsers: (search?: string, force?: boolean) => Promise<void>;
+  loadStaff: (force?: boolean) => Promise<void>;
   createStaff: (input: CreateStaffInput) => Promise<void>;
   setPassword: (userId: string, password: string) => Promise<void>;
   deleteAccount: (userId: string, isStaff: boolean) => Promise<void>;
-  loadNews: () => Promise<void>;
-  loadPromos: () => Promise<void>;
+  loadNews: (force?: boolean) => Promise<void>;
+  loadPromos: (force?: boolean) => Promise<void>;
 
   grantPlan: (userId: string, planCode: string, expiresAt?: string) => Promise<void>;
   createNews: (input: CreateNewsInput) => Promise<void>;
@@ -116,6 +127,10 @@ export interface CreatePromoInput {
   validUntil?: string;
 }
 
+function isFresh(timestamp: number | undefined): boolean {
+  return !!timestamp && Date.now() - timestamp < STALE_AFTER_MS;
+}
+
 export const useAdmin = create<AdminState>((set, get) => ({
   overview: null,
   financial: null,
@@ -125,8 +140,11 @@ export const useAdmin = create<AdminState>((set, get) => ({
   news: [],
   promos: [],
   loading: false,
+  loadedAt: {},
 
-  async loadDashboard() {
+  async loadDashboard(force) {
+    if (!force && isFresh(get().loadedAt.dashboard)) return;
+
     set({ loading: true });
     try {
       // ორივე ერთდროულად — თანმიმდევრული მოთხოვნა ეკრანს ორჯერ აციმციმებდა
@@ -134,13 +152,16 @@ export const useAdmin = create<AdminState>((set, get) => ({
         api<Overview>('/admin/stats'),
         api<Financial>('/admin/stats/financial'),
       ]);
-      set({ overview, financial });
+      set({ overview, financial, loadedAt: { ...get().loadedAt, dashboard: Date.now() } });
     } finally {
       set({ loading: false });
     }
   },
 
-  async loadUsers(search) {
+  async loadUsers(search, force) {
+    // ძებნისას ქეში არ მოქმედებს — მომხმარებელი შედეგს მაშინვე ელოდება
+    if (!search && !force && isFresh(get().loadedAt.users)) return;
+
     set({ loading: true });
     try {
       // მხოლოდ მშობლები — პერსონალს ცალკე სია აქვს პროფილზე
@@ -150,22 +171,28 @@ export const useAdmin = create<AdminState>((set, get) => ({
       const res = await api<{ items: AdminUser[]; total: number }>(
         `/admin/users?${params.toString()}`,
       );
-      set({ users: res.items, usersTotal: res.total });
+      set({
+        users: res.items,
+        usersTotal: res.total,
+        loadedAt: { ...get().loadedAt, users: search ? undefined : Date.now() },
+      });
     } finally {
       set({ loading: false });
     }
   },
 
-  async loadStaff() {
+  async loadStaff(force) {
+    if (!force && isFresh(get().loadedAt.staff)) return;
+
     const res = await api<{ items: AdminUser[] }>(
       '/admin/users?roles=OPERATOR,ADMIN,SUPER_ADMIN&perPage=100',
     );
-    set({ staff: res.items });
+    set({ staff: res.items, loadedAt: { ...get().loadedAt, staff: Date.now() } });
   },
 
   async createStaff(input) {
     await api('/admin/users/staff', { method: 'POST', body: input });
-    await get().loadStaff();
+    await get().loadStaff(true);
   },
 
   async setPassword(userId, password) {
@@ -178,15 +205,25 @@ export const useAdmin = create<AdminState>((set, get) => ({
       body: { status: 'DELETED', reason: 'ადმინის პანელიდან' },
     });
     // მხოლოდ შესაბამისი სია განახლდეს — ორივეს დატვირთვა ზედმეტია
-    await (isStaff ? get().loadStaff() : get().loadUsers());
+    await (isStaff ? get().loadStaff(true) : get().loadUsers(undefined, true));
   },
 
-  async loadNews() {
-    set({ news: await api<NewsPost[]>('/admin/news') });
+  async loadNews(force) {
+    if (!force && isFresh(get().loadedAt.news)) return;
+
+    set({
+      news: await api<NewsPost[]>('/admin/news'),
+      loadedAt: { ...get().loadedAt, news: Date.now() },
+    });
   },
 
-  async loadPromos() {
-    set({ promos: await api<PromoCode[]>('/admin/promo') });
+  async loadPromos(force) {
+    if (!force && isFresh(get().loadedAt.promos)) return;
+
+    set({
+      promos: await api<PromoCode[]>('/admin/promo'),
+      loadedAt: { ...get().loadedAt, promos: Date.now() },
+    });
   },
 
   async grantPlan(userId, planCode, expiresAt) {
@@ -195,21 +232,21 @@ export const useAdmin = create<AdminState>((set, get) => ({
       body: { planCode, expiresAt, note: 'ადმინის პანელიდან' },
     });
     // სია განახლდეს, რომ ახალი პაკეტი მაშინვე ჩანდეს
-    await get().loadUsers();
+    await get().loadUsers(undefined, true);
   },
 
   async createNews(input) {
     await api('/admin/news', { method: 'POST', body: input });
-    await get().loadNews();
+    await get().loadNews(true);
   },
 
   async createPromo(input) {
     await api('/admin/promo', { method: 'POST', body: input });
-    await get().loadPromos();
+    await get().loadPromos(true);
   },
 
   reset() {
-    set({ overview: null, financial: null, users: [], staff: [], news: [], promos: [] });
+    set({ overview: null, financial: null, users: [], staff: [], news: [], promos: [], loadedAt: {} });
   },
 }));
 
