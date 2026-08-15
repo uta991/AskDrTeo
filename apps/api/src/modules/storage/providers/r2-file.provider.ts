@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createReadStream, rmSync, statSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import type { FileStorageProvider, StoredFile, UploadFileInput } from '../storage.types';
@@ -58,7 +64,17 @@ export class R2FileProvider implements FileStorageProvider {
     rmSync(input.path, { force: true });
 
     this.logger.log(`R2 ატვირთვა: ${key}`);
-    return { url: `${this.publicBase}/${key}`, key };
+
+    // bucket კერძოა — საჯარო მისამართი მხოლოდ ცალსახად მონიშნულ ფაილს აქვს
+    return { url: input.isPublic ? `${this.publicBase}/${key}` : null, key };
+  }
+
+  async signedUrl(key: string, expiresInSec: number): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      { expiresIn: expiresInSec },
+    );
   }
 
   async remove(key: string): Promise<void> {

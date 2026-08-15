@@ -8,13 +8,15 @@
  */
 
 export interface StoredFile {
-  /** საჯარო მისამართი, რომელსაც კლიენტი იყენებს */
-  url: string;
+  /** საჯარო მისამართი — მხოლოდ isPublic ატვირთვისას, სხვა შემთხვევაში null */
+  url: string | null;
   /** პროვაიდერის შიდა იდენტიფიკატორი — წაშლისთვის */
   key: string;
 }
 
 export interface UploadFileInput {
+  /** true — ფაილი საჯაროდ ისმევა; ნაგულისხმევად კერძოა */
+  isPublic?: boolean;
   /** ლოკალური ფაილის გზა (multer-ის დროებითი ფაილი) */
   path: string;
   /** ორიგინალი გაფართოება, მაგ. ".jpg" */
@@ -29,6 +31,14 @@ export interface FileStorageProvider {
   readonly name: string;
   upload(input: UploadFileInput): Promise<StoredFile>;
   remove(key: string): Promise<void>;
+
+  /**
+   * დროებითი ბმული კერძო ფაილზე.
+   *
+   * ავტორიზაციას აქ არ ვამოწმებთ — ეს გამომძახებლის პასუხისმგებლობაა.
+   * ხელმოწერა მხოლოდ ტექნიკური საშუალებაა, არა უფლების შემოწმება.
+   */
+  signedUrl(key: string, expiresInSec: number): Promise<string>;
 }
 
 export interface UploadedVideo {

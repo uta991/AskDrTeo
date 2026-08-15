@@ -7,6 +7,7 @@ import {
 import { Child, Prisma } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { MediaAccessService, type Viewer } from '../media/media-access.service';
 import { CreateChildDto, UpdateChildDto } from './dto/child.dto';
 import { correctedAgeMonths, resolveAgeStage, type AgeStageKey } from './age-stage';
 
@@ -53,15 +54,32 @@ export class ChildrenService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly entitlements: EntitlementsService,
+    private readonly mediaAccess: MediaAccessService,
   ) {}
 
-  async list(parentId: string): Promise<ChildView[]> {
+  async list(parentId: string, viewer: Viewer): Promise<ChildView[]> {
     const children = await this.prisma.child.findMany({
       where: { parentId, deletedAt: null },
       orderBy: { birthDate: 'desc' },
     });
 
-    return children.map((child) => this.toView(child));
+    return this.withAvatars(children, viewer);
+  }
+
+  /**
+   * ავატარების ბმულები ერთ ჯერზე.
+   *
+   * თითო ბავშვისთვის ცალკე მოთხოვნა სიას შესამჩნევად ანელებდა —
+   * ხელმოწერები პაკეტად გამოგვაქვს.
+   */
+  private async withAvatars(children: Child[], viewer: Viewer): Promise<ChildView[]> {
+    const assetIds = children.map((c) => c.avatarAssetId).filter((id): id is string => !!id);
+    const urls = await this.mediaAccess.urlsFor(assetIds, viewer);
+
+    return children.map((child) => ({
+      ...this.toView(child),
+      avatarUrl: child.avatarAssetId ? (urls[child.avatarAssetId] ?? null) : null,
+    }));
   }
 
   /** პერსონალის ხედი — ბავშვი მშობლის საკონტაქტოსთან ერთად. */
@@ -110,7 +128,7 @@ export class ChildrenService {
     return { ...this.toView(rest), parent };
   }
 
-  async create(parentId: string, dto: CreateChildDto): Promise<ChildView> {
+  async create(parentId: string, dto: CreateChildDto, viewer: Viewer): Promise<ChildView> {
     const current = await this.prisma.child.count({
       where: { parentId, deletedAt: null },
     });
@@ -132,7 +150,7 @@ export class ChildrenService {
         lastName: dto.lastName?.trim(),
         birthDate: dto.birthDate,
         gender: dto.gender,
-        avatarUrl: dto.avatarUrl,
+        avatarAssetId: dto.avatarAssetId,
         gestationalWeek: dto.gestationalWeek,
         birthWeight: dto.birthWeight ? new Prisma.Decimal(dto.birthWeight) : null,
         birthHeight: dto.birthHeight ? new Prisma.Decimal(dto.birthHeight) : null,
@@ -146,10 +164,15 @@ export class ChildrenService {
       },
     });
 
-    return this.toView(child);
+    return (await this.withAvatars([child], viewer))[0];
   }
 
-  async update(parentId: string, id: string, dto: UpdateChildDto): Promise<ChildView> {
+  async update(
+    parentId: string,
+    id: string,
+    dto: UpdateChildDto,
+    viewer: Viewer,
+  ): Promise<ChildView> {
     await this.assertOwnership(parentId, id);
 
     const child = await this.prisma.child.update({
@@ -163,7 +186,7 @@ export class ChildrenService {
       },
     });
 
-    return this.toView(child);
+    return (await this.withAvatars([child], viewer))[0];
   }
 
   /** რბილი წაშლა — ზრდის ისტორია და ნახვები ბავშვს უკავშირდება. */
@@ -196,7 +219,8 @@ export class ChildrenService {
       lastName: child.lastName,
       birthDate: child.birthDate,
       gender: child.gender,
-      avatarUrl: child.avatarUrl,
+      // ბმულს withAvatars ავსებს — ხელმოწერა უფლების შემოწმების შემდეგ
+      avatarUrl: null,
       gestationalWeek: child.gestationalWeek,
       birthWeight: child.birthWeight ? Number(child.birthWeight) : null,
       birthHeight: child.birthHeight ? Number(child.birthHeight) : null,

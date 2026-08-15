@@ -1,6 +1,7 @@
 import { Gender } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsUUID,
   IsDate,
   IsEnum,
   IsInt,
@@ -8,7 +9,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUrl,
   Max,
   MaxLength,
   Min,
@@ -28,10 +28,9 @@ export class CreateChildDto {
   @IsOptional() @IsEnum(Gender)
   gender?: Gender;
 
-  // require_tld: false — ლოკალურ გარემოში ატვირთვა http://localhost:3000/...
-  // მისამართს აბრუნებს, რომელსაც ნაგულისხმევი წესი აბრაკებდა
-  @IsOptional() @IsUrl({ require_tld: false })
-  avatarUrl?: string;
+  /** ატვირთული ფაილის id — `/media/avatar` აბრუნებს */
+  @IsOptional() @IsUUID()
+  avatarAssetId?: string;
 
   /** ორსულობის კვირა დაბადებისას — 22-დან 45-მდე მედიცინურად რეალურია */
   @IsOptional() @Type(() => Number) @IsInt() @Min(22) @Max(45)
@@ -99,10 +98,9 @@ export class UpdateChildDto {
   @IsOptional() @IsEnum(Gender)
   gender?: Gender;
 
-  // require_tld: false — ლოკალურ გარემოში ატვირთვა http://localhost:3000/...
-  // მისამართს აბრუნებს, რომელსაც ნაგულისხმევი წესი აბრაკებდა
-  @IsOptional() @IsUrl({ require_tld: false })
-  avatarUrl?: string;
+  /** ატვირთული ფაილის id — `/media/avatar` აბრუნებს */
+  @IsOptional() @IsUUID()
+  avatarAssetId?: string;
 
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0.3) @Max(30)
   birthWeight?: number;

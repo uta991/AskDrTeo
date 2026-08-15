@@ -180,7 +180,12 @@ model Child {
   lastName  String?
   birthDate DateTime
   gender    Gender   @default(UNSPECIFIED)
-  avatarUrl String?
+
+  /// ფოტო კერძოა — ბმული ყოველ ჯერზე ხელმოწერით გამოაქვს.
+  /// გაუთვალისწინებელი საჯარო URL bearer-ბმულია: ვინც მიიღებს,
+  /// ავტორიზაციის გარეშე ნახავს. ბავშვის ფოტოზე ეს დაუშვებელია.
+  avatarAssetId String?
+  avatarAsset   MediaAsset? @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
 
   /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
   gestationalWeek Int?
@@ -495,6 +500,13 @@ enum MediaSource {
   OTHER
 }
 
+/// საჯარო თუ ხელმოწერით — წვდომის რეჟიმი ცალსახად ინახება,
+/// წყაროდან გამოყვანა მოგვიანებით შეცდომის წყარო გახდებოდა
+enum MediaVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 enum MediaStatus {
   UPLOADING
   PROCESSING
@@ -514,9 +526,11 @@ model MediaAsset {
   id      String      @id @default(uuid())
   ownerId String?
   owner   User?       @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  type    MediaType
-  source  MediaSource @default(OTHER)
-  status  MediaStatus @default(READY)
+  type       MediaType
+  source     MediaSource     @default(OTHER)
+  status     MediaStatus     @default(READY)
+  /// ნაგულისხმევად კერძო — საჯაროობა ცალსახად უნდა გამოცხადდეს
+  visibility MediaVisibility @default(PRIVATE)
 
   /// R2 | BUNNY — რომელ საცავშია
   provider StorageProvider
@@ -525,7 +539,8 @@ model MediaAsset {
   storageKey String
   /// დასაკრავი იდენტიფიკატორი (ვიდეოსთვის)
   playbackId String?
-  /// საჯარო მისამართი — მხოლოდ არაკონფიდენციალურ ფაილებზე
+  /// საჯარო მისამართი — ივსება მხოლოდ visibility = PUBLIC-ზე.
+  /// კერძო ფაილს ბმული ყოველ ჯერზე ხელმოწერით გამოაქვს.
   publicUrl  String?
 
   mimeType String
@@ -541,6 +556,7 @@ model MediaAsset {
   deletedAt DateTime?
 
   videos          Video[]           @relation("VideoAsset")
+  childAvatars    Child[]           @relation("ChildAvatar")
   thumbnailFor    Video[]           @relation("VideoThumbnail")
   attachments     MessageAttachment[]
 

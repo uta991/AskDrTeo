@@ -3,6 +3,7 @@ import {
   MediaSource,
   MediaStatus,
   MediaType,
+  MediaVisibility,
   StorageProvider,
   VideoStatus,
 } from '@prisma/client';
@@ -40,12 +41,16 @@ export class MediaService {
     file: Express.Multer.File,
     ownerId: string,
     source: MediaSource = MediaSource.PROFILE,
+    visibility: MediaVisibility = MediaVisibility.PRIVATE,
   ) {
+    const isPublic = visibility === MediaVisibility.PUBLIC;
+
     const stored = await this.files.upload({
       path: file.path,
       extension: extname(file.originalname).toLowerCase(),
       contentType: file.mimetype,
       folder: source.toLowerCase(),
+      isPublic,
     });
 
     const asset = await this.prisma.mediaAsset.create({
@@ -53,6 +58,7 @@ export class MediaService {
         ownerId,
         type: MediaType.IMAGE,
         source,
+        visibility,
         status: MediaStatus.READY,
         provider: this.fileProviderEnum(),
         storageKey: stored.key,
@@ -63,7 +69,12 @@ export class MediaService {
       select: { id: true, publicUrl: true, storageKey: true },
     });
 
-    return { assetId: asset.id, url: asset.publicUrl, key: asset.storageKey };
+    // კერძო ფაილს მისამართი ბმულის მოთხოვნისას გამოაქვს
+    const url = isPublic
+      ? asset.publicUrl
+      : await this.files.signedUrl(asset.storageKey, 900);
+
+    return { assetId: asset.id, url, key: asset.storageKey };
   }
 
   /**
@@ -130,7 +141,7 @@ export class MediaService {
    * მათზე წვდომა საუბრის მონაწილეობით უნდა შემოწმდეს, საჯარო ბმულით არა.
    */
   async uploadChatAttachment(file: Express.Multer.File, ownerId: string) {
-    return this.uploadImage(file, ownerId, MediaSource.CHAT);
+    return this.uploadImage(file, ownerId, MediaSource.CHAT, MediaVisibility.PRIVATE);
   }
 
   /** რბილი წაშლა — ფიზიკურად background-ით იშლება. */

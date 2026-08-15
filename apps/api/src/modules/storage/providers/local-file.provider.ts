@@ -31,10 +31,20 @@ export class LocalFileProvider implements FileStorageProvider {
     const key = `${input.folder}/${randomBytes(16).toString('hex')}${input.extension}`;
     renameSync(input.path, join(UPLOAD_DIR, key));
 
-    const base = this.config.get<string>('publicUrl', 'http://localhost:3000');
     this.logger.log(`ატვირთვა: ${key}`);
 
-    return { url: `${base}/uploads/${key}`, key };
+    // ლოკალურად ყველა ფაილი ერთნაირად ისმევა — ხელმოწერა მხოლოდ
+    // R2-ზეა რეალური. ეს დეველოპმენტს გასაღებების გარეშე ტოვებს.
+    return { url: input.isPublic ? this.url(key) : null, key };
+  }
+
+  async signedUrl(key: string): Promise<string> {
+    return this.url(key);
+  }
+
+  private url(key: string): string {
+    const base = this.config.get<string>('publicUrl', 'http://localhost:3000');
+    return `${base}/uploads/${key}`;
   }
 
   async remove(key: string): Promise<void> {
