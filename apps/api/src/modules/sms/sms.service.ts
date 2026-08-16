@@ -80,6 +80,8 @@ export class SmsService {
         return this.sendViaSmsOffice(phone, body);
       case 'twilio':
         return this.sendViaTwilio(phone, body);
+      case 'smsgate':
+        return this.sendViaSmsGate(phone, body);
       default:
         throw new Error(`SMS provider "${provider}" არ არის იმპლემენტირებული`);
     }
@@ -152,6 +154,58 @@ export class SmsService {
     return { providerRef: payload.sid };
   }
 
+  /**
+   * SMS Gateway (sms-gate.app) — Android ტელეფონი რეალური SIM-ით.
+   *
+   * შეტყობინება იმავე ნომრიდან მიდის, რომლითაც ტელეფონია აღჭურვილი,
+   * ანუ sender ID-ის რეგისტრაცია საჭირო არ არის. `deviceId` მაშინაა
+   * აუცილებელი, როცა ანგარიშზე ერთზე მეტი მოწყობილობაა მიბმული.
+   */
+  private async sendViaSmsGate(phone: string, body: string): Promise<SmsProviderResult> {
+    const gate = this.config.get<SmsGateConfig>('sms.gate')!;
+
+    if (!gate.user || !gate.password) {
+      throw new Error('SMS_GATE_USER / SMS_GATE_PASSWORD არ არის მითითებული');
+    }
+
+    // ტელეფონი უკვე E.164-შია შენახული; შემოწმება იმისთვისაა, რომ
+    // არასწორი ჩანაწერი gateway-მდე არ მივიდეს.
+    if (!/^\+995\d{9}$/.test(phone)) {
+      throw new Error(`ნომრის ფორმატი არასწორია: ${phone}`);
+    }
+
+    const payload: Record<string, unknown> = {
+      phoneNumbers: [phone],
+      textMessage: { text: body },
+    };
+    if (gate.deviceId) payload.deviceId = gate.deviceId;
+
+    const url = new URL(gate.url);
+    // GSM კონტროლერების SIM-ებს libphonenumber ვერ ცნობს, ფორმატს კი
+    // თავად ვამოწმებთ — gateway-ის ვალიდაცია ზედმეტია.
+    url.searchParams.set('skipPhoneValidation', 'true');
+
+    const response = await this.fetchWithTimeout(url.toString(), {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${gate.user}:${gate.password}`).toString('base64')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`SMS Gateway HTTP ${response.status}: ${text.slice(0, 200)}`);
+    }
+
+    const result = JSON.parse(text) as { id?: string; state?: string };
+    this.logger.log(`SMS Gateway: ${phone} → ${result.state ?? 'queued'} (${result.id})`);
+
+    return { providerRef: result.id };
+  }
+
   /** კონფიგის სავალდებულო ველი — ცარიელზე გასაგები შეცდომა, არა 401 provider-იდან. */
   private requireCredential(path: string, envName: string): string {
     const value = this.config.get<string>(path);
@@ -175,4 +229,11 @@ export class SmsService {
       clearTimeout(timer);
     }
   }
+}
+
+interface SmsGateConfig {
+  user?: string;
+  password?: string;
+  deviceId?: string;
+  url: string;
 }

@@ -21,6 +21,12 @@ export interface AppConfig {
     senderName: string;
     apiKey?: string;
     accountSid?: string;
+    gate: {
+      user?: string;
+      password?: string;
+      deviceId?: string;
+      url: string;
+    };
     apiUrl?: string;
   };
   google: {
@@ -83,6 +89,12 @@ export default (): AppConfig => ({
     senderName: process.env.SMS_SENDER_NAME ?? 'BabyCare',
     apiKey: process.env.SMS_API_KEY,
     accountSid: process.env.SMS_ACCOUNT_SID,
+    gate: {
+      user: process.env.SMS_GATE_USER,
+      password: process.env.SMS_GATE_PASSWORD,
+      deviceId: process.env.SMS_GATE_DEVICE_ID,
+      url: process.env.SMS_GATE_URL ?? 'https://api.sms-gate.app/3rdparty/v1/messages',
+    },
     apiUrl: process.env.SMS_API_URL,
   },
   google: {
