@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
 import { logout } from '../actions/auth';
 import { SunLogo } from '../components/Brand';
+import { PromoRedeem } from './PromoRedeem';
 import styles from './account.module.css';
 
 export const metadata = { title: 'ჩემი კაბინეტი — AskDrTeo' };
@@ -140,6 +141,8 @@ export default async function AccountPage() {
               ყველა პაკეტის ნახვა
             </Link>
           </section>
+
+          <PromoRedeem />
         </div>
 
         <p className={styles.note}>

@@ -505,3 +505,14 @@
   color: var(--text-muted);
 }
 
+.admin_generatorRow__DWpjt {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin_generatorRow__DWpjt .admin_input__O8BkZ {
+  flex: 1 1;
+  min-width: 0;
+}
+

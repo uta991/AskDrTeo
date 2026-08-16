@@ -53,6 +53,12 @@
       "static/chunks/main-app.js",
       "static/css/app/admin/promo/page.css",
       "static/chunks/app/admin/promo/page.js"
+    ],
+    "/account/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/account/page.css",
+      "static/chunks/app/account/page.js"
     ]
   }
 }

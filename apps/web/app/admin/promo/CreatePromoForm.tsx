@@ -11,6 +11,28 @@ interface PlanOption {
   name: string;
 }
 
+// მსგავსი სიმბოლოები გამოტოვებულია: 0/O და 1/I ხმით კარნახისას ერევა
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/**
+ * შემთხვევითი კოდი, სურვილისამებრ სიტყვიანი პრეფიქსით.
+ *
+ * `crypto.getRandomValues` განზრახ — `Math.random` მოკლე კოდებზე
+ * თვალშისაცემად მეორდება.
+ */
+function generateCode(word: string): string {
+  const length = word ? 4 : 8;
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  const random = Array.from(bytes, (byte) => ALPHABET[byte % ALPHABET.length]).join('');
+
+  const prefix = word
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 12);
+
+  return prefix ? `${prefix}${random}` : random;
+}
+
 function Submit() {
   const { pending } = useFormStatus();
 
@@ -30,6 +52,8 @@ function Submit() {
 export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<'DISCOUNT' | 'FREE_PLAN'>('DISCOUNT');
+  const [code, setCode] = useState('');
+  const [word, setWord] = useState('');
   const [state, formAction] = useActionState<ActionState, FormData>(createPromo, {});
 
   if (!open) {
@@ -44,12 +68,34 @@ export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
     <form action={formAction} className={styles.staffForm}>
       <input
         name="code"
+        value={code}
+        onChange={(event) => setCode(event.target.value.toUpperCase())}
         placeholder="კოდი (მაგ. WELCOME20)"
         className={`${styles.input} ${styles.codeField}`}
         autoCapitalize="characters"
         autoComplete="off"
         required
       />
+
+      <div className={styles.generatorRow}>
+        <input
+          value={word}
+          onChange={(event) => setWord(event.target.value)}
+          placeholder="სიტყვა (არასავალდებულო)"
+          className={styles.input}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          className={styles.outlineButton}
+          onClick={() => setCode(generateCode(word.trim()))}
+        >
+          გენერაცია
+        </button>
+      </div>
+      <p className={styles.miniLabel}>
+        სიტყვის გარეშე — 8 შემთხვევითი სიმბოლო; სიტყვით — სიტყვა და 4 სიმბოლო.
+      </p>
 
       <div className={styles.typeRow}>
         <label className={type === 'DISCOUNT' ? styles.typeActive : styles.typeOption}>
@@ -118,12 +164,17 @@ export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
 
       <div className={styles.formRow}>
         <label className={styles.miniField}>
+          <span className={styles.miniLabel}>დაწყება (ცარიელი = მაშინვე)</span>
+          <input name="validFrom" type="date" className={styles.input} />
+        </label>
+
+        <label className={styles.miniField}>
           <span className={styles.miniLabel}>მოქმედების ბოლო დღე</span>
           <input name="validUntil" type="date" className={styles.input} />
         </label>
 
         <label className={styles.miniField}>
-          <span className={styles.miniLabel}>ლიმიტი (ცარიელი = ულიმიტო)</span>
+          <span className={styles.miniLabel}>რამდენჯერ იმუშაოს (ცარიელი = ულიმიტო)</span>
           <input name="maxRedemptions" type="number" min={1} className={styles.input} />
         </label>
       </div>

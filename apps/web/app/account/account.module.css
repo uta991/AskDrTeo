@@ -147,3 +147,50 @@
   color: var(--text-muted);
   text-align: center;
 }
+
+/* ── პრომო კოდი ───────────────────────────────────────────── */
+
+.promoHint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.promoForm {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.promoInput {
+  flex: 1;
+  min-width: 160px;
+  height: 48px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.promoInput:focus {
+  border-color: var(--primary);
+}
+
+.promoError {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #e5484d;
+}
+
+.promoNotice {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #2f9e5e;
+  font-weight: 600;
+}

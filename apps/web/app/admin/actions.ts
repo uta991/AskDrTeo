@@ -182,6 +182,9 @@ export async function createPromo(
     body.freeDays = days;
   }
 
+  const validFrom = String(formData.get('validFrom') ?? '').trim();
+  if (validFrom) body.validFrom = new Date(validFrom).toISOString();
+
   const validUntil = String(formData.get('validUntil') ?? '').trim();
   if (validUntil) body.validUntil = new Date(validUntil).toISOString();
 

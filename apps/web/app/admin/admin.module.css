@@ -499,3 +499,14 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+.generatorRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.generatorRow .input {
+  flex: 1;
+  min-width: 0;
+}

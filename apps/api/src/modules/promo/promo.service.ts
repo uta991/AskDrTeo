@@ -204,9 +204,17 @@ export class PromoService {
       await tx.promoRedemption.create({
         data: { promoId: promo.id, userId, subscriptionId },
       });
+      // ლიმიტის ამოწურვისას კოდი თავად ითიშება — თორემ სიაში „აქტიურად"
+      // ჩანდებოდა, გამოსყიდვა კი ჩავარდებოდა.
+      const reachedLimit =
+        promo.maxRedemptions !== null && promo.redeemedCount + 1 >= promo.maxRedemptions;
+
       await tx.promoCode.update({
         where: { id: promo.id },
-        data: { redeemedCount: { increment: 1 } },
+        data: {
+          redeemedCount: { increment: 1 },
+          ...(reachedLimit ? { isActive: false } : {}),
+        },
       });
 
       // ტრანზაქციის შემდეგ უფლებები შეიცვალა
