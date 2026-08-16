@@ -10,16 +10,21 @@ import * as SecureStore from 'expo-secure-store';
  * ასე ერთი და იგივე კოდი მუშაობს სიმულატორზეც და ტელეფონზეც, IP-ის
  * ხელით ჩაწერის გარეშე (Wi-Fi ქსელი საერთო უნდა იყოს).
  */
+const PRODUCTION_API = 'https://api.askdrteo.com/api/v1';
+
 function resolveApiUrl(): string {
   const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
 
-  // პროდაქშენში ან როცა მისამართი ცალსახად მითითებულია — ისე ვტოვებთ
-  if (configured && !configured.includes('localhost')) return configured;
+  // Release ბილდში Metro არ არსებობს და კომპიუტერის IP-ს ვერსაიდან ვიგებთ —
+  // მისამართი მხოლოდ კონფიგიდან მოდის. `__DEV__` ერთადერთი საიმედო
+  // განმასხვავებელია: მისამართის ტექსტზე დაყრდნობა იმას ნიშნავდა, რომ
+  // პროდაქშენის მისამართის ჩაწერისთანავე ლოკალური მუშაობაც გატყდებოდა.
+  if (!__DEV__) return configured ?? PRODUCTION_API;
 
   const host = devServerHost();
   if (host) return `http://${host}:3000/api/v1`;
 
-  return configured ?? 'http://localhost:3000/api/v1';
+  return 'http://localhost:3000/api/v1';
 }
 
 /**

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Icon } from '@/components/ui/Icon';
 import { colors, radius, spacing, typography } from '@/theme';
 import { useT } from '@/i18n';
+import { api } from '@/api/client';
 import { useAdmin, type CreatePromoInput } from '@/features/admin/admin.store';
 import { usePlans } from '@/features/plans/plans.store';
 
@@ -32,6 +33,8 @@ export function PromoSection() {
   const [days, setDays] = useState('30');
   const [limit, setLimit] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,6 +71,17 @@ export function PromoSection() {
 
   // უფასო პაკეტი კოდით არ გაიცემა — ის ისედაც ყველას აქვს
   const purchasable = plans.filter((plan) => !plan.isFree);
+
+  const handleDelete = async (id: string) => {
+    setBusy(true);
+    try {
+      await api(`/admin/promo/${id}`, { method: 'DELETE' });
+      await loadPromos(true);
+      setConfirmId(null);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -182,6 +196,26 @@ export function PromoSection() {
           <Text style={styles.usage}>
             {promo.redeemedCount} / {promo.maxRedemptions ?? '∞'} {t('admin', 'redeemed')}
           </Text>
+
+          {/* წაშლა ორნაბიჯიანია — შემთხვევითი შეხება კოდს არ უნდა შლიდეს */}
+          {confirmId === promo.id ? (
+            <View style={styles.confirmRow}>
+              <Pressable style={styles.cancelPill} onPress={() => setConfirmId(null)}>
+                <Text style={styles.cancelText}>{t('common', 'cancel')}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.deletePill}
+                disabled={busy}
+                onPress={() => void handleDelete(promo.id)}
+              >
+                <Text style={styles.deletePillText}>წაშლა</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={styles.deleteLink} onPress={() => setConfirmId(promo.id)}>
+              <Text style={styles.deleteLinkText}>წაშლა</Text>
+            </Pressable>
+          )}
         </AuthCard>
       ))}
     </View>
@@ -242,4 +276,26 @@ const styles = StyleSheet.create({
   statusText: { ...typography.small, fontSize: 10, color: colors.surface, fontWeight: '700' },
   detail: { ...typography.small, color: colors.primaryDeep, marginTop: 2 },
   usage: { ...typography.small, color: colors.textMuted, marginTop: 2 },
+  deleteLink: { alignSelf: 'flex-start', marginTop: spacing.sm },
+  deleteLinkText: { ...typography.small, color: colors.danger, fontWeight: '600' },
+  confirmRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  cancelPill: {
+    flex: 1,
+    height: 40,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: { ...typography.small, color: colors.textSecondary },
+  deletePill: {
+    flex: 1,
+    height: 40,
+    borderRadius: radius.pill,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deletePillText: { ...typography.small, color: '#FFFFFF', fontWeight: '700' },
 });

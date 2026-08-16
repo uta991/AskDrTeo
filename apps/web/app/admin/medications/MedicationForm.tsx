@@ -202,7 +202,7 @@ export function MedicationForm({
           defaultValue={concentrationsText}
           className={styles.textarea}
           rows={4}
-          placeholder={'სირაფი 120 მგ / 5 მლ | 120 | 5\nწვეთები 100 მგ / 1 მლ | 100 | 1'}
+          placeholder={'სიროფი 120 მგ / 5 მლ | 120 | 5\nწვეთები 100 მგ / 1 მლ | 100 | 1'}
           required
         />
         <span className={styles.miniLabel}>

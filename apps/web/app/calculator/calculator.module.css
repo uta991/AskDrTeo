@@ -17,7 +17,7 @@
 
 .back:hover {
   color: var(--text-primary);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
 }
 
 .card {
@@ -177,7 +177,7 @@
 .warning {
   font-size: 13px;
   color: #b06a00;
-  background: #fff6dc;
+  background: var(--surface-muted);
   border-radius: var(--radius-lg);
   padding: 10px 12px;
   margin-top: 8px;

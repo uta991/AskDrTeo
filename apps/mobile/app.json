@@ -36,7 +36,7 @@
       "./plugins/withoutAppleSignIn"
     ],
     "extra": {
-      "apiUrl": "http://localhost:3000/api/v1",
+      "apiUrl": "https://api.askdrteo.com/api/v1",
       "googleClientIds": {
         "ios": "",
         "android": "",

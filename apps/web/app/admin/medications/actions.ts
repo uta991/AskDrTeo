@@ -8,7 +8,7 @@ export interface MedicationState {
   notice?: string;
 }
 
-/** `1|სირაფი 120 მგ / 5 მლ|120|5` სტილის სტრიქონები — ერთი ველი, რამდენიმე ჩანაწერი. */
+/** `1|სიროფი 120 მგ / 5 მლ|120|5` სტილის სტრიქონები — ერთი ველი, რამდენიმე ჩანაწერი. */
 function parseRows<T>(raw: string, build: (parts: string[]) => T | null): T[] {
   return raw
     .split('\n')

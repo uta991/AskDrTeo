@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.lg,
   },
-  statCardHighlight: { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+  statCardHighlight: { backgroundColor: colors.surfaceMuted, borderColor: colors.primaryLight },
   statValue: { ...typography.h2, color: colors.textPrimary },
   statValueHighlight: { color: colors.primaryDeep },
   statLabel: { ...typography.small, color: colors.textSecondary, marginTop: 2 },

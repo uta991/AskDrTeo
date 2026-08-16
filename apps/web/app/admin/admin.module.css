@@ -26,7 +26,7 @@
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-xl); padding: 20px;
 }
-.statHighlight { background: var(--primary-soft); border-color: var(--primary-light); }
+.statHighlight { background: var(--surface-muted); border-color: var(--primary-light); }
 .statValue { font-size: 30px; font-weight: 700; }
 .statHighlight .statValue { color: var(--primary-deep); }
 .statLabel { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
@@ -72,7 +72,7 @@
 }
 
 .tab:hover {
-  background: var(--primary-soft);
+  background: var(--surface-muted);
   color: var(--text-primary);
 }
 
@@ -485,7 +485,7 @@
 
 .typeActive {
   border-color: var(--primary);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
   font-weight: 600;
 }
 
@@ -609,4 +609,52 @@
   color: var(--text-secondary);
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+/* ── წამლების ცნობარი ─────────────────────────────────────── */
+
+.medHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.medName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.medRule {
+  font-size: 13px;
+  color: var(--primary-deep);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.medRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.concList {
+  list-style: none;
+  margin: 10px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.concList li::before {
+  content: '·';
+  margin-right: 8px;
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { togglePromo, type ActionState } from '../actions';
+import { deletePromo, togglePromo, type ActionState } from '../actions';
 import styles from '../admin.module.css';
 
 export interface PromoCode {
@@ -29,9 +29,21 @@ function ToggleButton({ isActive }: { isActive: boolean }) {
   );
 }
 
+function DeleteButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className={styles.dangerButton} disabled={pending}>
+      {pending ? 'იშლება…' : 'დიახ, წაშალე'}
+    </button>
+  );
+}
+
 /** კოდის ბარათი — რას აძლევს, რამდენჯერ გამოიყენეს, მოქმედებს თუ არა. */
 export function PromoRow({ promo }: { promo: PromoCode }) {
   const [state, action] = useActionState<ActionState, FormData>(togglePromo, {});
+  const [deleteState, deleteAction] = useActionState<ActionState, FormData>(deletePromo, {});
+  const [confirming, setConfirming] = useState(false);
 
   const benefit =
     promo.type === 'DISCOUNT'
@@ -61,12 +73,32 @@ export function PromoRow({ promo }: { promo: PromoCode }) {
         </div>
       </div>
 
-      <form action={action} className={styles.promoActions}>
-        <input type="hidden" name="id" value={promo.id} />
-        <input type="hidden" name="isActive" value={String(!promo.isActive)} />
-        <ToggleButton isActive={promo.isActive} />
+      <div className={styles.promoActions}>
+        <form action={action}>
+          <input type="hidden" name="id" value={promo.id} />
+          <input type="hidden" name="isActive" value={String(!promo.isActive)} />
+          <ToggleButton isActive={promo.isActive} />
+        </form>
+
+        {!confirming ? (
+          <button className={styles.purgeLink} onClick={() => setConfirming(true)}>
+            წაშლა
+          </button>
+        ) : (
+          <div className={styles.confirmRow}>
+            <button className={styles.outlineButton} onClick={() => setConfirming(false)}>
+              გაუქმება
+            </button>
+            <form action={deleteAction}>
+              <input type="hidden" name="id" value={promo.id} />
+              <DeleteButton />
+            </form>
+          </div>
+        )}
+
         {!!state.error && <span className={styles.actionError}>{state.error}</span>}
-      </form>
+        {!!deleteState.error && <span className={styles.actionError}>{deleteState.error}</span>}
+      </div>
     </article>
   );
 }

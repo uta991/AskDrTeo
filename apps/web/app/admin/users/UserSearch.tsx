@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react';
 import styles from '../admin.module.css';
 
 /** ძებნა 400მწ დაყოვნებით — ყოველ ასოზე მოთხოვნა ზედმეტია. */
-export function UserSearch({ initial }: { initial: string }) {
+export function UserSearch({
+  initial,
+  basePath = '/admin/users',
+}: {
+  initial: string;
+  basePath?: string;
+}) {
   const router = useRouter();
   const [value, setValue] = useState(initial);
 
@@ -13,11 +19,13 @@ export function UserSearch({ initial }: { initial: string }) {
     if (value === initial) return;
 
     const timer = setTimeout(() => {
-      router.replace(value.trim() ? `/admin/users?q=${encodeURIComponent(value.trim())}` : '/admin/users');
+      router.replace(
+        value.trim() ? `${basePath}?q=${encodeURIComponent(value.trim())}` : basePath,
+      );
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [value, initial, router]);
+  }, [value, initial, router, basePath]);
 
   return (
     <input

@@ -11,7 +11,13 @@ import { usePlans } from '@/features/plans/plans.store';
 import { AccountActions } from '@/components/AccountActions';
 import { useAuth } from '@/features/auth/auth.store';
 
-export function AdminUsersTab() {
+/**
+ * მშობლების სია.
+ *
+ * `embedded` — პროფილის გვერდში ჩასმისას: ფონი და ScrollView გარეთაა,
+ * აქ მათი გამეორება ჩადგმულ სქროლს შექმნიდა და ჟესტები აირეოდა.
+ */
+export function AdminUsersTab({ embedded = false }: { embedded?: boolean } = {}) {
   const insets = useSafeAreaInsets();
   const t = useT();
 
@@ -48,16 +54,8 @@ export function AdminUsersTab() {
     }
   };
 
-  return (
-    <SkyBackground showDoves={false}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + spacing.md, paddingBottom: spacing.xl },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+  const body = (
+    <>
         <Text style={styles.title}>
           {t('admin', 'users')} <Text style={styles.count}>({usersTotal})</Text>
         </Text>
@@ -137,6 +135,22 @@ export function AdminUsersTab() {
             )}
           </AuthCard>
         ))}
+    </>
+  );
+
+  if (embedded) return <View style={styles.embedded}>{body}</View>;
+
+  return (
+    <SkyBackground showDoves={false}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing.md, paddingBottom: spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {body}
       </ScrollView>
     </SkyBackground>
   );
@@ -156,6 +170,7 @@ function roleStyle(role: AdminUser['role']) {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: spacing.xl },
+  embedded: { marginTop: spacing.lg },
   title: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.md },
   count: { ...typography.caption, color: colors.textMuted },
   error: { ...typography.small, color: colors.danger, marginBottom: spacing.sm },

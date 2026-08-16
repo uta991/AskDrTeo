@@ -18,7 +18,7 @@
 
 .back:hover {
   color: var(--text-primary);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
 }
 
 .card {
@@ -203,7 +203,7 @@
   padding: 0 16px;
   border-radius: var(--radius-lg);
   border: 1.5px solid var(--primary);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;

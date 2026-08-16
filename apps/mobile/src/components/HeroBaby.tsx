@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   photo: { width: '100%', height: '100%' },
   placeholder: {
     flex: 1,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 import { SunLogo } from './Brand';
+import { UserMenu } from './UserMenu';
 import styles from './site-header.module.css';
 
 /**
@@ -33,21 +34,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className={styles.actions}>
-          {!user && (
-            <Link href="/login" className={styles.primary}>
-              შესვლა
-            </Link>
-          )}
-          {!!user && isStaff && (
-            <Link href="/admin" className={styles.primary}>
-              სამართავი პანელი
-            </Link>
-          )}
-          {!!user && !isStaff && (
-            <Link href="/account" className={styles.primary}>
-              ჩემი კაბინეტი
-            </Link>
-          )}
+          <UserMenu user={user} />
         </div>
       </div>
     </header>

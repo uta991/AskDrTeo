@@ -6,6 +6,7 @@ export type IconName =
   | 'home'
   | 'bulb'
   | 'calendar'
+  | 'calculator'
   | 'crown'
   | 'user'
   | 'user-plus'
@@ -48,6 +49,18 @@ export function Icon({
           <Path d="M3 10.5 12 3l9 7.5" {...common} />
           <Path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" {...common} />
           <Path d="M9.5 21v-6h5v6" {...common} />
+        </>
+      )}
+      {name === 'calculator' && (
+        <>
+          <Rect x="4" y="2.5" width="16" height="19" rx="2.5" {...common} />
+          <Rect x="7.5" y="6" width="9" height="3.5" rx="1" {...common} />
+          <Line x1="8" y1="13" x2="8" y2="13" {...common} strokeWidth={2.6} />
+          <Line x1="12" y1="13" x2="12" y2="13" {...common} strokeWidth={2.6} />
+          <Line x1="16" y1="13" x2="16" y2="13" {...common} strokeWidth={2.6} />
+          <Line x1="8" y1="17" x2="8" y2="17" {...common} strokeWidth={2.6} />
+          <Line x1="12" y1="17" x2="12" y2="17" {...common} strokeWidth={2.6} />
+          <Line x1="16" y1="17" x2="16" y2="17" {...common} strokeWidth={2.6} />
         </>
       )}
       {name === 'bulb' && (

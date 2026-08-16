@@ -216,3 +216,20 @@ export async function togglePromo(
     return toState(error);
   }
 }
+
+
+/** კოდის წაშლა — სიიდან ქრება, გამოსყიდვების ისტორია რჩება. */
+export async function deletePromo(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = String(formData.get('id') ?? '');
+
+  try {
+    await apiMutate(`/admin/promo/${id}`, 'DELETE');
+    revalidatePath('/admin/promo');
+    return { notice: 'პრომო კოდი წაშლილია' };
+  } catch (error) {
+    return toState(error);
+  }
+}

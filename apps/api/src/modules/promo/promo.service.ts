@@ -119,6 +119,32 @@ export class PromoService {
     return promo;
   }
 
+  /**
+   * კოდის წაშლა.
+   *
+   * რბილია: გამოსყიდვების ისტორია კოდზე მიუთითებს და ფიზიკური წაშლა
+   * გაწყვეტდა — ვეღარ ნახავდი, ვინ რა კოდით მიიღო პაკეტი.
+   */
+  async remove(id: string, actorId: string) {
+    const promo = await this.findOne(id);
+
+    await this.prisma.promoCode.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+
+    await this.audit.record({
+      actorId,
+      action: AuditAction.DELETE,
+      entityType: 'PromoCode',
+      entityId: id,
+      before: { code: promo.code, redeemedCount: promo.redeemedCount },
+      description: `პრომო კოდი წაშლილია: ${promo.code}`,
+    });
+
+    return { message: 'პრომო კოდი წაშლილია', id };
+  }
+
   // ─── მშობელი ─────────────────────────────────────────────────────────
 
   /**

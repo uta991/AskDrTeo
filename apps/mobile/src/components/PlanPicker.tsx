@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
   currentText: { ...typography.small, color: colors.textOnPrimary, fontWeight: '700' },
   badgePill: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 3,

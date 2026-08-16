@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
-import { logout } from '../actions/auth';
 import { SunLogo } from '../components/Brand';
+import { UserMenu } from '../components/UserMenu';
 import { PromoRedeem } from './PromoRedeem';
 import { NewsFeed, type NewsPost } from './NewsFeed';
 import styles from './account.module.css';
@@ -78,14 +78,7 @@ export default async function AccountPage() {
           </Link>
         </nav>
 
-        <div className={styles.headerRight}>
-          <span className={styles.userName}>
-            {user.firstName} {user.lastName}
-          </span>
-          <form action={logout}>
-            <button className={styles.logout}>გასვლა</button>
-          </form>
-        </div>
+        <UserMenu user={user} />
       </header>
 
       <div className="container">

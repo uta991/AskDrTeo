@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -36,6 +45,16 @@ export class AdminPromoController {
   @ApiOperation({ summary: 'პრომო კოდის შექმნა' })
   create(@Body() dto: CreatePromoDto, @CurrentUser('id') actorId: string) {
     return this.promo.create(dto, actorId);
+  }
+
+  @Delete(':id')
+  @RequirePermission('subscription.manage')
+  @ApiOperation({
+    summary: 'პრომო კოდის წაშლა',
+    description: 'სიიდან ქრება; გამოსყიდვების ისტორია რჩება.',
+  })
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.promo.remove(id, actorId);
   }
 
   @Patch(':id')

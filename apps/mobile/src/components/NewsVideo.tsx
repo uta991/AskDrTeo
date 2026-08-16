@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surfaceMuted,
   },
   noticeText: { ...typography.small, color: colors.primaryDeep, fontWeight: '600' },
 });

@@ -19,6 +19,7 @@ function DeleteButton() {
 
 export function MedicationRow({ medication }: { medication: Medication }) {
   const [state, action] = useActionState<MedicationState, FormData>(deleteMedication, {});
+  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -36,37 +37,55 @@ export function MedicationRow({ medication }: { medication: Medication }) {
 
   return (
     <article className={styles.newsCard}>
-      <div className={styles.newsHead}>
-        <strong>{medication.name}</strong>
-        <span className={medication.isActive ? styles.badgeActive : styles.badgeOff}>
-          {medication.isActive ? 'აქტიური' : 'გამორთული'}
+      {/* დაკეცილში მთავარია დოზა — სწორედ ის იძებნება თვალით */}
+      <button className={styles.medHead} onClick={() => setOpen(!open)}>
+        <span className={styles.medName}>
+          <strong>{medication.name}</strong>
+          <span className={styles.medRule}>{rule}</span>
         </span>
-      </div>
 
-      <div className={styles.promoMeta}>
-        <span>{rule}</span>
-        <span>{interval}</span>
-        <span>დღეში მაქს. {medication.maxDailyMg} მგ</span>
-        <span>{medication.minAgeMonths} თვიდან</span>
-        <span>{medication.minWeightKg} კგ-დან</span>
-        <span>{medication.concentrations.length} კონცენტრაცია</span>
-      </div>
+        <span className={styles.medRight}>
+          <span className={medication.isActive ? styles.badgeActive : styles.badgeOff}>
+            {medication.isActive ? 'აქტიური' : 'გამორთული'}
+          </span>
+          <span className={styles.chevron} aria-hidden>
+            {open ? '▴' : '▾'}
+          </span>
+        </span>
+      </button>
 
-      {!!medication.note && <p className={styles.newsBody}>{medication.note}</p>}
+      {open && (
+        <>
+          <div className={styles.promoMeta}>
+            <span>{interval}</span>
+            <span>დღეში მაქს. {medication.maxDailyMg} მგ</span>
+            <span>{medication.minAgeMonths} თვიდან</span>
+            <span>{medication.minWeightKg} კგ-დან</span>
+          </div>
 
-      <div className={styles.confirmRow}>
-        <button className={styles.outlineButton} onClick={() => setEditing(!editing)}>
-          {editing ? 'დახურვა' : 'რედაქტირება'}
-        </button>
+          <ul className={styles.concList}>
+            {medication.concentrations.map((c) => (
+              <li key={c.label}>{c.label}</li>
+            ))}
+          </ul>
 
-        {!confirming && (
-          <button className={styles.purgeLink} onClick={() => setConfirming(true)}>
-            წაშლა
-          </button>
-        )}
-      </div>
+          {!!medication.note && <p className={styles.newsBody}>{medication.note}</p>}
 
-      {confirming && (
+          <div className={styles.confirmRow}>
+            <button className={styles.outlineButton} onClick={() => setEditing(!editing)}>
+              {editing ? 'დახურვა' : 'რედაქტირება'}
+            </button>
+
+            {!confirming && (
+              <button className={styles.purgeLink} onClick={() => setConfirming(true)}>
+                წაშლა
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {open && confirming && (
         <div className={styles.confirmBox}>
           <p className={styles.confirmText}>
             კალკულატორიდან ქრება. ისტორია და ცვლილებების ჟურნალი რჩება.
@@ -85,7 +104,7 @@ export function MedicationRow({ medication }: { medication: Medication }) {
 
       {!!state.error && <p className={styles.actionError}>{state.error}</p>}
 
-      {editing && <MedicationForm medication={medication} onDone={() => setEditing(false)} />}
+      {open && editing && <MedicationForm medication={medication} onDone={() => setEditing(false)} />}
     </article>
   );
 }

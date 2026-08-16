@@ -64,6 +64,7 @@ export const ka = {
     home: 'მთავარი',
     advice: 'რჩევები',
     booking: 'ჯავშანი',
+    calculator: 'დოზა',
     profile: 'პროფილი',
   },
 
@@ -317,6 +318,7 @@ export const en: Loose<Translations> = {
     home: 'Home',
     advice: 'Advice',
     booking: 'Booking',
+    calculator: 'Dose',
     profile: 'Profile',
   },
 
@@ -565,6 +567,7 @@ export const ru: Loose<Translations> = {
     home: 'Главная',
     advice: 'Советы',
     booking: 'Запись',
+    calculator: 'Доза',
     profile: 'Профиль',
   },
 

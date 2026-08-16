@@ -7,8 +7,8 @@ import { BookingTab } from '@/screens/booking';
 import { HomeTab } from '@/screens/home';
 import { ProfileTab } from '@/screens/profile';
 import { AdminDashboardTab } from '@/screens/admin/dashboard';
+import { CalculatorTab } from '@/screens/calculator';
 import { AdminNewsTab } from '@/screens/admin/news';
-import { AdminUsersTab } from '@/screens/admin/users';
 import { colors } from '@/theme';
 import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
@@ -38,8 +38,8 @@ export default function MainScreen() {
     if (isStaff) {
       return [
         { key: 'dashboard', label: t('admin', 'dashboard'), icon: 'home' },
-        { key: 'users', label: t('admin', 'users'), icon: 'user' },
         { key: 'news', label: t('admin', 'news'), icon: 'bulb' },
+        { key: 'calculator', label: t('tabs', 'calculator'), icon: 'calculator' },
         { key: 'profile', label: t('tabs', 'profile'), icon: 'user' },
       ];
     }
@@ -48,6 +48,7 @@ export default function MainScreen() {
       { key: 'home', label: t('tabs', 'home'), icon: 'home' },
       { key: 'advice', label: t('tabs', 'advice'), icon: 'bulb' },
       { key: 'booking', label: t('tabs', 'booking'), icon: 'calendar' },
+      { key: 'calculator', label: t('tabs', 'calculator'), icon: 'calculator' },
       {
         key: 'profile',
         label: t('tabs', 'profile'),
@@ -79,11 +80,11 @@ export default function MainScreen() {
               <View key="dashboard" style={styles.page}>
                 <AdminDashboardTab />
               </View>,
-              <View key="users" style={styles.page}>
-                <AdminUsersTab />
-              </View>,
               <View key="news" style={styles.page}>
                 <AdminNewsTab />
+              </View>,
+              <View key="calculator" style={styles.page}>
+                <CalculatorTab />
               </View>,
               <View key="profile" style={styles.page}>
                 <ProfileTab />
@@ -98,6 +99,9 @@ export default function MainScreen() {
               </View>,
               <View key="booking" style={styles.page}>
                 <BookingTab />
+              </View>,
+              <View key="calculator" style={styles.page}>
+                <CalculatorTab />
               </View>,
               <View key="profile" style={styles.page}>
                 <ProfileTab />

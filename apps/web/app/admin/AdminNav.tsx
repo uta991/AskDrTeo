@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { logout } from '../actions/auth';
 import { SunLogo } from '../components/Brand';
+import { UserMenu } from '../components/UserMenu';
 import type { SessionUser } from '@/lib/session';
 import styles from './admin.module.css';
 
@@ -21,7 +21,7 @@ export function AdminNav({
   active,
 }: {
   user: SessionUser;
-  active: 'dashboard' | 'users' | 'news' | 'promo' | 'medications' | 'staff';
+  active: 'dashboard' | 'users' | 'news' | 'promo' | 'medications' | 'staff' | 'profile';
 }) {
   return (
     <header className={styles.header}>
@@ -37,48 +37,25 @@ export function AdminNav({
         <Link href="/admin" className={active === 'dashboard' ? styles.tabActive : styles.tab}>
           დაშბორდი
         </Link>
-        <Link href="/admin/users" className={active === 'users' ? styles.tabActive : styles.tab}>
-          მომხმარებლები
-        </Link>
         {/* სიახლეს ოპერატორიც წერს — ვიდეოს მიბმა კი ადმინის უფლებაა */}
         <Link href="/admin/news" className={active === 'news' ? styles.tabActive : styles.tab}>
           სიახლეები
         </Link>
 
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}
-        {user.role !== 'OPERATOR' && (
-          <Link href="/admin/promo" className={active === 'promo' ? styles.tabActive : styles.tab}>
-            პრომო კოდები
-          </Link>
-        )}
         <Link href="/calculator" className={styles.tab}>
           კალკულატორი
         </Link>
 
-        {/* ცნობარის რედაქტირება ოპერატორს არ ეკუთვნის — დოზირებაა */}
-        {user.role !== 'OPERATOR' && (
-          <Link
-            href="/admin/medications"
-            className={active === 'medications' ? styles.tabActive : styles.tab}
-          >
-            წამლები
-          </Link>
-        )}
+        <Link href="/profile" className={active === 'profile' ? styles.tabActive : styles.tab}>
+          პროფილი
+        </Link>
 
-        {user.role === 'SUPER_ADMIN' && (
-          <Link href="/admin/staff" className={active === 'staff' ? styles.tabActive : styles.tab}>
-            პერსონალი
-          </Link>
-        )}
+        {/* ცნობარის რედაქტირება ოპერატორს არ ეკუთვნის — დოზირებაა */}
       </nav>
 
       <div className={styles.headerRight}>
-        <span className={styles.userName}>
-          {user.firstName} {user.lastName}
-        </span>
-        <form action={logout}>
-          <button className={styles.logout}>გასვლა</button>
-        </form>
+        <UserMenu user={user} />
       </div>
     </header>
   );

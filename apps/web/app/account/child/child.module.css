@@ -17,7 +17,7 @@
 
 .back:hover {
   color: var(--text-primary);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
 }
 
 .card {
@@ -130,7 +130,7 @@
   justify-content: center;
   font-size: 34px;
   color: var(--primary-deep);
-  background: var(--primary-soft);
+  background: var(--surface-muted);
   border: 2px dashed var(--primary);
 }
 

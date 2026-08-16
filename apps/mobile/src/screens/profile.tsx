@@ -14,8 +14,10 @@ import { useAuth } from '@/features/auth/auth.store';
 import { useChildren } from '@/features/children/children.store';
 import { useEntitlements } from '@/features/entitlements/entitlements.store';
 import { usePlans } from '@/features/plans/plans.store';
+import { AdminUsersTab } from '@/screens/admin/users';
 import { StaffSection } from '@/screens/admin/staff';
 import { PromoSection } from '@/screens/admin/promo';
+import { MedicationsSection } from '@/screens/admin/medications';
 import { PromoRedeem } from '@/components/PromoRedeem';
 
 export function ProfileTab() {
@@ -114,7 +116,13 @@ export function ProfileTab() {
         {/* პრომო კოდების მართვა — ოპერატორს არ ეკუთვნის */}
         {canManagePromo && <PromoSection />}
 
+        {/* ცნობარი კალკულატორს კვებავს — ოპერატორს არ ეკუთვნის */}
+        {canManagePromo && <MedicationsSection />}
+
         {/* შიდა მომხმარებლები — მხოლოდ პერსონალს */}
+        {/* მშობლების სია — მენიუდან პროფილში გადმოვიდა */}
+        {isStaff && <AdminUsersTab embedded />}
+
         {isStaff && <StaffSection />}
       </ScrollView>
     </SkyBackground>

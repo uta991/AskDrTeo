@@ -30,6 +30,9 @@ export const colors = {
 
   // ზედაპირები
   surface: '#FFFFFF',
+  /** ოდნავ ნაცრისფერი ბლოკი — ბარათებისა და ღილაკების გამოსაყოფად.
+   *  ყვითელი აქცენტი ფონად აღარ გამოიყენება: ფონი სუფთა თეთრია. */
+  surfaceMuted: '#F7F7F7',
   surfaceTranslucent: 'rgba(255, 255, 255, 0.92)',
   border: '#E6E6E6',
   borderFocus: '#FFCE1F',
