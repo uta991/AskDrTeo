@@ -19,3 +19,8 @@ apps/api/uploads/
 # ნატიური პროექტები — prebuild-ით ავტომატურად გენერირდება
 apps/mobile/ios/
 apps/mobile/android/
+
+# Next.js — build და cache
+.next/
+out/
+.vercel/
