@@ -49,3 +49,340 @@
   background: var(--surface); border-radius: var(--radius-xxl);
   box-shadow: var(--shadow-card); padding: 40px; display: grid; gap: 16px; justify-items: center;
 }
+
+/* ── ნავიგაცია ────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.tab,
+.tabActive {
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab {
+  color: var(--text-secondary);
+}
+
+.tab:hover {
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background: var(--primary);
+  color: var(--text-on-primary, #fff);
+}
+
+/* ── მომხმარებლების სია ───────────────────────────────────── */
+
+.count {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: -8px 0 16px;
+}
+
+.search {
+  width: 100%;
+  max-width: 460px;
+  margin-bottom: 16px;
+}
+
+.input {
+  height: 48px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--primary);
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.userCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.userHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.userHeader:hover {
+  background: var(--sky-mid);
+}
+
+.userNameCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 15px;
+}
+
+.userContact {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.planLabel {
+  font-size: 13px;
+  color: var(--primary-deep);
+  font-weight: 600;
+}
+
+.planUntil {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.rolePill {
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.roleParent { background: var(--text-muted); }
+.roleOperator { background: #2f9e5e; }
+.roleAdmin { background: var(--primary-deep); }
+.roleSuper { background: #e5484d; }
+
+.chevron {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.userBody {
+  padding: 4px 20px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── პაკეტები ─────────────────────────────────────────────── */
+
+.planOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.planOption,
+.planCurrent {
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.planOption {
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.planOption:hover {
+  border-color: var(--primary);
+}
+
+.planCurrent {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  cursor: default;
+}
+
+/* ── ანგარიშის მართვა ─────────────────────────────────────── */
+
+.accountActions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.actionsTitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 12px 0 8px;
+}
+
+.inlineForm {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.outlineButton {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.outlineButton:hover {
+  border-color: var(--primary);
+}
+
+.outlineButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dangerButton {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: #e5484d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.dangerButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.confirmBox,
+.purgeBox {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirmBox {
+  background: #fdf2f2;
+  border: 1.5px solid #f5c2c2;
+}
+
+/* სამუდამო წაშლა ვიზუალურად უფრო მკაცრია — შეცდომა შეუქცევადია */
+.purgeBox {
+  background: #fff5f5;
+  border: 2px solid #e5484d;
+}
+
+.confirmText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirmRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.purgeLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: #e5484d;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.actionError {
+  font-size: 13px;
+  color: #e5484d;
+}
+
+.actionNotice {
+  font-size: 13px;
+  color: #2f9e5e;
+}
+
+/* ── პერსონალის შექმნა ────────────────────────────────────── */
+
+.staffForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 460px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}

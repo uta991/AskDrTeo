@@ -92,3 +92,45 @@ export async function apiFetch<T>(path: string): Promise<T | null> {
     return null;
   }
 }
+
+/**
+ * ცვლილების გაგზავნა API-ზე.
+ *
+ * `apiFetch`-გან იმით განსხვავდება, რომ შეცდომას *არ* ყლაპავს:
+ * წაშლა ან პაროლის შეცვლა ჩუმად ვერ ჩავარდება — ადმინმა უნდა
+ * დაინახოს, რომ ოპერაცია არ შესრულდა.
+ */
+export async function apiMutate<T>(
+  path: string,
+  method: 'POST' | 'PATCH' | 'DELETE',
+  body?: unknown,
+): Promise<T> {
+  const token = await getAccessToken();
+  if (!token) throw new Error('სესია ამოიწურა — გაიარეთ ავტორიზაცია თავიდან');
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('სერვერთან კავშირი ვერ დამყარდა');
+  }
+
+  const payload = res.status === 204 ? null : await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const message = (payload as { message?: string | string[] } | null)?.message;
+    throw new Error(
+      (Array.isArray(message) ? message[0] : message) ?? `მოთხოვნა ჩავარდა (${res.status})`,
+    );
+  }
+
+  return payload as T;
+}

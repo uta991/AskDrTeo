@@ -92,6 +92,7 @@ interface AdminState {
   createStaff: (input: CreateStaffInput) => Promise<void>;
   setPassword: (userId: string, password: string) => Promise<void>;
   deleteAccount: (userId: string, isStaff: boolean) => Promise<void>;
+  purgeAccount: (userId: string, isStaff: boolean) => Promise<void>;
   loadNews: (force?: boolean) => Promise<void>;
   loadPromos: (force?: boolean) => Promise<void>;
 
@@ -205,6 +206,12 @@ export const useAdmin = create<AdminState>((set, get) => ({
       body: { status: 'DELETED', reason: 'ადმინის პანელიდან' },
     });
     // მხოლოდ შესაბამისი სია განახლდეს — ორივეს დატვირთვა ზედმეტია
+    await (isStaff ? get().loadStaff(true) : get().loadUsers(undefined, true));
+  },
+
+  /** სამუდამო წაშლა — ჩანაწერი ბაზიდან ქრება, აღდგენა შეუძლებელია. */
+  async purgeAccount(userId, isStaff) {
+    await api(`/admin/users/${userId}`, { method: 'DELETE' });
     await (isStaff ? get().loadStaff(true) : get().loadUsers(undefined, true));
   },
 

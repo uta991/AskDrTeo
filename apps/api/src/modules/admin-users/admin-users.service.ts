@@ -422,6 +422,82 @@ export class AdminUsersService {
     });
   }
 
+  /**
+   * ანგარიშის სამუდამო წაშლა.
+   *
+   * `changeStatus(DELETED)`-გან იმით განსხვავდება, რომ ჩანაწერი ბაზიდან
+   * ქრება — ელ. ფოსტა და ნომერი თავისუფლდება და აღდგენა შეუძლებელია.
+   *
+   * რაც *არ* იშლება:
+   *   • გადახდები — ბუღალტრული ჩანაწერია, კავშირი წყდება (`userId = null`)
+   *   • ცვლილებების ისტორია — ვინ რა წაშალა, უნდა დარჩეს
+   *   • ჩატის შეტყობინებები, თუ საუბარი მეორე მხარესაც ეკუთვნის
+   *
+   * ფაილები ბაზიდან წაშლისთანავე არ ქრება საცავიდან: ვნიშნავთ წაშლილად
+   * და ფონური `MediaCleanupService` შლის R2/Bunny-დან. პირდაპირ აქ წაშლა
+   * ტრანზაქციას გარე სერვისზე დამოკიდებულს გახდიდა.
+   */
+  async purge(id: string, actorId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { ...USER_SELECT, deletedAt: true },
+    });
+    if (!user) throw new NotFoundException('მომხმარებელი ვერ მოიძებნა');
+
+    if (id === actorId) {
+      throw new ForbiddenException('საკუთარი ანგარიშის წაშლა შეუძლებელია');
+    }
+
+    if (user.role === UserRole.SUPER_ADMIN) {
+      await this.assertNotLastSuperAdmin(id);
+    }
+
+    // ისტორია წაშლამდე ვწერთ — შემდეგ მონაცემები აღარ იარსებებს.
+    await this.audit.record({
+      actorId,
+      action: AuditAction.DELETE,
+      entityType: 'User',
+      entityId: id,
+      before: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+      },
+      description: 'ანგარიში სამუდამოდ წაშლილია',
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      // ფაილები — მფლობელის ველი SetNull-ია, ამიტომ წაშლის შემდეგ
+      // დამლაგებელი ვეღარ მიხვდებოდა, რომ ეს ფაილები ობოლი დარჩა.
+      await tx.mediaAsset.updateMany({
+        where: { ownerId: id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+
+      // მშობლის საუბრები მთლიანად მიჰყვება — მეორე მხარე ოპერატორია,
+      // რომელსაც ცალკე აღებული საუბარი აღარაფერში სჭირდება.
+      if (user.role === UserRole.PARENT) {
+        const conversationIds = await tx.conversationUser.findMany({
+          where: { userId: id },
+          select: { conversationId: true },
+        });
+
+        if (conversationIds.length) {
+          await tx.conversation.deleteMany({
+            where: { id: { in: conversationIds.map((c) => c.conversationId) } },
+          });
+        }
+      }
+
+      await tx.user.delete({ where: { id } });
+    });
+
+    return { message: 'ანგარიში სამუდამოდ წაშლილია', id };
+  }
+
   private async assertNotLastSuperAdmin(excludeId: string): Promise<void> {
     const remaining = await this.prisma.user.count({
       where: {

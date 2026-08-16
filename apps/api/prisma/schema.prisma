@@ -497,9 +497,12 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id             String          @id @default(uuid())
-  userId         String
-  user           User            @relation(fields: [userId], references: [id])
+  id String @id @default(uuid())
+
+  // ანგარიშის მუდმივად წაშლისას გადახდა უნდა გადარჩეს — ეს ბუღალტრული
+  // ჩანაწერია. ამიტომ კავშირი წყდება, თავად ჩანაწერი კი რჩება.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   subscriptionId String?
   subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
   provider       PaymentProvider @default(MANUAL)
@@ -906,8 +909,10 @@ model Message {
   id             String       @id @default(uuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderId       String
-  sender         User         @relation(fields: [senderId], references: [id])
+  // ავტორის წაშლისას შეტყობინება რჩება, თორემ მეორე მხარეს საუბარი
+  // ნახევრად გაწყვეტილი დარჩებოდა.
+  senderId       String?
+  sender         User?        @relation(fields: [senderId], references: [id], onDelete: SetNull)
   type           MessageType  @default(TEXT)
   body           String?
 

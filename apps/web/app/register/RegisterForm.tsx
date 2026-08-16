@@ -22,6 +22,7 @@ function Field({
   autoComplete,
   error,
   prefix,
+  placeholder,
 }: {
   name: string;
   label: string;
@@ -29,6 +30,7 @@ function Field({
   autoComplete?: string;
   error?: string;
   prefix?: string;
+  placeholder?: string;
 }) {
   return (
     <label className={styles.field}>
@@ -39,6 +41,7 @@ function Field({
         <input
           name={name}
           type={type}
+          placeholder={placeholder}
           autoComplete={autoComplete}
           autoCapitalize={type === 'email' ? 'none' : undefined}
           className={styles.input}
@@ -57,10 +60,21 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className={styles.form}>
-      <div className={styles.row}>
-        <Field name="firstName" label="სახელი" autoComplete="given-name" error={errors.firstName} />
-        <Field name="lastName" label="გვარი" autoComplete="family-name" error={errors.lastName} />
-      </div>
+      <Field
+        name="firstName"
+        label="სახელი"
+        placeholder="მშობლის სახელი"
+        autoComplete="given-name"
+        error={errors.firstName}
+      />
+
+      <Field
+        name="lastName"
+        label="გვარი"
+        placeholder="მშობლის გვარი"
+        autoComplete="family-name"
+        error={errors.lastName}
+      />
 
       <Field
         name="email"

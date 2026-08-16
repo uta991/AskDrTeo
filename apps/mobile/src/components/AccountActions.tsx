@@ -21,10 +21,11 @@ export function AccountActions({
   onDone?: () => void;
 }) {
   const t = useT();
-  const { setPassword, deleteAccount } = useAdmin();
+  const { setPassword, deleteAccount, purgeAccount } = useAdmin();
 
   const [password, setPasswordValue] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +96,33 @@ export function AccountActions({
         </Pressable>
       )}
 
+      {confirmPurge ? (
+        <View style={styles.purgeBox}>
+          <Text style={styles.purgeText}>{t('admin', 'confirmPurge')}</Text>
+          <View style={styles.confirmRow}>
+            <Pressable style={styles.cancelButton} onPress={() => setConfirmPurge(false)}>
+              <Text style={styles.cancelText}>{t('common', 'cancel')}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.deleteButton}
+              disabled={busy}
+              onPress={() =>
+                run(async () => {
+                  await purgeAccount(userId, isStaff);
+                  onDone?.();
+                })
+              }
+            >
+              <Text style={styles.deleteText}>{t('admin', 'purgeAccount')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable style={styles.deleteLink} onPress={() => setConfirmPurge(true)}>
+          <Text style={styles.purgeLinkText}>{t('admin', 'purgeAccount')}</Text>
+        </Pressable>
+      )}
+
       {!!notice && <Text style={styles.notice}>{notice}</Text>}
       {!!error && <Text style={styles.error}>{error}</Text>}
     </View>
@@ -111,6 +139,27 @@ const styles = StyleSheet.create({
   title: { ...typography.small, color: colors.textMuted, marginBottom: spacing.sm },
   deleteLink: { alignSelf: 'center', marginTop: spacing.md, padding: spacing.sm },
   deleteLinkText: { ...typography.small, color: colors.danger, fontWeight: '600' },
+  // სამუდამო წაშლა ხაზგასმულია — შეცდომა შეუქცევადია
+  purgeLinkText: {
+    ...typography.small,
+    color: colors.danger,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  purgeBox: {
+    marginTop: spacing.md,
+    backgroundColor: colors.dangerSoft,
+    borderRadius: radius.lg,
+    borderWidth: 2,
+    borderColor: colors.danger,
+    padding: spacing.md,
+  },
+  purgeText: {
+    ...typography.small,
+    color: colors.danger,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
   confirmBox: {
     marginTop: spacing.md,
     backgroundColor: colors.dangerSoft,

@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -99,6 +109,18 @@ export class AdminUsersController {
     @CurrentUser('id') actorId: string,
   ) {
     return this.users.setPassword(id, dto, actorId);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'ანგარიშის სამუდამო წაშლა',
+    description:
+      'ჩანაწერი ბაზიდან ქრება, ელ. ფოსტა და ნომერი თავისუფლდება. აღდგენა შეუძლებელია. ' +
+      'გადახდები და ცვლილებების ისტორია რჩება.',
+  })
+  purge(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.users.purge(id, actorId);
   }
 
   @Patch(':id/role')

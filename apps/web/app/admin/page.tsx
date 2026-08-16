@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
-import { logout } from '../actions/auth';
-import { SunLogo } from '../components/Brand';
+import { AdminNav } from './AdminNav';
 import styles from './admin.module.css';
 
 export const metadata = { title: 'სამართავი პანელი — AskDrTeo' };
@@ -22,12 +21,6 @@ interface Financial {
   planBreakdown: { planCode: string; planName: string; subscribers: number; monthlyRevenueMinor: number }[];
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  OPERATOR: 'ოპერატორი',
-  ADMIN: 'ადმინისტრატორი',
-  SUPER_ADMIN: 'მთავარი ადმინისტრატორი',
-};
-
 function money(minor: number, currency = 'GEL'): string {
   return `${(minor / 100).toFixed(2)} ${currency === 'GEL' ? '₾' : currency}`;
 }
@@ -46,24 +39,7 @@ export default async function AdminPage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.brand}>
-          <SunLogo size={48} />
-          <div>
-            <strong>AskDrTeo</strong>
-            <div className={styles.role}>{ROLE_LABELS[user.role] ?? user.role}</div>
-          </div>
-        </div>
-
-        <div className={styles.headerRight}>
-          <span className={styles.userName}>
-            {user.firstName} {user.lastName}
-          </span>
-          <form action={logout}>
-            <button className={styles.logout}>გასვლა</button>
-          </form>
-        </div>
-      </header>
+      <AdminNav user={user} active="dashboard" />
 
       <div className="container">
         {!overview ? (
