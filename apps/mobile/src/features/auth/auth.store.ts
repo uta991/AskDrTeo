@@ -19,6 +19,15 @@ interface Tokens {
   refreshToken: string;
 }
 
+/** როცა `verificationRequired` false-ია, ტოკენები უკვე პასუხშია. */
+interface RegisterResult {
+  destination: string;
+  message: string;
+  verificationRequired: boolean;
+  user?: User;
+  tokens?: AuthResult['tokens'];
+}
+
 interface AuthResult {
   user: User;
   tokens: Tokens;
@@ -30,7 +39,7 @@ interface AuthState {
   initializing: boolean;
   restore: () => Promise<void>;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (input: RegisterInput) => Promise<{ destination: string }>;
+  register: (input: RegisterInput) => Promise<RegisterResult>;
   verifyOtp: (destination: string, code: string, purpose: OtpPurpose) => Promise<void>;
   resendOtp: (destination: string, purpose: OtpPurpose) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
@@ -88,12 +97,18 @@ export const useAuth = create<AuthState>((set) => {
       await applySession(result);
     },
 
-    register(input) {
-      return api<{ destination: string }>('/auth/register', {
+    async register(input) {
+      const result = await api<RegisterResult>('/auth/register', {
         method: 'POST',
         auth: false,
         body: input,
       });
+
+      // SMS არხის გარეშე სერვერი ანგარიშს მაშინვე ხსნის — კოდის ეკრანი აღარ სჭირდება.
+      if (result.tokens && result.user) {
+        await applySession({ user: result.user, tokens: result.tokens });
+      }
+      return result;
     },
 
     async verifyOtp(destination, code, purpose) {

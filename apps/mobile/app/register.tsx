@@ -96,7 +96,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const digits = form.phone.replace(/\D/g, '');
-      const { destination } = await register({
+      const { destination, verificationRequired } = await register({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
@@ -104,6 +104,11 @@ export default function RegisterScreen() {
         password: form.password,
         acceptedTerms,
       });
+
+      if (!verificationRequired) {
+        router.replace('/home');
+        return;
+      }
 
       router.push({
         pathname: '/verify',

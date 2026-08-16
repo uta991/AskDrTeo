@@ -98,3 +98,88 @@
   text-align: center;
   margin-top: 20px;
 }
+
+/* ── რეგისტრაცია ─────────────────────────────────────────── */
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 420px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ნომრის ველი — +995 ჩამაგრებული პრეფიქსით */
+.withPrefix {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.withPrefix:focus-within {
+  border-color: var(--primary);
+}
+
+.prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 16px;
+  font-size: 16px;
+  color: var(--text-secondary);
+  background: var(--sky-mid);
+  border-right: 1.5px solid var(--border);
+}
+
+/* შიგნით ჩასმულ ველს საკუთარი ჩარჩო აღარ სჭირდება */
+.withPrefix .input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.terms {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.terms input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-deep);
+  cursor: pointer;
+}
+
+.fieldError {
+  font-size: 12px;
+  color: #e5484d;
+}
+
+.codeInput {
+  text-align: center;
+  font-size: 28px;
+  letter-spacing: 12px;
+  font-weight: 700;
+  padding: 0;
+}
+
+.inlineLink {
+  color: var(--primary-deep);
+  font-weight: 600;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}

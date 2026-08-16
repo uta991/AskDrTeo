@@ -28,8 +28,8 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'რეგისტრაცია — აგზავნის SMS კოდს ნომრის დასადასტურებლად' })
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    return this.auth.register(dto, this.ctx(req));
   }
 
   @Public()

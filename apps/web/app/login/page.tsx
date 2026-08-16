@@ -29,8 +29,10 @@ export default async function LoginPage() {
         <LoginForm />
 
         <p className={styles.note}>
-          არ გაქვთ ანგარიში? დარეგისტრირდით მობილურ აპლიკაციაში — SMS
-          დადასტურება იქ ხდება.
+          არ გაქვთ ანგარიში?{' '}
+          <Link href="/register" className={styles.inlineLink}>
+            რეგისტრაცია
+          </Link>
         </p>
       </div>
     </main>

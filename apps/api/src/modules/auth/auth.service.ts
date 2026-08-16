@@ -44,6 +44,21 @@ export interface AuthResult {
   tokens: TokenPair;
 }
 
+/**
+ * რეგისტრაციის პასუხი.
+ *
+ * როცა SMS არხი მიუწვდომელია, `tokens` მოდის მაშინვე — დასადასტურებელი
+ * ნაბიჯი გამოტოვებულია. კლიენტი სწორედ ამ ველს უყურებს და წყვეტს,
+ * კოდის ეკრანზე გადავიდეს თუ პირდაპირ შეიყვანოს.
+ */
+export interface RegisterResult {
+  destination: string;
+  message: string;
+  verificationRequired: boolean;
+  user?: PublicUser;
+  tokens?: TokenPair;
+}
+
 export interface PublicUser {
   id: string;
   firstName: string;
@@ -72,7 +87,7 @@ export class AuthService {
 
   // ─── რეგისტრაცია ───────────────────────────────────────────────────────
 
-  async register(dto: RegisterDto): Promise<{ destination: string; message: string }> {
+  async register(dto: RegisterDto, ctx: SessionContext): Promise<RegisterResult> {
     if (!dto.acceptedTerms) {
       throw new BadRequestException('წესებსა და პირობებზე დათანხმება სავალდებულოა');
     }
@@ -105,8 +120,7 @@ export class AuthService {
           passwordHash: await argon2.hash(dto.password),
         },
       });
-      await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, existing.id);
-      return { destination: phone, message: 'დადასტურების კოდი გამოგზავნილია' };
+      return this.finishRegistration(existing.id, phone, ctx);
     }
 
     const user = await this.prisma.user.create({
@@ -122,8 +136,54 @@ export class AuthService {
       },
     });
 
-    await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, user.id);
-    return { destination: phone, message: 'დადასტურების კოდი გამოგზავნილია' };
+    return this.finishRegistration(user.id, phone, ctx);
+  }
+
+  /**
+   * რეგისტრაციის დასრულება — ან კოდს ვგზავნით, ან ანგარიშს მაშინვე ვხსნით.
+   *
+   * `console` provider-ზე SMS არსად მიდის: კოდი მხოლოდ სერვერის ლოგშია.
+   * ასეთ დროს დადასტურების მოთხოვნა რეგისტრაციას ჩიხში აგდებს — ვერავინ
+   * ვერ დაასრულებს. ამიტომ არხის გარეშე ანგარიშს პირდაპირ ვააქტიურებთ,
+   * ხოლო რეალური provider-ის ჩართვისთანავე ნაბიჯი თავისით ბრუნდება.
+   */
+  private async finishRegistration(
+    userId: string,
+    phone: string,
+    ctx: SessionContext,
+  ): Promise<RegisterResult> {
+    if (this.smsDeliverable) {
+      await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, userId);
+      return {
+        destination: phone,
+        message: 'დადასტურების კოდი გამოგზავნილია',
+        verificationRequired: true,
+      };
+    }
+
+    this.logger.warn(
+      `SMS არხი გამორთულია — ${phone} აქტიურდება დადასტურების გარეშე`,
+    );
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { status: UserStatus.ACTIVE },
+    });
+
+    await this.ensureDefaultSubscription(user.id);
+    const result = await this.buildAuthResult(user, ctx);
+
+    return {
+      destination: phone,
+      message: 'ანგარიში შეიქმნა',
+      verificationRequired: false,
+      ...result,
+    };
+  }
+
+  /** SMS ნამდვილად მიდის თუ მხოლოდ ლოგში იწერება. */
+  private get smsDeliverable(): boolean {
+    return this.config.get<string>('sms.provider') !== 'console';
   }
 
   /** ტელეფონის დადასტურება — აქტივაცია და პირველივე შესვლა ერთ ნაბიჯში. */
@@ -182,8 +242,20 @@ export class AuthService {
     if (!(await argon2.verify(user.passwordHash, dto.password))) throw invalid;
 
     if (user.status === UserStatus.PENDING_VERIFICATION) {
-      await this.otp.issue(user.phone!, OtpPurpose.PHONE_VERIFICATION, user.id).catch(() => undefined);
-      throw new UnauthorizedException('ნომერი არ არის დადასტურებული. კოდი გამოგზავნილია');
+      // SMS-ის გარეშე კოდს ვერსად ვაგზავნით — ასეთი ანგარიში სამუდამოდ
+      // ჩარჩებოდა. ვხსნით და შესვლას ვაგრძელებთ.
+      if (!this.smsDeliverable) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { status: UserStatus.ACTIVE },
+        });
+        await this.ensureDefaultSubscription(user.id);
+      } else {
+        await this.otp
+          .issue(user.phone!, OtpPurpose.PHONE_VERIFICATION, user.id)
+          .catch(() => undefined);
+        throw new UnauthorizedException('ნომერი არ არის დადასტურებული. კოდი გამოგზავნილია');
+      }
     }
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('ანგარიში დაბლოკილია. დაგვიკავშირდით');
