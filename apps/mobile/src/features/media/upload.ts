@@ -75,14 +75,16 @@ export async function uploadAvatar(image: PickedImage): Promise<string> {
   }
 
   const payload = safeParse(result.body);
-  if (!payload?.url) throw new Error('სერვერმა სურათის მისამართი არ დააბრუნა');
+  // ბავშვის პროფილს ფაილის id სჭირდება და არა მისამართი: ხელმოწერილ
+  // ბმულს ვადა აქვს და ბაზაში შენახვა აზრს კარგავს.
+  if (!payload?.assetId) throw new Error('სერვერმა ფაილის id არ დააბრუნა');
 
-  return payload.url;
+  return payload.assetId;
 }
 
-function safeParse(body: string): { url?: string; message?: string } | null {
+function safeParse(body: string): { assetId?: string; message?: string } | null {
   try {
-    return JSON.parse(body) as { url?: string; message?: string };
+    return JSON.parse(body) as { assetId?: string; message?: string };
   } catch {
     return null;
   }

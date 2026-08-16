@@ -36,7 +36,7 @@ export interface CreateChildInput {
   firstName: string;
   lastName?: string;
   birthDate: string;
-  avatarUrl?: string;
+  avatarAssetId?: string;
   gender?: 'MALE' | 'FEMALE';
   gestationalWeek?: number;
   birthWeight?: number;

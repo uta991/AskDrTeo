@@ -10,6 +10,7 @@ import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
 import { useActiveChild, useChildren } from '@/features/children/children.store';
 import { useEntitlements, useIsFreePlan } from '@/features/entitlements/entitlements.store';
+import { useNews } from '@/features/news/news.store';
 
 export function HomeTab() {
   const insets = useSafeAreaInsets();
@@ -20,15 +21,17 @@ export function HomeTab() {
   const activeChild = useActiveChild();
   const loadEntitlements = useEntitlements((s) => s.load);
   const isFree = useIsFreePlan();
+  const { posts: news, load: loadNews } = useNews();
 
   const isStaff = !!user && user.role !== 'PARENT';
 
   useEffect(() => {
     if (!user) return;
     void loadEntitlements().catch(() => undefined);
+    void loadNews().catch(() => undefined);
     // პერსონალს ბავშვის პროფილები არ აქვს — ზედმეტ მოთხოვნას არ ვაგზავნით
     if (!isStaff) void loadChildren().catch(() => undefined);
-  }, [user, isStaff, loadChildren, loadEntitlements]);
+  }, [user, isStaff, loadChildren, loadEntitlements, loadNews]);
 
   return (
     <SkyBackground showDoves={false}>
@@ -133,6 +136,30 @@ export function HomeTab() {
             </View>
             <Icon name="chevron-right" size={18} color={colors.danger} />
           </Pressable>
+        )}
+
+        {/* ── სიახლეები ─────────────────────────────────────── */}
+        {!!news.length && (
+          <>
+            <Text style={styles.newsTitle}>{t('home', 'news')}</Text>
+
+            {news.map((post) => (
+              <AuthCard key={post.id} style={styles.newsCard}>
+                <Text style={styles.newsDate}>
+                  {(post.publishedAt ?? post.createdAt).slice(0, 10)}
+                </Text>
+                <Text style={styles.newsHeading}>{post.title}</Text>
+                <Text style={styles.newsBody}>{post.body}</Text>
+
+                {!!post.video && (
+                  <View style={styles.newsVideo}>
+                    <Icon name="chevron-right" size={12} color={colors.primaryDeep} strokeWidth={2} />
+                    <Text style={styles.newsVideoText}>{t('home', 'newsVideo')}</Text>
+                  </View>
+                )}
+              </AuthCard>
+            ))}
+          </>
         )}
       </ScrollView>
     </SkyBackground>
@@ -250,4 +277,31 @@ const styles = StyleSheet.create({
   addChildBody: { flex: 1 },
   addChildTitle: { ...typography.caption, color: colors.danger, fontWeight: '600' },
   addChildAction: { ...typography.small, color: colors.danger, marginTop: 2 },
+  newsTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  newsCard: { marginBottom: spacing.sm },
+  newsDate: { ...typography.small, color: colors.textMuted },
+  newsHeading: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    marginTop: 2,
+    marginBottom: spacing.xs,
+  },
+  newsBody: { ...typography.small, color: colors.textSecondary, lineHeight: 20 },
+  newsVideo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+  },
+  newsVideoText: { ...typography.small, color: colors.primaryDeep, fontWeight: '600' },
 });

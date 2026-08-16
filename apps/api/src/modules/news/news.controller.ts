@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import {
   CurrentUser,
@@ -34,8 +35,8 @@ export class AdminNewsController {
 
   @Get()
   @RequirePermission('admin.view')
-  listAll(@Query('page') page?: number, @Query('perPage') perPage?: number) {
-    return this.news.listAll(page, perPage);
+  listAll(@Query() query: PaginationQueryDto) {
+    return this.news.listAll(query.page, query.perPage);
   }
 
   @Post()

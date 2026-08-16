@@ -194,3 +194,20 @@
   color: #2f9e5e;
   font-weight: 600;
 }
+
+.addChild {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--primary);
+  background: var(--primary-soft);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-deep);
+}
+
+.addChild:hover {
+  background: var(--primary);
+  color: #fff;
+}

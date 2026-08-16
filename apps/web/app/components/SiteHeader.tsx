@@ -16,7 +16,8 @@ export async function SiteHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.brand}>
+        {/* შესულ მომხმარებელს ლოგო თავის პანელში აბრუნებს, არა landing-ზე */}
+        <Link href={!user ? '/' : isStaff ? '/admin' : '/account'} className={styles.brand}>
           <SunLogo size={44} />
           <span className={styles.name}>AskDrTeo</span>
         </Link>

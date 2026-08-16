@@ -21,17 +21,17 @@ export function AdminNav({
   active,
 }: {
   user: SessionUser;
-  active: 'dashboard' | 'users' | 'promo' | 'staff';
+  active: 'dashboard' | 'users' | 'news' | 'promo' | 'staff';
 }) {
   return (
     <header className={styles.header}>
-      <div className={styles.brand}>
+      <Link href="/admin" className={styles.brand}>
         <SunLogo size={48} />
         <div>
           <strong>AskDrTeo</strong>
           <div className={styles.role}>{ROLE_LABELS[user.role] ?? user.role}</div>
         </div>
-      </div>
+      </Link>
 
       <nav className={styles.tabs}>
         <Link href="/admin" className={active === 'dashboard' ? styles.tabActive : styles.tab}>
@@ -40,6 +40,11 @@ export function AdminNav({
         <Link href="/admin/users" className={active === 'users' ? styles.tabActive : styles.tab}>
           მომხმარებლები
         </Link>
+        {/* სიახლეს ოპერატორიც წერს — ვიდეოს მიბმა კი ადმინის უფლებაა */}
+        <Link href="/admin/news" className={active === 'news' ? styles.tabActive : styles.tab}>
+          სიახლეები
+        </Link>
+
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}
         {user.role !== 'OPERATOR' && (
           <Link href="/admin/promo" className={active === 'promo' ? styles.tabActive : styles.tab}>

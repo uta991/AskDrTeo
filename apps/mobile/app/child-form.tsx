@@ -93,11 +93,11 @@ export default function ChildFormScreen() {
     setLoading(true);
     try {
       // ფოტო ჯერ იტვირთება — ჩავარდნის შემთხვევაში პროფილი არ უნდა შეიქმნას
-      const avatarUrl = photo ? await uploadAvatar(photo) : undefined;
+      const avatarAssetId = photo ? await uploadAvatar(photo) : undefined;
 
       await createChild({
         firstName: firstName.trim(),
-        avatarUrl,
+        avatarAssetId,
         lastName: lastName.trim() || undefined,
         birthDate: birthISO,
         gender: gender ?? undefined,

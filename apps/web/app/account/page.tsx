@@ -18,6 +18,15 @@ interface Child {
   correctedAgeMonths: number;
 }
 
+interface NewsPost {
+  id: string;
+  title: string;
+  body: string;
+  publishedAt: string | null;
+  createdAt: string;
+  video?: { id: string; title: string | null } | null;
+}
+
 interface Entitlements {
   planCode: string | null;
   planName: string | null;
@@ -48,9 +57,10 @@ export default async function AccountPage() {
   // პერსონალს პანელი უფრო გამოადგება
   if (user.role !== 'PARENT') redirect('/admin');
 
-  const [children, entitlements] = await Promise.all([
+  const [children, entitlements, news] = await Promise.all([
     apiFetch<Child[]>('/children'),
     apiFetch<Entitlements>('/me/entitlements'),
+    apiFetch<NewsPost[]>('/news'),
   ]);
 
   const planLabel = entitlements?.planCode
@@ -65,7 +75,7 @@ export default async function AccountPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link href="/" className={styles.brand}>
+        <Link href="/account" className={styles.brand}>
           <SunLogo size={44} />
           <span className={styles.name}>AskDrTeo</span>
         </Link>
@@ -95,8 +105,7 @@ export default async function AccountPage() {
 
             {!children?.length ? (
               <p className={styles.empty}>
-                ჯერ არ დაგიმატებიათ. პროფილის შევსება აპლიკაციაშია — იქ ფოტოსაც
-                აირჩევთ.
+                ჯერ არ დაგიმატებიათ — ასაკობრივი რჩევებისთვის პროფილი საჭიროა.
               </p>
             ) : (
               <ul className={styles.childList}>
@@ -117,6 +126,10 @@ export default async function AccountPage() {
                 ))}
               </ul>
             )}
+
+            <Link href="/account/child" className={styles.addChild}>
+              + ბავშვის დამატება
+            </Link>
           </section>
 
           {/* ── პაკეტი ───────────────────────────────────── */}
@@ -144,6 +157,28 @@ export default async function AccountPage() {
 
           <PromoRedeem />
         </div>
+
+        {/* ── სიახლეები ──────────────────────────────────────── */}
+        <h2 className={styles.newsTitle}>სიახლეები</h2>
+
+        {!news?.length ? (
+          <p className={styles.empty}>ჯერ სიახლეები არ არის.</p>
+        ) : (
+          <div className={styles.newsList}>
+            {news.map((post) => (
+              <article key={post.id} className="card">
+                <div className={styles.newsDate}>
+                  {(post.publishedAt ?? post.createdAt).slice(0, 10)}
+                </div>
+                <h3 className={styles.newsHeading}>{post.title}</h3>
+                <p className={styles.newsBody}>{post.body}</p>
+                {!!post.video && (
+                  <div className={styles.newsVideo}>ვიდეო — აპლიკაციაში იხილეთ</div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
 
         <p className={styles.note}>
           ვიდეოები, რჩევები და კონსულტაცია მობილურ აპლიკაციაშია. აქ ანგარიშსა და

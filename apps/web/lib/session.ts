@@ -134,3 +134,45 @@ export async function apiMutate<T>(
 
   return payload as T;
 }
+
+/**
+ * ფაილის ატვირთვა — multipart.
+ *
+ * `apiMutate`-ისგან ცალკეა, რადგან FormData-ს `Content-Type` თავად
+ * უნდა დააყენოს boundary-თი; ხელით მითითება ატვირთვას გატეხავდა.
+ */
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  fields?: Record<string, string>,
+): Promise<T> {
+  const token = await getAccessToken();
+  if (!token) throw new Error('სესია ამოიწურა — გაიარეთ ავტორიზაცია თავიდან');
+
+  const body = new FormData();
+  body.append('file', file);
+  for (const [key, value] of Object.entries(fields ?? {})) body.append(key, value);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body,
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('სერვერთან კავშირი ვერ დამყარდა');
+  }
+
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const message = (payload as { message?: string | string[] } | null)?.message;
+    throw new Error(
+      (Array.isArray(message) ? message[0] : message) ?? 'ფაილის ატვირთვა ვერ მოხერხდა',
+    );
+  }
+
+  return payload as T;
+}
