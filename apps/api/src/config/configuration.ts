@@ -13,6 +13,8 @@ export interface AppConfig {
     length: number;
     ttlMinutes: number;
     maxAttempts: number;
+    /** ნომერი → ფიქსირებული კოდი. ამ ნომრებზე SMS არ იგზავნება. */
+    testNumbers: Record<string, string>;
   };
   sms: {
     provider: string;
@@ -73,6 +75,7 @@ export default (): AppConfig => ({
     length: parseInt(process.env.OTP_LENGTH ?? '6', 10),
     ttlMinutes: parseInt(process.env.OTP_TTL_MINUTES ?? '5', 10),
     maxAttempts: parseInt(process.env.OTP_MAX_ATTEMPTS ?? '5', 10),
+    testNumbers: parseTestNumbers(process.env.OTP_TEST_NUMBERS),
   },
   sms: {
     provider: process.env.SMS_PROVIDER ?? 'console',
@@ -105,3 +108,19 @@ export default (): AppConfig => ({
     },
   },
 });
+
+/**
+ * `OTP_TEST_NUMBERS`-ის გარჩევა: `+995599000000:123456,+995577111111:000000`.
+ *
+ * ასეთ ნომრებზე კოდი ყოველთვის ერთი და იგივეა და SMS არსად მიდის —
+ * გამოსადეგია, სანამ რეალური provider ჩართული არ არის.
+ */
+function parseTestNumbers(raw?: string): Record<string, string> {
+  if (!raw?.trim()) return {};
+
+  return raw.split(',').reduce<Record<string, string>>((acc, pair) => {
+    const [phone, code] = pair.split(':').map((part) => part.trim());
+    if (phone && code) acc[phone] = code;
+    return acc;
+  }, {});
+}

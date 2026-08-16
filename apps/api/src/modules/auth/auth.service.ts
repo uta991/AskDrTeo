@@ -152,7 +152,7 @@ export class AuthService {
     phone: string,
     ctx: SessionContext,
   ): Promise<RegisterResult> {
-    if (this.smsDeliverable) {
+    if (this.otpReachable(phone)) {
       await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, userId);
       return {
         destination: phone,
@@ -162,7 +162,7 @@ export class AuthService {
     }
 
     this.logger.warn(
-      `SMS არხი გამორთულია — ${phone} აქტიურდება დადასტურების გარეშე`,
+      `კოდის მიწოდება შეუძლებელია — ${phone} აქტიურდება დადასტურების გარეშე`,
     );
 
     const user = await this.prisma.user.update({
@@ -181,9 +181,17 @@ export class AuthService {
     };
   }
 
-  /** SMS ნამდვილად მიდის თუ მხოლოდ ლოგში იწერება. */
-  private get smsDeliverable(): boolean {
-    return this.config.get<string>('sms.provider') !== 'console';
+  /**
+   * კოდი მიაღწევს თუ არა მიმღებს.
+   *
+   * ორი გზაა: რეალური SMS provider, ან სატესტო ნომერი ფიქსირებული კოდით.
+   * არცერთის შემთხვევაში დადასტურების მოთხოვნა უაზროა.
+   */
+  private otpReachable(phone: string): boolean {
+    return (
+      this.config.get<string>('sms.provider') !== 'console' ||
+      !!this.otp.testCodeFor(phone)
+    );
   }
 
   /** ტელეფონის დადასტურება — აქტივაცია და პირველივე შესვლა ერთ ნაბიჯში. */
@@ -244,7 +252,7 @@ export class AuthService {
     if (user.status === UserStatus.PENDING_VERIFICATION) {
       // SMS-ის გარეშე კოდს ვერსად ვაგზავნით — ასეთი ანგარიში სამუდამოდ
       // ჩარჩებოდა. ვხსნით და შესვლას ვაგრძელებთ.
-      if (!this.smsDeliverable) {
+      if (!this.otpReachable(user.phone ?? '')) {
         await this.prisma.user.update({
           where: { id: user.id },
           data: { status: UserStatus.ACTIVE },

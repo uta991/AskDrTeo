@@ -27,11 +27,14 @@ export class OtpService {
    * რომ ერთდროულად ერთზე მეტი მოქმედი კოდი არასდროს არსებობდეს.
    */
   async issue(destination: string, purpose: OtpPurpose, userId?: string): Promise<void> {
-    await this.assertNotThrottled(destination, purpose);
+    const testCode = this.testCodeFor(destination);
+
+    // სატესტო ნომერს cooldown არ ეხება — თორემ ზედიზედ ცდა შეუძლებელი გახდება.
+    if (!testCode) await this.assertNotThrottled(destination, purpose);
 
     const length = this.config.get<number>('otp.length', 6);
     const ttlMinutes = this.config.get<number>('otp.ttlMinutes', 5);
-    const code = this.generateCode(length);
+    const code = testCode ?? this.generateCode(length);
 
     await this.prisma.$transaction([
       this.prisma.otpCode.updateMany({
@@ -51,7 +54,8 @@ export class OtpService {
     ]);
 
     // ელ. ფოსტის არხი ჯერ არ არის ჩართული — SMS-ით ვგზავნით ტელეფონზე.
-    if (!destination.includes('@')) {
+    // სატესტო ნომერზე გაგზავნა უაზროა: კოდი წინასწარ ცნობილია.
+    if (!destination.includes('@') && !testCode) {
       await this.sms.send({
         phone: destination,
         body: MESSAGES[purpose](code),
@@ -120,6 +124,12 @@ export class OtpService {
       const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - elapsed);
       throw new BadRequestException(`ახალი კოდის გამოთხოვა შესაძლებელია ${wait} წამში`);
     }
+  }
+
+  /** ამ ნომრის ფიქსირებული კოდი, თუ სატესტოა. */
+  testCodeFor(destination: string): string | null {
+    const numbers = this.config.get<Record<string, string>>('otp.testNumbers', {});
+    return numbers[destination] ?? null;
   }
 
   private generateCode(length: number): string {
