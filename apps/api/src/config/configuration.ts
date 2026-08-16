@@ -20,6 +20,7 @@ export interface AppConfig {
     provider: string;
     senderName: string;
     apiKey?: string;
+    accountSid?: string;
     apiUrl?: string;
   };
   google: {
@@ -81,6 +82,7 @@ export default (): AppConfig => ({
     provider: process.env.SMS_PROVIDER ?? 'console',
     senderName: process.env.SMS_SENDER_NAME ?? 'BabyCare',
     apiKey: process.env.SMS_API_KEY,
+    accountSid: process.env.SMS_ACCOUNT_SID,
     apiUrl: process.env.SMS_API_URL,
   },
   google: {

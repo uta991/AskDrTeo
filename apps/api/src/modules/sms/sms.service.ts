@@ -10,6 +10,8 @@ export interface SendSmsInput {
   templateKey?: string;
 }
 
+const SEND_TIMEOUT_MS = 10_000;
+
 interface SmsProviderResult {
   providerRef?: string;
   costMinor?: number;
@@ -31,7 +33,8 @@ export class SmsService {
     private readonly config: ConfigService,
   ) {}
 
-  async send(input: SendSmsInput): Promise<void> {
+  /** აბრუნებს `true`-ს, თუ provider-მა შეტყობინება მიიღო. */
+  async send(input: SendSmsInput): Promise<boolean> {
     const record = await this.prisma.smsMessage.create({
       data: {
         userId: input.userId,
@@ -54,6 +57,7 @@ export class SmsService {
           sentAt: new Date(),
         },
       });
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`SMS ვერ გაიგზავნა ${input.phone}: ${message}`);
@@ -61,7 +65,7 @@ export class SmsService {
         where: { id: record.id },
         data: { status: SmsStatus.FAILED, error: message },
       });
-      // SMS-ის ჩავარდნა რეგისტრაციას არ წყვეტს — მომხმარებელს resend შეუძლია.
+      return false;
     }
   }
 
@@ -72,8 +76,103 @@ export class SmsService {
       case 'console':
         this.logger.warn(`[SMS → ${phone}] ${body}`);
         return {};
+      case 'smsoffice':
+        return this.sendViaSmsOffice(phone, body);
+      case 'twilio':
+        return this.sendViaTwilio(phone, body);
       default:
         throw new Error(`SMS provider "${provider}" არ არის იმპლემენტირებული`);
+    }
+  }
+
+  /**
+   * SMSOffice.ge — ქართული provider.
+   *
+   * ნომერს ლოკალურ ფორმატში ითხოვს (`599123456`), ამიტომ `+995` ეჭრება.
+   * პასუხი JSON-ია; წარმატებას `Success: true` აღნიშნავს, შეცდომას კი
+   * `ErrorCode` — HTTP სტატუსი ორივე შემთხვევაში 200-ია, ამიტომ მარტო
+   * მას ვერ დავეყრდნობით.
+   */
+  private async sendViaSmsOffice(phone: string, body: string): Promise<SmsProviderResult> {
+    const key = this.requireCredential('sms.apiKey', 'SMS_API_KEY');
+    const sender = this.config.get<string>('sms.senderName');
+    const baseUrl = this.config.get<string>('sms.apiUrl') || 'https://smsoffice.ge/api/v2/send/';
+
+    const url = new URL(baseUrl);
+    url.searchParams.set('key', key);
+    url.searchParams.set('destination', phone.replace(/^\+?995/, ''));
+    url.searchParams.set('sender', sender ?? '');
+    url.searchParams.set('content', body);
+
+    const response = await this.fetchWithTimeout(url.toString());
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`SMSOffice HTTP ${response.status}: ${text.slice(0, 200)}`);
+    }
+
+    let payload: { Success?: boolean; Message?: string; ErrorCode?: number; Output?: string };
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Error(`SMSOffice-ის პასუხი გაურკვეველია: ${text.slice(0, 200)}`);
+    }
+
+    if (payload.Success === false || (payload.ErrorCode && payload.ErrorCode !== 0)) {
+      throw new Error(`SMSOffice [${payload.ErrorCode}]: ${payload.Message ?? 'უცნობი შეცდომა'}`);
+    }
+
+    return { providerRef: payload.Output };
+  }
+
+  /** Twilio — საერთაშორისო სათადარიგო არხი. */
+  private async sendViaTwilio(phone: string, body: string): Promise<SmsProviderResult> {
+    const accountSid = this.requireCredential('sms.accountSid', 'SMS_ACCOUNT_SID');
+    const authToken = this.requireCredential('sms.apiKey', 'SMS_API_KEY');
+    const from = this.requireCredential('sms.senderName', 'SMS_SENDER_NAME');
+
+    const response = await this.fetchWithTimeout(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ To: phone, From: from, Body: body }).toString(),
+      },
+    );
+
+    const payload = (await response.json()) as { sid?: string; message?: string; code?: number };
+
+    if (!response.ok) {
+      throw new Error(`Twilio [${payload.code}]: ${payload.message ?? response.status}`);
+    }
+
+    return { providerRef: payload.sid };
+  }
+
+  /** კონფიგის სავალდებულო ველი — ცარიელზე გასაგები შეცდომა, არა 401 provider-იდან. */
+  private requireCredential(path: string, envName: string): string {
+    const value = this.config.get<string>(path);
+    if (!value) throw new Error(`${envName} არ არის მითითებული`);
+    return value;
+  }
+
+  /** provider-ის ჩამოკიდება რეგისტრაციას არ უნდა გაუყინოს. */
+  private async fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`provider-მა ${SEND_TIMEOUT_MS / 1000} წამში არ უპასუხა`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

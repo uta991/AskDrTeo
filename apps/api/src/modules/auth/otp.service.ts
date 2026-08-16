@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from '@prisma/client';
 import { createHash, randomInt } from 'node:crypto';
@@ -55,13 +59,21 @@ export class OtpService {
 
     // ელ. ფოსტის არხი ჯერ არ არის ჩართული — SMS-ით ვგზავნით ტელეფონზე.
     // სატესტო ნომერზე გაგზავნა უაზროა: კოდი წინასწარ ცნობილია.
-    if (!destination.includes('@') && !testCode) {
-      await this.sms.send({
-        phone: destination,
-        body: MESSAGES[purpose](code),
-        userId,
-        templateKey: `otp_${purpose.toLowerCase()}`,
-      });
+    if (destination.includes('@') || testCode) return;
+
+    const delivered = await this.sms.send({
+      phone: destination,
+      body: MESSAGES[purpose](code),
+      userId,
+      templateKey: `otp_${purpose.toLowerCase()}`,
+    });
+
+    // ჩუმად ჩავარდნა ყველაზე ცუდი ვარიანტია: მომხმარებელი კოდს ელოდება,
+    // რომელიც არასდროს მოვა. მიზეზი `sms_messages`-შია ჩაწერილი.
+    if (!delivered) {
+      throw new ServiceUnavailableException(
+        'SMS ვერ გაიგზავნა. სცადეთ ხელახლა ან დაგვიკავშირდით',
+      );
     }
   }
 
