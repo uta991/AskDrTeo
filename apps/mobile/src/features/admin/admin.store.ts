@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
+import { isFresh } from '../freshness';
 
 export interface Overview {
   users: { total: number; parents: number; staff: number; newThisMonth: number };
@@ -65,14 +66,6 @@ export interface PromoCode {
   plan: { code: string; name: string } | null;
 }
 
-/**
- * რამდენ ხანს ითვლება ჩატვირთული მონაცემი ახლად.
- *
- * ეკრანებს შორის გადაფურცვლა კომპონენტს ხელახლა ამონტაჟებს და ყოველ
- * ჯერზე მოთხოვნა მიდიოდა — სია თვალსაჩინოდ ციმციმებდა. ამ ვადაში
- * განმეორებითი გამოძახება იგნორირდება.
- */
-const STALE_AFTER_MS = 5 * 60 * 1000;
 
 interface AdminState {
   overview: Overview | null;
@@ -126,10 +119,6 @@ export interface CreatePromoInput {
   freeDays?: number;
   maxRedemptions?: number;
   validUntil?: string;
-}
-
-function isFresh(timestamp: number | undefined): boolean {
-  return !!timestamp && Date.now() - timestamp < STALE_AFTER_MS;
 }
 
 export const useAdmin = create<AdminState>((set, get) => ({

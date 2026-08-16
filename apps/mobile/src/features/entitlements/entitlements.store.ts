@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
+import { isFresh } from '../freshness';
 
 export interface Entitlement {
   key: string;
@@ -21,7 +22,8 @@ export interface EntitlementSnapshot {
 interface EntitlementsState {
   snapshot: EntitlementSnapshot | null;
   loading: boolean;
-  load: () => Promise<void>;
+  load: (force?: boolean) => Promise<void>;
+  loadedAt?: number;
   reset: () => void;
   /** ფუნქცია ხელმისაწვდომია თუ არა — ეკრანები ამით მალავენ ღილაკებს */
   can: (featureKey: string) => boolean;
@@ -31,10 +33,15 @@ export const useEntitlements = create<EntitlementsState>((set, get) => ({
   snapshot: null,
   loading: false,
 
-  async load() {
+  async load(force) {
+    if (!force && isFresh(get().loadedAt)) return;
+
     set({ loading: true });
     try {
-      set({ snapshot: await api<EntitlementSnapshot>('/me/entitlements') });
+      set({
+        snapshot: await api<EntitlementSnapshot>('/me/entitlements'),
+        loadedAt: Date.now(),
+      });
     } finally {
       set({ loading: false });
     }

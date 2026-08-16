@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
+import { isFresh } from '../freshness';
 
 export interface NewsPost {
   id: string;
@@ -9,14 +10,6 @@ export interface NewsPost {
   createdAt: string;
   video?: { id: string; title: string | null } | null;
 }
-
-/**
- * რამდენ ხანს ითვლება ლენტი ახლად.
- *
- * ეკრანზე ყოველ დაბრუნებაზე მოთხოვნა ზედმეტია — სიახლეები ასე ხშირად
- * არ იცვლება. იგივე ვადაა, რაც ადმინის მონაცემებზე.
- */
-const FRESH_MS = 5 * 60 * 1000;
 
 interface NewsState {
   posts: NewsPost[];
@@ -31,7 +24,7 @@ export const useNews = create<NewsState>((set, get) => ({
 
   async load(force) {
     const { loadedAt } = get();
-    if (!force && loadedAt && Date.now() - loadedAt < FRESH_MS) return;
+    if (!force && isFresh(loadedAt)) return;
 
     set({ loading: true });
     try {

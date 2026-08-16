@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
+import { isFresh } from '../freshness';
 
 export type AgeStage =
   | 'NEWBORN'
@@ -54,7 +55,8 @@ interface ChildrenState {
   loading: boolean;
   /** მიმდინარედ არჩეული ბავშვი — მისალმებასა და კონტენტის ფილტრში გამოიყენება */
   activeChildId: string | null;
-  load: () => Promise<void>;
+  load: (force?: boolean) => Promise<void>;
+  loadedAt?: number;
   create: (input: CreateChildInput) => Promise<Child>;
   setActive: (id: string) => void;
   reset: () => void;
@@ -65,7 +67,9 @@ export const useChildren = create<ChildrenState>((set, get) => ({
   loading: false,
   activeChildId: null,
 
-  async load() {
+  async load(force) {
+    if (!force && isFresh(get().loadedAt)) return;
+
     set({ loading: true });
     try {
       const children = await api<Child[]>('/children');
@@ -74,6 +78,7 @@ export const useChildren = create<ChildrenState>((set, get) => ({
         // არჩეული ბავშვი თუ წაიშალა, პირველზე ვბრუნდებით
         activeChildId:
           children.find((c) => c.id === get().activeChildId)?.id ?? children[0]?.id ?? null,
+        loadedAt: Date.now(),
       });
     } finally {
       set({ loading: false });
@@ -83,7 +88,11 @@ export const useChildren = create<ChildrenState>((set, get) => ({
   async create(input) {
     const child = await api<Child>('/children', { method: 'POST', body: input });
     // ახლადშექმნილი პროფილი მაშინვე აქტიური ხდება
-    set((s) => ({ children: [child, ...s.children], activeChildId: child.id }));
+    set((s) => ({
+      children: [child, ...s.children],
+      activeChildId: child.id,
+      loadedAt: Date.now(),
+    }));
     return child;
   },
 
@@ -92,7 +101,7 @@ export const useChildren = create<ChildrenState>((set, get) => ({
   },
 
   reset() {
-    set({ children: [], activeChildId: null });
+    set({ children: [], activeChildId: null, loadedAt: undefined });
   },
 }));
 

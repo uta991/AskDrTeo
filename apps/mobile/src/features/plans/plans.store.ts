@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
+import { isFresh } from '../freshness';
 
 export interface PlanPrice {
   id: string;
@@ -33,17 +34,20 @@ export interface Plan {
 interface PlansState {
   plans: Plan[];
   loading: boolean;
-  load: () => Promise<void>;
+  load: (force?: boolean) => Promise<void>;
+  loadedAt?: number;
 }
 
-export const usePlans = create<PlansState>((set) => ({
+export const usePlans = create<PlansState>((set, get) => ({
   plans: [],
   loading: false,
 
-  async load() {
+  async load(force) {
+    if (!force && isFresh(get().loadedAt)) return;
+
     set({ loading: true });
     try {
-      set({ plans: await api<Plan[]>('/plans', { auth: false }) });
+      set({ plans: await api<Plan[]>('/plans', { auth: false }), loadedAt: Date.now() });
     } finally {
       set({ loading: false });
     }
