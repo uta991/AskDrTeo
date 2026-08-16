@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!--
+    ბრაუზერის ჩანართის ხატულა — იგივე მზე, რაც აპლიკაციაში.
+    Next.js ამ ფაილს ავტომატურად იღებს favicon-ად.
+    ფერები ცვლადების გარეშეა: SVG ხატულა CSS-ს ვერ ხედავს.
+  -->
+  <defs>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFCE1F"/>
+      <stop offset="1" stop-color="#F5B800"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="120" height="120" rx="26" fill="#FFFBF0"/>
+
+  <g transform="translate(0, 14)">
+    <!-- სხივები: ცენტრალური ყველაზე გრძელი, კიდეებისკენ მოკლდება -->
+    <g fill="url(#sun)">
+      <rect x="58.5" y="26" width="3" height="10" rx="1.5" transform="rotate(-70 60 62)"/>
+      <rect x="58.5" y="23" width="3" height="13" rx="1.5" transform="rotate(-50 60 62)"/>
+      <rect x="58.5" y="20" width="3" height="16" rx="1.5" transform="rotate(-25 60 62)"/>
+      <rect x="58.5" y="18" width="3" height="18" rx="1.5"/>
+      <rect x="58.5" y="20" width="3" height="16" rx="1.5" transform="rotate(25 60 62)"/>
+      <rect x="58.5" y="23" width="3" height="13" rx="1.5" transform="rotate(50 60 62)"/>
+      <rect x="58.5" y="26" width="3" height="10" rx="1.5" transform="rotate(70 60 62)"/>
+    </g>
+
+    <!-- ჰორიზონტზე ნახევრად ამოსული დისკი -->
+    <path d="M36 62 A24 24 0 0 1 84 62 Z" fill="url(#sun)"/>
+    <rect x="26" y="66" width="68" height="4.5" rx="2.25" fill="url(#sun)"/>
+    <rect x="40" y="76" width="40" height="4" rx="2" fill="#FFE08A"/>
+  </g>
+</svg>

@@ -1,0 +1,149 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  margin-bottom: 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.userName {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.logout {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.logout:hover {
+  border-color: var(--primary);
+}
+
+.greeting {
+  font-size: clamp(24px, 4vw, 32px);
+}
+
+.subGreeting {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 4px 0 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.childList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.child {
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--sky-mid);
+}
+
+.childMeta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.preterm {
+  font-size: 12px;
+  color: var(--primary-deep);
+  background: var(--primary-soft);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  display: inline-block;
+  margin-top: 6px;
+}
+
+.plan {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-deep);
+}
+
+.features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 16px 0;
+}
+
+.features li::before {
+  content: '✓';
+  color: var(--primary-deep);
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.link {
+  color: var(--primary-deep);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.note {
+  margin-top: 28px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}

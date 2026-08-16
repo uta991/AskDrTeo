@@ -1,0 +1,52 @@
+{
+  "node": {
+    "00161ef824e8cd457b1136be04935d8c3c7a738b5e": {
+      "workers": {
+        "app/login/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/admin/page": {
+          "moduleId": "(rsc)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/account/page": {
+          "moduleId": "(rsc)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/login/page": "action-browser",
+        "app/admin/page": "rsc",
+        "app/account/page": "rsc"
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "logout"
+    },
+    "60775df1915bac53ea93eabc3443e3c53d0b0f6b74": {
+      "workers": {
+        "app/login/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/admin/page": {
+          "moduleId": "(rsc)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/account/page": {
+          "moduleId": "(rsc)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Futabuziashvili%2FDesktop%2Fbaby-pediatry%2Fapps%2Fweb%2Fapp%2Factions%2Fauth.ts%22%2C%5B%7B%22id%22%3A%2200161ef824e8cd457b1136be04935d8c3c7a738b5e%22%2C%22exportedName%22%3A%22logout%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%2C%7B%22id%22%3A%2260775df1915bac53ea93eabc3443e3c53d0b0f6b74%22%2C%22exportedName%22%3A%22login%22%2C%22filename%22%3A%22app%2Factions%2Fauth.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/login/page": "action-browser",
+        "app/admin/page": "rsc",
+        "app/account/page": "rsc"
+      },
+      "filename": "app/actions/auth.ts",
+      "exportedName": "login"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "LMkgWzkjryIGHNwfCvpHqLN0Ox5XEFBHhlOHcEAfOPI="
+}
