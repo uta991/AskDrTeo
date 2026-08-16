@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
@@ -63,6 +73,16 @@ export class AdminNewsController {
   @ApiOperation({ summary: 'გამოქვეყნება და შეტყობინებების დაგზავნა' })
   publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
     return this.news.publish(id, actorId);
+  }
+
+  @Delete(':id')
+  @RequirePermission('notification.send')
+  @ApiOperation({
+    summary: 'სიახლის წაშლა',
+    description: 'ლენტიდან ქრება; ჩანაწერი ისტორიისთვის რჩება.',
+  })
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.news.remove(id, actorId);
   }
 
   @Patch(':id/archive')

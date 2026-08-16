@@ -2,25 +2,10 @@ import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
 import { AdminNav } from '../AdminNav';
 import { CreateNewsForm } from './CreateNewsForm';
+import { NewsRow, type NewsPost } from './NewsRow';
 import styles from '../admin.module.css';
 
 export const metadata = { title: 'სიახლეები — AskDrTeo' };
-
-interface NewsPost {
-  id: string;
-  title: string;
-  body: string;
-  status: string;
-  publishedAt: string | null;
-  createdAt: string;
-  video?: { id: string; title: string | null } | null;
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'მონახაზი',
-  PUBLISHED: 'გამოქვეყნებული',
-  ARCHIVED: 'დაარქივებული',
-};
 
 export default async function AdminNewsPage() {
   const user = await getSessionUser();
@@ -54,19 +39,7 @@ export default async function AdminNewsPage() {
         ) : (
           <div className={styles.userList}>
             {posts.map((post) => (
-              <article key={post.id} className={styles.newsCard}>
-                <div className={styles.newsHead}>
-                  <strong>{post.title}</strong>
-                  <span className={post.status === 'PUBLISHED' ? styles.badgeActive : styles.badgeOff}>
-                    {STATUS_LABELS[post.status] ?? post.status}
-                  </span>
-                </div>
-                <p className={styles.newsBody}>{post.body}</p>
-                <div className={styles.promoMeta}>
-                  <span>{(post.publishedAt ?? post.createdAt).slice(0, 10)}</span>
-                  {!!post.video && <span>ვიდეო მიმაგრებულია</span>}
-                </div>
-              </article>
+              <NewsRow key={post.id} post={post} />
             ))}
           </div>
         )}

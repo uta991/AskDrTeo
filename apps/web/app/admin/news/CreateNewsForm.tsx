@@ -48,6 +48,18 @@ export function CreateNewsForm({ canAttachVideo }: { canAttachVideo: boolean }) 
         </label>
       )}
 
+      <div className={styles.formRow}>
+        <label className={styles.miniField}>
+          <span className={styles.miniLabel}>ჩვენება იწყება (ცარიელი = მაშინვე)</span>
+          <input name="visibleFrom" type="date" className={styles.input} />
+        </label>
+
+        <label className={styles.miniField}>
+          <span className={styles.miniLabel}>ჩვენება მთავრდება (ცარიელი = უვადოდ)</span>
+          <input name="visibleUntil" type="date" className={styles.input} />
+        </label>
+      </div>
+
       <label className={styles.terms}>
         <input type="checkbox" name="notify" defaultChecked />
         <span>შეტყობინება გაეგზავნოს მშობლებს</span>

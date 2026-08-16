@@ -1,5 +1,7 @@
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDate,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -29,9 +31,23 @@ export class CreateNewsDto {
   /** true — შექმნისთანავე ქვეყნდება */
   @IsOptional() @IsBoolean()
   publishNow?: boolean;
+
+  /** როდიდან გამოჩნდეს მთავარ გვერდზე — ცარიელი ნიშნავს „მაშინვე" */
+  @IsOptional() @Type(() => Date) @IsDate({ message: 'დაწყების თარიღი არასწორია' })
+  visibleFrom?: Date;
+
+  /** როდემდე ჩანდეს — ცარიელი ნიშნავს „უვადოდ" */
+  @IsOptional() @Type(() => Date) @IsDate({ message: 'დასრულების თარიღი არასწორია' })
+  visibleUntil?: Date;
 }
 
 export class UpdateNewsDto {
+  @IsOptional() @Type(() => Date) @IsDate()
+  visibleFrom?: Date;
+
+  @IsOptional() @Type(() => Date) @IsDate()
+  visibleUntil?: Date;
+
   @IsOptional() @IsString() @IsNotEmpty() @MaxLength(150)
   title?: string;
 

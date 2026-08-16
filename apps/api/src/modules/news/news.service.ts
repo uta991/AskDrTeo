@@ -38,8 +38,18 @@ export class NewsService {
 
   /** გამოქვეყნებული სიახლეები — მთავარი ეკრანის ლენტი. */
   async listPublished(limit = 20) {
+    const now = new Date();
+
     const posts = await this.prisma.newsPost.findMany({
-      where: { status: NewsStatus.PUBLISHED, deletedAt: null },
+      where: {
+        status: NewsStatus.PUBLISHED,
+        deletedAt: null,
+        // ჩვენების ფანჯარა: ცარიელი საზღვარი შეზღუდვას არ ნიშნავს
+        AND: [
+          { OR: [{ visibleFrom: null }, { visibleFrom: { lte: now } }] },
+          { OR: [{ visibleUntil: null }, { visibleUntil: { gte: now } }] },
+        ],
+      },
       orderBy: { publishedAt: 'desc' },
       take: limit,
       include: NEWS_INCLUDE,
@@ -81,6 +91,8 @@ export class NewsService {
         coverUrl: dto.coverUrl,
         videoId: dto.videoId,
         notify: dto.notify ?? true,
+        visibleFrom: dto.visibleFrom,
+        visibleUntil: dto.visibleUntil,
         authorId: actorId,
       },
       include: NEWS_INCLUDE,
@@ -110,6 +122,8 @@ export class NewsService {
         coverUrl: dto.coverUrl,
         videoId: dto.videoId,
         notify: dto.notify,
+        visibleFrom: dto.visibleFrom,
+        visibleUntil: dto.visibleUntil,
       },
       include: NEWS_INCLUDE,
     });
@@ -160,6 +174,35 @@ export class NewsService {
     });
 
     return { ...updated, notifiedCount: notified };
+  }
+
+  /**
+   * სიახლის წაშლა.
+   *
+   * რბილია: `deletedAt` ინიშნება და ლენტიდან ქრება, ჩანაწერი კი რჩება —
+   * შეტყობინება უკვე გაგზავნილია და ვინ რა გამოაქვეყნა, უნდა ჩანდეს.
+   */
+  async remove(id: string, actorId: string) {
+    const post = await this.prisma.newsPost.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!post) throw new NotFoundException('სიახლე ვერ მოიძებნა');
+
+    await this.prisma.newsPost.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: NewsStatus.ARCHIVED },
+    });
+
+    await this.audit.record({
+      actorId,
+      action: AuditAction.DELETE,
+      entityType: 'NewsPost',
+      entityId: id,
+      before: { title: post.title, status: post.status },
+      description: `სიახლე წაშლილია: ${post.title}`,
+    });
+
+    return { message: 'სიახლე წაშლილია', id };
   }
 
   async archive(id: string, actorId: string) {

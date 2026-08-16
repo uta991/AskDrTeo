@@ -845,11 +845,19 @@ model NewsPost {
   author   User?   @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   publishedAt DateTime?
+
+  /// ჩვენების ფანჯარა მთავარ გვერდზე. ცარიელი `visibleUntil` = უვადოდ.
+  /// `publishedAt`-ისგან იმით განსხვავდება, რომ სიახლე შეიძლება უკვე
+  /// გამოქვეყნებული იყოს, ჩვენება კი მოგვიანებით იწყებოდეს.
+  visibleFrom  DateTime?
+  visibleUntil DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
   @@index([status, publishedAt])
+  @@index([status, visibleFrom, visibleUntil])
   @@map("news_posts")
 }
 
