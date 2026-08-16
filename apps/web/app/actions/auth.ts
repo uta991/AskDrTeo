@@ -55,6 +55,31 @@ export async function logout(): Promise<void> {
 }
 
 
+/** ნომერზე კოდის გაგზავნა — ანგარიშის შექმნამდე. */
+export async function sendPhoneCode(phone: string): Promise<{ ok: boolean; message: string }> {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 9) return { ok: false, message: 'ტელეფონის ნომერი არასრულია' };
+
+  try {
+    const res = await fetch(`${API_URL}/auth/send-phone-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: `+995${digits.replace(/^995/, '')}` }),
+      cache: 'no-store',
+    });
+
+    const payload = await res.json();
+    if (!res.ok) {
+      const message = Array.isArray(payload.message) ? payload.message[0] : payload.message;
+      return { ok: false, message: message ?? 'კოდი ვერ გაიგზავნა' };
+    }
+
+    return { ok: true, message: payload.message ?? 'კოდი გამოგზავნილია' };
+  } catch {
+    return { ok: false, message: 'სერვერთან კავშირი ვერ დამყარდა' };
+  }
+}
+
 export interface RegisterState {
   error?: string;
   fieldErrors?: Record<string, string>;
@@ -73,6 +98,7 @@ export async function register(_prev: RegisterState, formData: FormData): Promis
   const phoneDigits = String(formData.get('phone') ?? '').replace(/\D/g, '');
   const password = String(formData.get('password') ?? '');
   const confirmPassword = String(formData.get('confirmPassword') ?? '');
+  const code = String(formData.get('code') ?? '').replace(/\D/g, '');
   const acceptedTerms = formData.get('acceptedTerms') === 'on';
 
   const fieldErrors: Record<string, string> = {};
@@ -84,6 +110,7 @@ export async function register(_prev: RegisterState, formData: FormData): Promis
     fieldErrors.password = 'მინიმუმ 8 სიმბოლო, ასო და ციფრი';
   }
   if (password !== confirmPassword) fieldErrors.confirmPassword = 'პაროლები არ ემთხვევა';
+  if (!code) fieldErrors.code = 'შეიყვანეთ ნომერზე მიღებული კოდი';
   if (!acceptedTerms) fieldErrors.acceptedTerms = 'დაეთანხმეთ წესებსა და პირობებს';
 
   if (Object.keys(fieldErrors).length) return { fieldErrors };
@@ -100,6 +127,7 @@ export async function register(_prev: RegisterState, formData: FormData): Promis
         email,
         phone: `+995${phoneDigits.replace(/^995/, '')}`,
         password,
+        code,
         acceptedTerms,
       }),
       cache: 'no-store',

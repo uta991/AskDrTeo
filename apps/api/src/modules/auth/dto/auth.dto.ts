@@ -34,8 +34,23 @@ export class RegisterDto {
   @IsBoolean()
   acceptedTerms!: boolean;
 
+  /**
+   * SMS-ით მიღებული კოდი.
+   *
+   * თუ მითითებულია, ანგარიში მაშინვე აქტიურდება და ტოკენები ბრუნდება —
+   * ცალკე დასადასტურებელი ნაბიჯი აღარ არის. გამოტოვებისას ძველი,
+   * ორნაბიჯიანი ნაკადი მუშაობს.
+   */
+  @IsOptional() @IsString() @Length(4, 8, { message: 'კოდი არასწორია' })
+  code?: string;
+
   @IsOptional() @IsString()
   deviceId?: string;
+}
+
+export class SendPhoneCodeDto {
+  @IsString() @IsNotEmpty({ message: 'ტელეფონი სავალდებულოა' })
+  phone!: string;
 }
 
 export class LoginDto {

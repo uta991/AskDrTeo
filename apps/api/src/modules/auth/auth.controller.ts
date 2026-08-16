@@ -15,6 +15,7 @@ import {
   RefreshDto,
   RegisterDto,
   ResendOtpDto,
+  SendPhoneCodeDto,
   ResetPasswordDto,
   VerifyOtpDto,
 } from './dto/auth.dto';
@@ -30,6 +31,18 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   register(@Body() dto: RegisterDto, @Req() req: Request) {
     return this.auth.register(dto, this.ctx(req));
+  }
+
+  @Public()
+  @Post('send-phone-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'ნომრის დადასტურების კოდის გაგზავნა ანგარიშის შექმნამდე',
+    description: 'რეგისტრაციის ფორმა კოდს ადგილზე ითხოვს — ცალკე გვერდი აღარ სჭირდება.',
+  })
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  sendPhoneCode(@Body() dto: SendPhoneCodeDto) {
+    return this.auth.sendPhoneCode(dto.phone);
   }
 
   @Public()

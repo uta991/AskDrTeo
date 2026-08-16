@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -120,7 +121,7 @@ export class AuthService {
           passwordHash: await argon2.hash(dto.password),
         },
       });
-      return this.finishRegistration(existing.id, phone, ctx);
+      return this.finishRegistration(existing.id, phone, ctx, dto.code);
     }
 
     const user = await this.prisma.user.create({
@@ -136,7 +137,32 @@ export class AuthService {
       },
     });
 
-    return this.finishRegistration(user.id, phone, ctx);
+    return this.finishRegistration(user.id, phone, ctx, dto.code);
+  }
+
+  /**
+   * ნომრის დადასტურების კოდის გაგზავნა ანგარიშის შექმნამდე.
+   *
+   * რეგისტრაციის ფორმა ერთგვერდიანია: ჯერ კოდს ითხოვს, მერე კი მას
+   * დანარჩენ ველებთან ერთად აგზავნის. ამიტომ კოდი მომხმარებლის
+   * ჩანაწერზე მიბმული ჯერ არაა — `destination` საკმარისია.
+   */
+  async sendPhoneCode(rawPhone: string): Promise<{ message: string }> {
+    const phone = normalizePhone(rawPhone);
+
+    const existing = await this.prisma.user.findFirst({
+      where: { phone, deletedAt: null, NOT: { status: UserStatus.PENDING_VERIFICATION } },
+    });
+    if (existing) {
+      throw new ConflictException('ამ ნომრით ანგარიში უკვე არსებობს');
+    }
+
+    if (!this.otpReachable(phone)) {
+      throw new ServiceUnavailableException('SMS არხი არ არის კონფიგურირებული');
+    }
+
+    await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION);
+    return { message: 'დადასტურების კოდი გამოგზავნილია' };
   }
 
   /**
@@ -151,23 +177,39 @@ export class AuthService {
     userId: string,
     phone: string,
     ctx: SessionContext,
+    code?: string,
   ): Promise<RegisterResult> {
     if (this.otpReachable(phone)) {
-      await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, userId);
-      return {
-        destination: phone,
-        message: 'დადასტურების კოდი გამოგზავნილია',
-        verificationRequired: true,
-      };
+      // კოდი ფორმაშივე შეიყვანეს — დამატებითი ნაბიჯი აღარ სჭირდება
+      if (code) {
+        await this.otp.verify(phone, code, OtpPurpose.PHONE_VERIFICATION);
+      } else {
+        await this.otp.issue(phone, OtpPurpose.PHONE_VERIFICATION, userId);
+        return {
+          destination: phone,
+          message: 'დადასტურების კოდი გამოგზავნილია',
+          verificationRequired: true,
+        };
+      }
+    } else if (!this.config.get<boolean>('auth.allowUnverifiedSignup')) {
+      // პროდაქშენში ჩუმად შემოშვება დაუშვებელია: თუ SMS არ მუშაობს,
+      // რეგისტრაცია უნდა გაჩერდეს და არა დადასტურება გამოტოვდეს.
+      this.logger.error(`SMS არხი არ მუშაობს — ${phone} რეგისტრაცია შეჩერდა`);
+      throw new ServiceUnavailableException(
+        'დადასტურების კოდის გაგზავნა ვერ ხერხდება. სცადეთ მოგვიანებით',
+      );
+    } else {
+      this.logger.warn(
+        `კოდის მიწოდება შეუძლებელია — ${phone} აქტიურდება დადასტურების გარეშე`,
+      );
     }
-
-    this.logger.warn(
-      `კოდის მიწოდება შეუძლებელია — ${phone} აქტიურდება დადასტურების გარეშე`,
-    );
 
     const user = await this.prisma.user.update({
       where: { id: userId },
-      data: { status: UserStatus.ACTIVE },
+      data: {
+        status: UserStatus.ACTIVE,
+        ...(code ? { phoneVerifiedAt: new Date() } : {}),
+      },
     });
 
     await this.ensureDefaultSubscription(user.id);
@@ -252,7 +294,10 @@ export class AuthService {
     if (user.status === UserStatus.PENDING_VERIFICATION) {
       // SMS-ის გარეშე კოდს ვერსად ვაგზავნით — ასეთი ანგარიში სამუდამოდ
       // ჩარჩებოდა. ვხსნით და შესვლას ვაგრძელებთ.
-      if (!this.otpReachable(user.phone ?? '')) {
+      if (
+        !this.otpReachable(user.phone ?? '') &&
+        this.config.get<boolean>('auth.allowUnverifiedSignup')
+      ) {
         await this.prisma.user.update({
           where: { id: user.id },
           data: { status: UserStatus.ACTIVE },

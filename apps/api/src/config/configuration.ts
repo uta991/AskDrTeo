@@ -9,6 +9,15 @@ export interface AppConfig {
     accessTtl: string;
     refreshTtlDays: number;
   };
+  auth: {
+    /**
+     * SMS არხის გარეშე რეგისტრაციის დაშვება.
+     *
+     * მხოლოდ ლოკალური მუშაობისთვისაა: ჩართული რომ იყოს, პროდაქშენში
+     * გატეხილი SMS-ის დროს ყველა დაუდასტურებლად შემოვიდოდა.
+     */
+    allowUnverifiedSignup: boolean;
+  };
   otp: {
     length: number;
     ttlMinutes: number;
@@ -77,6 +86,9 @@ export default (): AppConfig => ({
     accessSecret: process.env.JWT_ACCESS_SECRET ?? 'change-me-access-secret',
     accessTtl: process.env.JWT_ACCESS_TTL ?? '15m',
     refreshTtlDays: parseInt(process.env.JWT_REFRESH_TTL_DAYS ?? '30', 10),
+  },
+  auth: {
+    allowUnverifiedSignup: process.env.ALLOW_UNVERIFIED_SIGNUP === 'true',
   },
   otp: {
     length: parseInt(process.env.OTP_LENGTH ?? '6', 10),

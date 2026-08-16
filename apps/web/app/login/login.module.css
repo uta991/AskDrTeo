@@ -183,3 +183,41 @@
 .inlineLink:hover {
   text-decoration: underline;
 }
+
+/* ── ნომერი + კოდის გაგზავნა ─────────────────────────────── */
+
+.phoneRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.phoneRow .withPrefix {
+  flex: 1;
+  min-width: 0;
+}
+
+.sendCode {
+  flex-shrink: 0;
+  min-width: 96px;
+  padding: 0 16px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--primary);
+  background: var(--primary-soft);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-deep);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.sendCode:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.fieldNotice {
+  font-size: 12px;
+  color: #2f9e5e;
+}

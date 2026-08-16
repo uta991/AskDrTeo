@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
-import { register, type RegisterState } from '../actions/auth';
+import { register, sendPhoneCode, type RegisterState } from '../actions/auth';
 import styles from '../login/login.module.css';
 
 function SubmitButton() {
@@ -58,6 +58,33 @@ export function RegisterForm() {
   const [state, formAction] = useActionState<RegisterState, FormData>(register, {});
   const errors = state.fieldErrors ?? {};
 
+  const [phone, setPhone] = useState('');
+  const [sending, startSending] = useTransition();
+  const [sent, setSent] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  // ხელახლა გაგზავნის ტაიმერი — სერვერსაც აქვს 60წმ შეზღუდვა და
+  // ღილაკის ღიად დატოვება მხოლოდ შეცდომას დააბრუნებდა
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const requestCode = () => {
+    setSendError(null);
+    startSending(async () => {
+      const result = await sendPhoneCode(phone);
+      if (result.ok) {
+        setSent(result.message);
+        setCooldown(60);
+      } else {
+        setSendError(result.message);
+      }
+    });
+  };
+
   return (
     <form action={formAction} className={styles.form}>
       <Field
@@ -84,13 +111,44 @@ export function RegisterForm() {
         error={errors.email}
       />
 
+      <label className={styles.field}>
+        <span className={styles.label}>ტელეფონი</span>
+
+        <span className={styles.phoneRow}>
+          <span className={styles.withPrefix}>
+            <span className={styles.prefix}>+995</span>
+            <input
+              name="phone"
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              autoComplete="tel"
+              className={styles.input}
+              required
+            />
+          </span>
+
+          <button
+            type="button"
+            onClick={requestCode}
+            disabled={sending || cooldown > 0}
+            className={styles.sendCode}
+          >
+            {sending ? '…' : cooldown > 0 ? `${cooldown}წმ` : sent ? 'თავიდან' : 'გაგზავნა'}
+          </button>
+        </span>
+
+        {!!errors.phone && <span className={styles.fieldError}>{errors.phone}</span>}
+        {!!sendError && <span className={styles.fieldError}>{sendError}</span>}
+        {!!sent && !sendError && <span className={styles.fieldNotice}>{sent}</span>}
+      </label>
+
       <Field
-        name="phone"
-        label="ტელეფონი"
-        type="tel"
-        autoComplete="tel"
-        prefix="+995"
-        error={errors.phone}
+        name="code"
+        label="დადასტურების კოდი"
+        placeholder="ნომერზე მიღებული 6 ციფრი"
+        autoComplete="one-time-code"
+        error={errors.code}
       />
 
       <Field
