@@ -41,6 +41,18 @@
       "static/chunks/main-app.js",
       "static/css/app/admin/staff/page.css",
       "static/chunks/app/admin/staff/page.js"
+    ],
+    "/verify/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/verify/page.css",
+      "static/chunks/app/verify/page.js"
+    ],
+    "/admin/promo/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/admin/promo/page.css",
+      "static/chunks/app/admin/promo/page.js"
     ]
   }
 }

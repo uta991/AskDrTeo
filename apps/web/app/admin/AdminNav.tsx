@@ -16,7 +16,13 @@ const ROLE_LABELS: Record<string, string> = {
  * „პერსონალი" მხოლოდ Super Admin-ს უჩანს: ანგარიშების მართვა მისი
  * უფლებაა და ცარიელი გვერდი ადმინს მხოლოდ დააბნევდა.
  */
-export function AdminNav({ user, active }: { user: SessionUser; active: 'dashboard' | 'users' | 'staff' }) {
+export function AdminNav({
+  user,
+  active,
+}: {
+  user: SessionUser;
+  active: 'dashboard' | 'users' | 'promo' | 'staff';
+}) {
   return (
     <header className={styles.header}>
       <div className={styles.brand}>
@@ -34,6 +40,12 @@ export function AdminNav({ user, active }: { user: SessionUser; active: 'dashboa
         <Link href="/admin/users" className={active === 'users' ? styles.tabActive : styles.tab}>
           მომხმარებლები
         </Link>
+        {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}
+        {user.role !== 'OPERATOR' && (
+          <Link href="/admin/promo" className={active === 'promo' ? styles.tabActive : styles.tab}>
+            პრომო კოდები
+          </Link>
+        )}
         {user.role === 'SUPER_ADMIN' && (
           <Link href="/admin/staff" className={active === 'staff' ? styles.tabActive : styles.tab}>
             პერსონალი

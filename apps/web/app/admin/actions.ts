@@ -141,3 +141,75 @@ export async function createStaff(
     return toState(error);
   }
 }
+
+
+/**
+ * პრომო კოდის შექმნა.
+ *
+ * ორი სახეობაა და თითოეულს სხვა ველი სჭირდება: DISCOUNT-ს პროცენტი,
+ * FREE_PLAN-ს კი პაკეტი და დღეების რაოდენობა. ცარიელი ველები
+ * გამოტოვებულია, თორემ backend-ის ვალიდაცია `null`-ზე ჩავარდებოდა.
+ */
+export async function createPromo(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const type = String(formData.get('type') ?? 'DISCOUNT');
+  const code = String(formData.get('code') ?? '').trim().toUpperCase();
+
+  if (!/^[A-Za-z0-9_-]{3,30}$/.test(code)) {
+    return { error: 'კოდი: 3–30 ლათინური სიმბოლო ან ციფრი' };
+  }
+
+  const body: Record<string, unknown> = { code, type };
+
+  const description = String(formData.get('description') ?? '').trim();
+  if (description) body.description = description;
+
+  if (type === 'DISCOUNT') {
+    const percent = Number(formData.get('discountPercent'));
+    if (!Number.isInteger(percent) || percent < 1 || percent > 100) {
+      return { error: 'ფასდაკლება 1-დან 100 პროცენტამდე' };
+    }
+    body.discountPercent = percent;
+  } else {
+    const planCode = String(formData.get('planCode') ?? '').trim();
+    if (!planCode) return { error: 'აირჩიეთ პაკეტი' };
+    body.planCode = planCode;
+
+    const days = Number(formData.get('freeDays'));
+    if (!Number.isInteger(days) || days < 1) return { error: 'მიუთითეთ დღეების რაოდენობა' };
+    body.freeDays = days;
+  }
+
+  const validUntil = String(formData.get('validUntil') ?? '').trim();
+  if (validUntil) body.validUntil = new Date(validUntil).toISOString();
+
+  const maxRedemptions = String(formData.get('maxRedemptions') ?? '').trim();
+  if (maxRedemptions) body.maxRedemptions = Number(maxRedemptions);
+
+  try {
+    await apiMutate('/admin/promo', 'POST', body);
+    revalidatePath('/admin/promo');
+    return { notice: `კოდი ${code} შეიქმნა` };
+  } catch (error) {
+    return toState(error);
+  }
+}
+
+/** კოდის ჩართვა/გამორთვა — წაშლა განზრახ არ არის, ისტორია უნდა დარჩეს. */
+export async function togglePromo(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = String(formData.get('id') ?? '');
+  const isActive = formData.get('isActive') === 'true';
+
+  try {
+    await apiMutate(`/admin/promo/${id}`, 'PATCH', { isActive });
+    revalidatePath('/admin/promo');
+    return { notice: isActive ? 'კოდი გააქტიურდა' : 'კოდი გაითიშა' };
+  } catch (error) {
+    return toState(error);
+  }
+}

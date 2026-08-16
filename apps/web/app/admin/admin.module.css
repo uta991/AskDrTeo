@@ -386,3 +386,116 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── პრომო კოდები ─────────────────────────────────────────── */
+
+.promoCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.promoMain {
+  min-width: 0;
+  flex: 1;
+}
+
+.promoCodeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.promoCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--primary-deep);
+}
+
+.badgeActive,
+.badgeOff {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badgeActive {
+  background: #e6f6ec;
+  color: #2f9e5e;
+}
+
+.badgeOff {
+  background: var(--sky-mid);
+  color: var(--text-muted);
+}
+
+.promoBenefit {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.promoMeta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.promoActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.codeField {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.typeRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typeOption,
+.typeActive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.typeActive {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+
+.miniField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.miniLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
