@@ -8,7 +8,14 @@ export interface NewsPost {
   body: string;
   publishedAt: string | null;
   createdAt: string;
-  video?: { id: string; title: string | null } | null;
+  video?: {
+    id: string;
+    title: string | null;
+    /** HLS მისამართი — expo-video პირდაპირ კრავს */
+    playbackUrl?: string | null;
+    thumbnailUrl?: string | null;
+    ready?: boolean;
+  } | null;
 }
 
 interface NewsState {

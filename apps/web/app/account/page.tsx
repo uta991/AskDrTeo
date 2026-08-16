@@ -4,6 +4,7 @@ import { apiFetch, getSessionUser } from '@/lib/session';
 import { logout } from '../actions/auth';
 import { SunLogo } from '../components/Brand';
 import { PromoRedeem } from './PromoRedeem';
+import { NewsFeed, type NewsPost } from './NewsFeed';
 import styles from './account.module.css';
 
 export const metadata = { title: 'ჩემი კაბინეტი — AskDrTeo' };
@@ -16,15 +17,6 @@ interface Child {
   stage: string;
   isPreterm: boolean;
   correctedAgeMonths: number;
-}
-
-interface NewsPost {
-  id: string;
-  title: string;
-  body: string;
-  publishedAt: string | null;
-  createdAt: string;
-  video?: { id: string; title: string | null } | null;
 }
 
 interface Entitlements {
@@ -164,20 +156,7 @@ export default async function AccountPage() {
         {!news?.length ? (
           <p className={styles.empty}>ჯერ სიახლეები არ არის.</p>
         ) : (
-          <div className={styles.newsList}>
-            {news.map((post) => (
-              <article key={post.id} className="card">
-                <div className={styles.newsDate}>
-                  {(post.publishedAt ?? post.createdAt).slice(0, 10)}
-                </div>
-                <h3 className={styles.newsHeading}>{post.title}</h3>
-                <p className={styles.newsBody}>{post.body}</p>
-                {!!post.video && (
-                  <div className={styles.newsVideo}>ვიდეო — აპლიკაციაში იხილეთ</div>
-                )}
-              </article>
-            ))}
-          </div>
+          <NewsFeed posts={news} />
         )}
 
         <p className={styles.note}>

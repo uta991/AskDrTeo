@@ -118,6 +118,11 @@ export class BunnyVideoProvider implements VideoStorageProvider {
     return `https://${this.cdnHost}${path}?token=${token}&expires=${expires}`;
   }
 
+  /** Bunny-ს მზა დამკვრელი — ბრაუზერს HLS-ის გაშიფვრა აღარ სჭირდება. */
+  embedUrl(playbackId: string): string {
+    return `https://iframe.mediadelivery.net/embed/${this.libraryId}/${playbackId}`;
+  }
+
   private async request<T = unknown>(
     path: string,
     init: RequestInit & { duplex?: string } = {},

@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth/auth.store';
 import { useActiveChild, useChildren } from '@/features/children/children.store';
 import { useEntitlements, useIsFreePlan } from '@/features/entitlements/entitlements.store';
 import { useNews } from '@/features/news/news.store';
+import { NewsVideo } from '@/components/NewsVideo';
 
 export function HomeTab() {
   const insets = useSafeAreaInsets();
@@ -151,11 +152,12 @@ export function HomeTab() {
                 <Text style={styles.newsHeading}>{post.title}</Text>
                 <Text style={styles.newsBody}>{post.body}</Text>
 
-                {!!post.video && (
-                  <View style={styles.newsVideo}>
-                    <Icon name="chevron-right" size={12} color={colors.primaryDeep} strokeWidth={2} />
-                    <Text style={styles.newsVideoText}>{t('home', 'newsVideo')}</Text>
-                  </View>
+                {/* ვიდეო თავისივე სიახლის ქვემოთ — ცალკე გადასვლა არ სჭირდება */}
+                {!!post.video?.playbackUrl && (
+                  <NewsVideo
+                    url={post.video.playbackUrl}
+                    label={post.video.title ?? t('home', 'newsVideo')}
+                  />
                 )}
               </AuthCard>
             ))}
@@ -292,16 +294,4 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   newsBody: { ...typography.small, color: colors.textSecondary, lineHeight: 20 },
-  newsVideo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-  },
-  newsVideoText: { ...typography.small, color: colors.primaryDeep, fontWeight: '600' },
 });

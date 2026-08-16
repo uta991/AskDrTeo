@@ -147,7 +147,7 @@
 }
 
 .userHeader:hover {
-  background: var(--sky-mid);
+  background: var(--surface-muted);
 }
 
 .userNameCol {
@@ -434,7 +434,7 @@
 }
 
 .badgeOff {
-  background: var(--sky-mid);
+  background: var(--surface-muted);
   color: var(--text-muted);
 }
 

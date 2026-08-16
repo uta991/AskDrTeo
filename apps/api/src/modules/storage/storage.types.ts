@@ -103,6 +103,14 @@ export interface VideoStorageProvider {
    * აუარონ.
    */
   playbackUrl(playbackId: string, expiresInSec: number): Promise<string>;
+
+  /**
+   * ბრაუზერში ჩასართავი დამკვრელი.
+   *
+   * `playbackUrl` HLS-ია და ბრაუზერების ნაწილს დამატებითი ბიბლიოთეკა
+   * სჭირდება; ეს კი მზა iframe-ია და ყველგან მუშაობს.
+   */
+  embedUrl(playbackId: string): string;
 }
 
 export const FILE_STORAGE = Symbol('FILE_STORAGE');

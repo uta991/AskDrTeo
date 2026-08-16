@@ -4,9 +4,9 @@
  * ხელით არსად მეორდება — აქ ერთხელ იწერება და ცვლადებით გამოიყენება.
  */
 :root {
-  --sky-top: #fffdf6;
-  --sky-mid: #fffbf0;
-  --sky-bottom: #fff8e7;
+  --sky-top: #ffffff;
+  --sky-mid: #ffffff;
+  --sky-bottom: #ffffff;
   --surface: #ffffff;
 
   --primary: #ffce1f;
@@ -20,7 +20,9 @@
   --text-muted: #bfb4a2;
   --text-on-primary: #3a3020;
 
-  --border: #f2e8d4;
+  --border: #e6e6e6;
+  /* ოდნავ ნაცრისფერი ზედაპირი — ბარათებისა და ველების გამოსაყოფად */
+  --surface-muted: #f7f7f7;
 
   --radius-lg: 16px;
   --radius-xl: 20px;

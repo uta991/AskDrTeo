@@ -1,6 +1,13 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AuditAction,
+  MediaStatus,
   NewsStatus,
   NotificationChannel,
   NotificationStatus,
@@ -10,6 +17,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { VIDEO_STORAGE, type VideoStorageProvider } from '../storage/storage.types';
 import { CreateNewsDto, UpdateNewsDto } from './dto/news.dto';
 
 const NEWS_INCLUDE = {
@@ -25,6 +33,11 @@ const NEWS_INCLUDE = {
   author: { select: { id: true, firstName: true, lastName: true } },
 } satisfies Prisma.NewsPostInclude;
 
+/** ხელმოწერილი ბმულის ვადა — ერთი ყურება უხვად ეტევა. */
+const PLAYBACK_TTL_SEC = 4 * 60 * 60;
+
+type NewsVideo = Prisma.NewsPostGetPayload<{ include: typeof NEWS_INCLUDE }>['video'];
+
 @Injectable()
 export class NewsService {
   private readonly logger = new Logger(NewsService.name);
@@ -32,7 +45,29 @@ export class NewsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    @Inject(VIDEO_STORAGE) private readonly videos: VideoStorageProvider,
   ) {}
+
+  /**
+   * ვიდეოს დასაკრავი ფორმა კლიენტისთვის.
+   *
+   * `playbackId`-ს თავისთავად აზრი არ აქვს — ბრაუზერს მზა მისამართი
+   * სჭირდება. `embedUrl` iframe-ია და ყველგან მუშაობს; `playbackUrl`
+   * HLS-ია, აპლიკაციის დამკვრელისთვის.
+   */
+  private async playable(video: NewsVideo) {
+    if (!video?.mediaAsset?.playbackId) return video ?? null;
+
+    const { playbackId } = video.mediaAsset;
+
+    return {
+      ...video,
+      embedUrl: this.videos.embedUrl(playbackId),
+      playbackUrl: await this.videos.playbackUrl(playbackId, PLAYBACK_TTL_SEC),
+      thumbnailUrl: video.thumbnailAsset?.publicUrl ?? null,
+      ready: video.mediaAsset.status === MediaStatus.READY,
+    };
+  }
 
   // ─── მშობლისთვის ─────────────────────────────────────────────────────
 
@@ -55,14 +90,16 @@ export class NewsService {
       include: NEWS_INCLUDE,
     });
 
-    return posts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      body: post.body,
-      coverUrl: post.coverUrl,
-      video: post.video,
-      publishedAt: post.publishedAt,
-    }));
+    return Promise.all(
+      posts.map(async (post) => ({
+        id: post.id,
+        title: post.title,
+        body: post.body,
+        coverUrl: post.coverUrl,
+        video: await this.playable(post.video),
+        publishedAt: post.publishedAt,
+      })),
+    );
   }
 
   // ─── ადმინისთვის ─────────────────────────────────────────────────────

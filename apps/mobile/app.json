@@ -9,7 +9,7 @@
     "newArchEnabled": true,
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#FFF6DC",
+      "backgroundColor": "#FFFFFF",
       "image": "./assets/images/splash-icon.png"
     },
     "ios": {
@@ -19,7 +19,7 @@
     "android": {
       "package": "ge.askdrteo.app",
       "adaptiveIcon": {
-        "backgroundColor": "#FFF6DC",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/adaptive-icon.png"
       }
     },
@@ -33,7 +33,8 @@
           "photosPermission": "აპლიკაციას ბავშვის ფოტოს ასარჩევად სჭირდება გალერეაზე წვდომა."
         }
       ],
-      "./plugins/withoutAppleSignIn"
+      "./plugins/withoutAppleSignIn",
+      "expo-video"
     ],
     "extra": {
       "apiUrl": "http://localhost:3000/api/v1",

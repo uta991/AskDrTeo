@@ -56,4 +56,9 @@ export class LocalVideoProvider implements VideoStorageProvider {
     // ლოკალურად ხელმოწერა არ არის — მისამართი პირდაპირ ისმევა
     return playbackId;
   }
+
+  /** ლოკალურად ცალკე დამკვრელი არაა — იგივე მისამართს ვაბრუნებთ. */
+  embedUrl(playbackId: string): string {
+    return playbackId;
+  }
 }

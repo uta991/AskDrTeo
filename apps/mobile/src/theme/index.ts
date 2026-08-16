@@ -4,14 +4,14 @@ import { Platform } from 'react-native';
  * ერთადერთი წყარო ფერებისა და ზომებისთვის.
  * ეკრანებში hex კოდი პირდაპირ არასდროს იწერება — ყოველთვის აქედან.
  *
- * პალიტრა: თბილი კრემისფერი ფონი + მზისფერი ყვითელი აქცენტი.
+ * პალიტრა: სუფთა თეთრი ფონი + მზისფერი ყვითელი აქცენტი.
  */
 
 export const colors = {
-  // ფონი — თბილი, კრემისფერი
-  skyTop: '#FFFDF6',
-  skyMid: '#FFFBF0',
-  skyBottom: '#FFF8E7',
+  // ფონი — სუფთა თეთრი
+  skyTop: '#FFFFFF',
+  skyMid: '#FFFFFF',
+  skyBottom: '#FFFFFF',
   cloud: '#FFFFFF',
 
   // აქცენტი — მზე
@@ -31,7 +31,7 @@ export const colors = {
   // ზედაპირები
   surface: '#FFFFFF',
   surfaceTranslucent: 'rgba(255, 255, 255, 0.92)',
-  border: '#F2E8D4',
+  border: '#E6E6E6',
   borderFocus: '#FFCE1F',
 
   // სტატუსები
