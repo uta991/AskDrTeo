@@ -11,7 +11,9 @@ export interface NewsPost {
   video?: {
     id: string;
     title: string | null;
-    /** HLS მისამართი — expo-video პირდაპირ კრავს */
+    /** ჩასართავი დამკვრელი — იგივე, რასაც საიტი იყენებს */
+    embedUrl?: string | null;
+    /** HLS — პირდაპირი წვდომა Bunny-ზე დახურულია, სათადარიგოდ რჩება */
     playbackUrl?: string | null;
     thumbnailUrl?: string | null;
     ready?: boolean;

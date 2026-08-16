@@ -21,7 +21,7 @@ export function AdminNav({
   active,
 }: {
   user: SessionUser;
-  active: 'dashboard' | 'users' | 'news' | 'promo' | 'staff';
+  active: 'dashboard' | 'users' | 'news' | 'promo' | 'medications' | 'staff';
 }) {
   return (
     <header className={styles.header}>
@@ -51,6 +51,20 @@ export function AdminNav({
             პრომო კოდები
           </Link>
         )}
+        <Link href="/calculator" className={styles.tab}>
+          კალკულატორი
+        </Link>
+
+        {/* ცნობარის რედაქტირება ოპერატორს არ ეკუთვნის — დოზირებაა */}
+        {user.role !== 'OPERATOR' && (
+          <Link
+            href="/admin/medications"
+            className={active === 'medications' ? styles.tabActive : styles.tab}
+          >
+            წამლები
+          </Link>
+        )}
+
         {user.role === 'SUPER_ADMIN' && (
           <Link href="/admin/staff" className={active === 'staff' ? styles.tabActive : styles.tab}>
             პერსონალი

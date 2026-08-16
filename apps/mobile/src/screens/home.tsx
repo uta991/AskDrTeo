@@ -153,9 +153,9 @@ export function HomeTab() {
                 <Text style={styles.newsBody}>{post.body}</Text>
 
                 {/* ვიდეო თავისივე სიახლის ქვემოთ — ცალკე გადასვლა არ სჭირდება */}
-                {!!post.video?.playbackUrl && (
+                {!!post.video?.embedUrl && (
                   <NewsVideo
-                    url={post.video.playbackUrl}
+                    url={post.video.embedUrl}
                     label={post.video.title ?? t('home', 'newsVideo')}
                   />
                 )}

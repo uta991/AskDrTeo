@@ -33,8 +33,7 @@
           "photosPermission": "აპლიკაციას ბავშვის ფოტოს ასარჩევად სჭირდება გალერეაზე წვდომა."
         }
       ],
-      "./plugins/withoutAppleSignIn",
-      "expo-video"
+      "./plugins/withoutAppleSignIn"
     ],
     "extra": {
       "apiUrl": "http://localhost:3000/api/v1",

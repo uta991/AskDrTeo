@@ -28,6 +28,8 @@ export async function SiteHeader() {
           <a href="#stages">ასაკები</a>
           {/* პაკეტები მხოლოდ შესულს ეჩვენება — სექციაც მაშინ არსებობს */}
           {!!user && <a href="#plans">პაკეტები</a>}
+          {/* დოზირება სამედიცინო ინფორმაციაა — მხოლოდ შესულს */}
+          {!!user && <Link href="/calculator">კალკულატორი</Link>}
         </nav>
 
         <div className={styles.actions}>

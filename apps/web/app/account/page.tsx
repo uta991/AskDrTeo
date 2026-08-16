@@ -72,6 +72,12 @@ export default async function AccountPage() {
           <span className={styles.name}>AskDrTeo</span>
         </Link>
 
+        <nav className={styles.headerNav}>
+          <Link href="/calculator" className={styles.navLink}>
+            კალკულატორი
+          </Link>
+        </nav>
+
         <div className={styles.headerRight}>
           <span className={styles.userName}>
             {user.firstName} {user.lastName}

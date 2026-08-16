@@ -260,3 +260,23 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+.headerNav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.navLink {
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.navLink:hover {
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}

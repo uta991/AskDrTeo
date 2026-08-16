@@ -1106,6 +1106,64 @@ model AuditLog {
 }
 
 // გლობალური პარამეტრები (მინიმალური აპ-ვერსია, maintenance mode, კონტაქტები)
+enum MedicationDosingType {
+  /// დოზა წონაზე ითვლება — მგ ერთ კილოგრამზე
+  PER_KG
+  /// დოზა ასაკობრივი საფეხურითაა და წონაზე არ იზრდება
+  BY_AGE
+}
+
+/**
+ * დოზის კალკულატორის ცნობარი.
+ *
+ * კოდში არ იწერება: ექიმს უნდა შეეძლოს წამლის დამატება და დოზის
+ * შესწორება პროგრამისტის გარეშე.
+ *
+ * `ageBands` და `concentrations` JSON-ია განზრახ — ორივე მხოლოდ
+ * წამალთან ერთად იკითხება, ცალკე არასდროს იძებნება და ერთიანად
+ * რედაქტირდება; ცალკე ცხრილი მხოლოდ ფორმას ართულებდა.
+ *   ageBands:       [{ untilMonths, mg, label }]
+ *   concentrations: [{ label, mg, ml }]
+ */
+model Medication {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  dosingType MedicationDosingType @default(PER_KG)
+
+  /// PER_KG-ისთვის: მგ ერთ კილოგრამზე, ერთჯერად მიღებაზე
+  mgPerKgMin Float?
+  mgPerKgMax Float?
+
+  /// BY_AGE-ისთვის
+  ageBands Json?
+
+  /// მიღებებს შორის ინტერვალი საათებში
+  intervalHoursMin Int
+  intervalHoursMax Int
+
+  /// მაქსიმალური თერაპიული დოზა 24 საათში, მგ
+  maxDailyMg Float
+
+  /// ამ ასაკამდე / ამ წონაზე ნაკლებზე დოზა არ გამოითვლება
+  minAgeMonths Int   @default(0)
+  minWeightKg  Float @default(0)
+
+  concentrations Json @default("[]")
+
+  note      String?
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([isActive, sortOrder])
+  @@map("medications")
+}
+
 model AppSetting {
   id          String   @id @default(uuid())
   key         String   @unique
