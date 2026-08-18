@@ -16,12 +16,24 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/mobile/package.json apps/mobile/
 
+# საერთო პაკეტები — npm-ს workspace-ების გადასაბმელად manifest-ები
+# უკვე ამ ეტაპზე სჭირდება, თორემ symlink-ები არ შეიქმნება
+COPY packages/dosing/package.json packages/dosing/
+COPY packages/milestones/package.json packages/milestones/
+
 # --ignore-scripts — მობილურის ნატიური სკრიპტები სერვერზე ზედმეტია
 RUN npm ci --ignore-scripts --workspace=@baby/api --include-workspace-root
 
 COPY apps/api apps/api
 
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma \
+# პაკეტები TypeScript-წყაროდ იგზავნება — build-ს თავად კომპილირდება
+COPY packages/dosing packages/dosing
+COPY packages/milestones packages/milestones
+
+# npm ci --ignore-scripts-ის გამო postinstall არ გაშვებულა — საერთო
+# პაკეტები ხელით უნდა აეწყოს, თორემ API-ს import ვერაფერს იპოვის
+RUN npm run build:packages \
+ && npx prisma generate --schema=apps/api/prisma/schema.prisma \
  && npm run build --workspace=@baby/api
 
 # ─── 2. გასაშვები ხატი ───────────────────────────────────────────
@@ -37,6 +49,10 @@ COPY --from=builder /app/package.json package.json
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/package.json apps/api/package.json
 COPY --from=builder /app/apps/api/prisma apps/api/prisma
+
+# node_modules/@askdrteo/* symlink-ებია — შედგენილი JS უნდა გადმოვიდეს,
+# თორემ გაშვებისას require ჩავარდება
+COPY --from=builder /app/packages packages
 
 WORKDIR /app/apps/api
 

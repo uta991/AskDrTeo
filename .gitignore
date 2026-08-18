@@ -24,3 +24,4 @@ apps/mobile/android/
 .next/
 out/
 .vercel/
+packages/*/dist/

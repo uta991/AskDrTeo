@@ -10,7 +10,9 @@
     "api:dev": "npm run start:dev --workspace=@baby/api",
     "api:migrate": "npm run prisma:migrate --workspace=@baby/api",
     "api:seed": "npm run prisma:seed --workspace=@baby/api",
-    "mobile:start": "npm run start --workspace=@baby/mobile"
+    "mobile:start": "npm run start --workspace=@baby/mobile",
+    "build:packages": "npm run build --workspace=@askdrteo/dosing --workspace=@askdrteo/milestones",
+    "postinstall": "npm run build:packages"
   },
   "engines": {
     "node": ">=20"
