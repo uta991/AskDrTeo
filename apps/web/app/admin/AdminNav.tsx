@@ -43,6 +43,10 @@ export function AdminNav({
         </Link>
 
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}
+        <Link href="/development" className={styles.tab}>
+          განვითარება
+        </Link>
+
         <Link href="/calculator" className={styles.tab}>
           კალკულატორი
         </Link>

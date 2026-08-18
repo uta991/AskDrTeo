@@ -2,34 +2,9 @@ import { create } from 'zustand';
 import { api } from '@/api/client';
 import { isFresh } from '../freshness';
 
-export interface Concentration {
-  label: string;
-  mg: number;
-  ml: number;
-}
-
-export interface AgeBand {
-  untilMonths: number;
-  mg: number;
-  label: string;
-}
-
-export interface Medication {
-  id: string;
-  slug: string;
-  name: string;
-  dosingType: 'PER_KG' | 'BY_AGE';
-  mgPerKgMin: number | null;
-  mgPerKgMax: number | null;
-  ageBands: AgeBand[] | null;
-  intervalHoursMin: number;
-  intervalHoursMax: number;
-  maxDailyMg: number;
-  minAgeMonths: number;
-  minWeightKg: number;
-  concentrations: Concentration[];
-  note?: string | null;
-}
+// ტიპები საერთო პაკეტიდან — გამოთვლაც იქვეა
+export type { AgeBand, Concentration, Medication } from '@askdrteo/dosing';
+import type { Medication } from '@askdrteo/dosing';
 
 interface MedicationsState {
   medications: Medication[];

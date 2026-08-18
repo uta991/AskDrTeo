@@ -16,6 +16,7 @@ import { ChildrenModule } from './modules/children/children.module';
 import { EntitlementsModule } from './modules/entitlements/entitlements.module';
 import { MediaModule } from './modules/media/media.module';
 import { MedicationsModule } from './modules/medications/medications.module';
+import { MilestonesModule } from './modules/milestones/milestones.module';
 import { NewsModule } from './modules/news/news.module';
 import { PromoModule } from './modules/promo/promo.module';
 import { StatsModule } from './modules/stats/stats.module';
@@ -41,6 +42,7 @@ import { SmsModule } from './modules/sms/sms.module';
     StorageModule,
     MediaModule,
     MedicationsModule,
+    MilestonesModule,
     NewsModule,
     PromoModule,
     StatsModule,

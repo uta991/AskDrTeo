@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@askdrteo/dosing": "*",
+    "@askdrteo/milestones": "*",
     "@expo/metro-runtime": "~57.0.9",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "^57.0.12",

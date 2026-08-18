@@ -1,0 +1,267 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 60px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 24px;
+  margin-bottom: 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.body {
+  width: 100%;
+  max-width: 720px;
+  padding: 0 24px;
+}
+
+.intro {
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: clamp(22px, 4vw, 28px);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.input {
+  height: 50px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+
+/* ── კითხვები ─────────────────────────────────────────────── */
+
+.domainBlock {
+  padding: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.domainTitle {
+  font-size: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.question {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.question:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.questionText {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.option,
+.optionActive {
+  display: flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.option:hover {
+  border-color: var(--primary);
+}
+
+.optionActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-primary);
+  font-weight: 700;
+}
+
+/* რადიო ღილაკი ვიზუალურად იმალება — მთელი ჭდე არის ღილაკი */
+.option input,
+.optionActive input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 0;
+  background: var(--surface);
+}
+
+/* ── შედეგი ───────────────────────────────────────────────── */
+
+.result {
+  padding: 24px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xxl);
+}
+
+.headline,
+.headlineAlert {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.headlineAlert {
+  color: #e5484d;
+}
+
+.advice {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.domains {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.domainCard {
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+}
+
+.domainName {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.bar_ON_TRACK,
+.bar_WATCH,
+.bar_DISCUSS {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.bar_ON_TRACK { background: #2f9e5e; }
+.bar_WATCH { background: var(--primary-dark); }
+.bar_DISCUSS { background: #e5484d; }
+
+.domainMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.redFlag {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  background: #fdf2f2;
+  font-size: 13px;
+  color: #b3282d;
+  line-height: 1.5;
+}
+
+.disclaimer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.again {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-deep);
+}
+
+.empty {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.error {
+  font-size: 14px;
+  color: #e5484d;
+  background: #fdf2f2;
+  border-radius: var(--radius-lg);
+  padding: 12px;
+}

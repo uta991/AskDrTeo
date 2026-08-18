@@ -7,6 +7,7 @@ export type IconName =
   | 'bulb'
   | 'calendar'
   | 'calculator'
+  | 'growth'
   | 'crown'
   | 'user'
   | 'user-plus'
@@ -49,6 +50,39 @@ export function Icon({
           <Path d="M3 10.5 12 3l9 7.5" {...common} />
           <Path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" {...common} />
           <Path d="M9.5 21v-6h5v6" {...common} />
+        </>
+      )}
+      {/* განვითარება — მხოხავი ბავშვი, მზარდი სვეტები და ვარსკვლავი */}
+      {name === 'growth' && (
+        <>
+          {/* ბავშვი */}
+          <Circle cx="5.4" cy="12.2" r="2" {...common} />
+          <Path
+            d="M7.1 13.4c.9.8 1.3 1.9 1.3 3.1v2.9c0 .6-.5 1.1-1.1 1.1"
+            {...common}
+          />
+          <Path
+            d="M3.9 13.7c-1.4.6-2.4 2-2.4 3.6v1.9c0 .7.6 1.3 1.3 1.3h4.5"
+            {...common}
+          />
+
+          {/* ვარსკვლავისკენ მიმავალი წყვეტილი რკალი */}
+          <Path
+            d="M9.6 13.2c2.4-1.1 4.8-2.9 6.6-5.2"
+            {...common}
+            strokeDasharray="1.6 1.6"
+          />
+
+          {/* სვეტები — დაბლიდან მაღლა */}
+          <Rect x="11.4" y="16.4" width="2.7" height="4.2" rx="1" {...common} />
+          <Rect x="15" y="13.6" width="2.7" height="7" rx="1" {...common} />
+          <Rect x="18.6" y="10.8" width="2.7" height="9.8" rx="1" {...common} />
+
+          {/* ვარსკვლავი */}
+          <Path
+            d="m19.4 2.6 1 2 2.2.3-1.6 1.6.4 2.2-2-1-2 1 .4-2.2-1.6-1.6 2.2-.3z"
+            {...common}
+          />
         </>
       )}
       {name === 'calculator' && (

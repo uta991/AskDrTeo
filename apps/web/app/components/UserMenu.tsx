@@ -131,6 +131,10 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             </>
           )}
 
+          <Link href="/development" className={styles.item} role="menuitem">
+            განვითარების მონიტორინგი
+          </Link>
+
           <Link href="/calculator" className={styles.item} role="menuitem">
             დოზის კალკულატორი
           </Link>

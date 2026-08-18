@@ -8,6 +8,7 @@ import { HomeTab } from '@/screens/home';
 import { ProfileTab } from '@/screens/profile';
 import { AdminDashboardTab } from '@/screens/admin/dashboard';
 import { CalculatorTab } from '@/screens/calculator';
+import { DevelopmentTab } from '@/screens/development';
 import { AdminNewsTab } from '@/screens/admin/news';
 import { colors } from '@/theme';
 import { useT } from '@/i18n';
@@ -39,6 +40,7 @@ export default function MainScreen() {
       return [
         { key: 'dashboard', label: t('admin', 'dashboard'), icon: 'home' },
         { key: 'news', label: t('admin', 'news'), icon: 'bulb' },
+        { key: 'development', label: t('tabs', 'development'), icon: 'growth' },
         { key: 'calculator', label: t('tabs', 'calculator'), icon: 'calculator' },
         { key: 'profile', label: t('tabs', 'profile'), icon: 'user' },
       ];
@@ -48,6 +50,7 @@ export default function MainScreen() {
       { key: 'home', label: t('tabs', 'home'), icon: 'home' },
       { key: 'advice', label: t('tabs', 'advice'), icon: 'bulb' },
       { key: 'booking', label: t('tabs', 'booking'), icon: 'calendar' },
+      { key: 'development', label: t('tabs', 'development'), icon: 'growth' },
       { key: 'calculator', label: t('tabs', 'calculator'), icon: 'calculator' },
       {
         key: 'profile',
@@ -83,6 +86,9 @@ export default function MainScreen() {
               <View key="news" style={styles.page}>
                 <AdminNewsTab />
               </View>,
+              <View key="development" style={styles.page}>
+                <DevelopmentTab />
+              </View>,
               <View key="calculator" style={styles.page}>
                 <CalculatorTab />
               </View>,
@@ -99,6 +105,9 @@ export default function MainScreen() {
               </View>,
               <View key="booking" style={styles.page}>
                 <BookingTab />
+              </View>,
+              <View key="development" style={styles.page}>
+                <DevelopmentTab />
               </View>,
               <View key="calculator" style={styles.page}>
                 <CalculatorTab />

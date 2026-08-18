@@ -239,6 +239,7 @@ model Child {
   /// ავტორიზაციის გარეშე ნახავს. ბავშვის ფოტოზე ეს დაუშვებელია.
   avatarAssetId String?
   avatarAsset   MediaAsset? @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  assessments   MilestoneAssessment[]
 
   /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
   gestationalWeek Int?
@@ -1173,4 +1174,95 @@ model AppSetting {
   updatedAt   DateTime @updatedAt
 
   @@map("app_settings")
+}
+
+enum MilestoneDomain {
+  /// უხეში მოტორიკა
+  GROSS_MOTOR
+  /// ნატიფი მოტორიკა
+  FINE_MOTOR
+  /// სოციალურ-ემოციური
+  SOCIAL_EMOTIONAL
+  /// კოგნიტური / მეტყველება
+  COGNITIVE_LANGUAGE
+}
+
+enum MilestoneAnswer {
+  YES
+  SOMETIMES
+  NOT_YET
+  UNKNOWN
+}
+
+/**
+ * განვითარების მონიტორინგის კითხვა.
+ *
+ * ეს არ არის დიაგნოსტიკური ტესტი და არც ვალიდირებული სკრინინგის
+ * ასლი — AAP-ის ტერმინოლოგიით ეს `developmental surveillance`-ია,
+ * რომელიც ყოველ გეგმიურ ვიზიტზეა რეკომენდებული. ფორმალური სკრინინგი
+ * (9, 18, 30 თვე) და ASD-ის სკრინინგი (18, 24 თვე) ექიმის საქმეა.
+ *
+ * `ageMonths` — რომელ ასაკზე ფასდება ეს უნარი. კითხვა მოქმედია ამ
+ * ასაკიდან: 6 თვის კითხვა 8 თვის ბავშვსაც უნდა ჰქონდეს შესრულებული,
+ * ამიტომ შეფასებისას წინა თვეებიც მოწმდება.
+ */
+model MilestoneQuestion {
+  id        String          @id @default(uuid())
+  /// ადამიანისთვის წასაკითხი კოდი — მაგ. GM_06_01
+  code      String          @unique
+  ageMonths Int
+  domain    MilestoneDomain
+  questionKa String
+
+  /// true — ამ ასაკში შეუსრულებლობა ექიმთან მიმართვის ნიშანია
+  redFlag   Boolean @default(false)
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  answers MilestoneAnswerEntry[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([ageMonths, domain, sortOrder])
+  @@map("milestone_questions")
+}
+
+/**
+ * ერთი შევსებული კითხვარი.
+ *
+ * `ageMonths` შენახვისას ფიქსირდება: ბავშვი იზრდება და ერთი წლის
+ * შემდეგ შედეგი უაზრო იქნებოდა, თუ არ ვიცით, რა ასაკში შეივსო.
+ */
+model MilestoneAssessment {
+  id        String @id @default(uuid())
+  childId   String
+  child     Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  ageMonths Int
+
+  /// დომენების ჯამური სურათი — [{ domain, achieved, total, status }]
+  summary   Json
+  /// true — ერთი მაინც წითელი ალამი შეუსრულებელია
+  hasRedFlag Boolean @default(false)
+
+  answers MilestoneAnswerEntry[]
+
+  createdAt DateTime @default(now())
+
+  @@index([childId, createdAt])
+  @@map("milestone_assessments")
+}
+
+model MilestoneAnswerEntry {
+  id           String              @id @default(uuid())
+  assessmentId String
+  assessment   MilestoneAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     MilestoneQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer       MilestoneAnswer
+
+  @@unique([assessmentId, questionId])
+  @@index([questionId])
+  @@map("milestone_answers")
 }

@@ -73,6 +73,9 @@ export default async function AccountPage() {
         </Link>
 
         <nav className={styles.headerNav}>
+          <Link href="/development" className={styles.navLink}>
+            განვითარება
+          </Link>
           <Link href="/calculator" className={styles.navLink}>
             კალკულატორი
           </Link>
