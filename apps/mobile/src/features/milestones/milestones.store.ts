@@ -10,7 +10,11 @@ interface MilestonesState {
   /** რომელი ასაკის კითხვები გვაქვს — ბავშვის შეცვლისას თავიდან ვტვირთავთ */
   loadedForAge?: number;
   load: (ageMonths: number) => Promise<void>;
-  submit: (childId: string, answers: Record<string, MilestoneAnswer>) => Promise<AssessmentResult>;
+  submit: (
+    childId: string,
+    ageMonths: number,
+    answers: Record<string, MilestoneAnswer>,
+  ) => Promise<AssessmentResult>;
 }
 
 export const useMilestones = create<MilestonesState>((set, get) => ({
@@ -29,11 +33,12 @@ export const useMilestones = create<MilestonesState>((set, get) => ({
     }
   },
 
-  async submit(childId, answers) {
+  async submit(childId, ageMonths, answers) {
     return api<AssessmentResult>('/milestones/assessments', {
       method: 'POST',
       body: {
         childId,
+        ageMonths,
         answers: Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer })),
       },
     });

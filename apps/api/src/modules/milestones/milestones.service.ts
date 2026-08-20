@@ -45,7 +45,7 @@ export class MilestonesService {
   async submit(dto: SubmitAssessmentDto, userId: string, role: UserRole) {
     const child = await this.prisma.child.findFirst({
       where: { id: dto.childId, deletedAt: null },
-      select: { id: true, parentId: true, birthDate: true },
+      select: { id: true, parentId: true },
     });
     if (!child) throw new NotFoundException('ბავშვის პროფილი ვერ მოიძებნა');
 
@@ -53,8 +53,6 @@ export class MilestonesService {
     if (role === UserRole.PARENT && child.parentId !== userId) {
       throw new ForbiddenException('ეს პროფილი თქვენი არ არის');
     }
-
-    const ageMonths = monthsSince(child.birthDate);
 
     const questions = await this.prisma.milestoneQuestion.findMany({
       where: { id: { in: dto.answers.map((a) => a.questionId) }, deletedAt: null },
@@ -71,12 +69,12 @@ export class MilestonesService {
     const answers: Record<string, SharedAnswer> = {};
     for (const item of dto.answers) answers[item.questionId] = item.answer as SharedAnswer;
 
-    const result = evaluate(questions as unknown as Question[], answers, ageMonths);
+    const result = evaluate(questions as unknown as Question[], answers, dto.ageMonths);
 
     const assessment = await this.prisma.milestoneAssessment.create({
       data: {
         childId: child.id,
-        ageMonths,
+        ageMonths: dto.ageMonths,
         summary: result as unknown as Prisma.InputJsonValue,
         hasRedFlag: result.hasRedFlag,
         answers: {
@@ -181,12 +179,3 @@ export class MilestonesService {
   }
 }
 
-/** სრული თვეები დაბადებიდან. */
-function monthsSince(birthDate: Date): number {
-  const now = new Date();
-  let months =
-    (now.getFullYear() - birthDate.getFullYear()) * 12 + (now.getMonth() - birthDate.getMonth());
-
-  if (now.getDate() < birthDate.getDate()) months -= 1;
-  return Math.max(0, months);
-}

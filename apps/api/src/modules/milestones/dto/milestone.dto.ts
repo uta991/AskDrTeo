@@ -34,6 +34,16 @@ export class SubmitAssessmentDto {
   @IsUUID()
   childId!: string;
 
+  /**
+   * ბავშვის ასაკი თვეებში.
+   *
+   * პროფილის დაბადების თარიღიდან განზრახ არ ითვლება: მშობელს უნდა
+   * შეეძლოს ასაკის ხელით მითითება — კითხვარს სხვა ბავშვზეც ავსებს
+   * და პროფილში თარიღიც შეიძლება არაზუსტი იყოს.
+   */
+  @Type(() => Number) @IsInt() @Min(0) @Max(216)
+  ageMonths!: number;
+
   @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => AnswerDto)
   answers!: AnswerDto[];
 }

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import type { Question } from '@askdrteo/milestones';
 import { apiFetch, getSessionUser } from '@/lib/session';
 import { SunLogo } from '../components/Brand';
 import { UserMenu } from '../components/UserMenu';
@@ -12,8 +11,6 @@ export const metadata = { title: 'განვითარების მონ
 interface Child {
   id: string;
   firstName: string;
-  ageMonths: number;
-  ageLabel: string;
 }
 
 export default async function DevelopmentPage() {
@@ -21,11 +18,6 @@ export default async function DevelopmentPage() {
   if (!user) redirect('/login');
 
   const children = await apiFetch<Child[]>('/children');
-  const activeChild = children?.[0];
-
-  const questions = activeChild
-    ? await apiFetch<Question[]>(`/milestones/questions?ageMonths=${activeChild.ageMonths}`)
-    : null;
 
   return (
     <main className={styles.page}>
@@ -56,12 +48,8 @@ export default async function DevelopmentPage() {
               ბავშვის დამატება
             </Link>
           </section>
-        ) : !questions?.length ? (
-          <section className="card">
-            <p className={styles.empty}>ამ ასაკისთვის კითხვები ჯერ არ დამატებულა.</p>
-          </section>
         ) : (
-          <AssessmentForm children={children} questions={questions} />
+          <AssessmentForm children={children} />
         )}
       </div>
     </main>

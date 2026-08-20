@@ -13,6 +13,7 @@ import { SkyBackground } from '@/components/SkyBackground';
 import { AuthCard } from '@/components/AuthCard';
 import { Button } from '@/components/ui/Button';
 import { colors, radius, spacing, typography } from '@/theme';
+import { NumberPad } from '@/components/NumberPad';
 import { useActiveChild } from '@/features/children/children.store';
 import { useMilestones } from '@/features/milestones/milestones.store';
 
@@ -37,14 +38,36 @@ export function DevelopmentTab() {
   const { questions, loading, load, submit } = useMilestones();
 
   const [answers, setAnswers] = useState<Record<string, MilestoneAnswer>>({});
+
+  // ასაკს მშობელი უთითებს — პროფილის თარიღიდან განზრახ არ ვიღებთ
+  const [years, setYears] = useState('');
+  const [months, setMonths] = useState('');
+  const [editing, setEditing] = useState<'years' | 'months' | null>(null);
+  const [started, setStarted] = useState(false);
+  const [ageError, setAgeError] = useState<string | null>(null);
+
+  const ageMonths = (Number(years) || 0) * 12 + (Number(months) || 0);
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!activeChild) return;
-    void load(activeChild.ageMonths).catch(() => undefined);
-  }, [activeChild, load]);
+  const start = () => {
+    setAgeError(null);
+
+    if (!years && !months) {
+      setAgeError('მიუთითეთ ბავშვის ასაკი');
+      return;
+    }
+    if (ageMonths > 72) {
+      setAgeError('კითხვარი 6 წლამდე ასაკზეა გათვლილი.');
+      return;
+    }
+
+    setAnswers({});
+    setResult(null);
+    setStarted(true);
+    void load(ageMonths).catch(() => undefined);
+  };
 
   const answered = useMemo(() => Object.keys(answers).length, [answers]);
 
@@ -54,7 +77,7 @@ export function DevelopmentTab() {
     setError(null);
     setBusy(true);
     try {
-      setResult(await submit(activeChild.id, answers));
+      setResult(await submit(activeChild.id, ageMonths, answers));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'შენახვა ვერ მოხერხდა');
     } finally {
@@ -65,6 +88,7 @@ export function DevelopmentTab() {
   const reset = () => {
     setResult(null);
     setAnswers({});
+    setStarted(false);
   };
 
   return (
@@ -86,11 +110,41 @@ export function DevelopmentTab() {
           </AuthCard>
         )}
 
-        {!!activeChild && !result && (
+        {!!activeChild && !result && !started && (
+          <AuthCard style={styles.card}>
+            <Text style={styles.subtitle}>
+              მიუთითეთ ბავშვის ასაკი — კითხვები სწორედ ამის მიხედვით შეირჩევა.
+            </Text>
+
+            <View style={styles.ageRow}>
+              <Pressable style={styles.ageField} onPress={() => setEditing('years')}>
+                <Text style={styles.ageLabel}>წელი</Text>
+                <Text style={[styles.ageValue, !years && styles.agePlaceholder]}>
+                  {years || '—'}
+                </Text>
+              </Pressable>
+
+              <Pressable style={styles.ageField} onPress={() => setEditing('months')}>
+                <Text style={styles.ageLabel}>თვე</Text>
+                <Text style={[styles.ageValue, !months && styles.agePlaceholder]}>
+                  {months || '—'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {!!ageError && <Text style={styles.error}>{ageError}</Text>}
+
+            <Button title="კითხვარის დაწყება" onPress={start} />
+          </AuthCard>
+        )}
+
+        {!!activeChild && !result && started && (
           <>
             <Text style={styles.subtitle}>
-              {activeChild.firstName} — {activeChild.ageLabel}. უპასუხეთ დაკვირვების
-              მიხედვით; თუ დარწმუნებული არ ხართ, აირჩიეთ „არ ვიცი".
+              {activeChild.firstName} — {ageText(ageMonths)}.{' '}
+              <Text style={styles.changeAge} onPress={() => setStarted(false)}>
+                ასაკის შეცვლა
+              </Text>
             </Text>
 
             {loading && !questions.length && <ActivityIndicator color={colors.primary} />}
@@ -193,8 +247,24 @@ export function DevelopmentTab() {
           </AuthCard>
         )}
       </ScrollView>
+
+      <NumberPad
+        visible={editing !== null}
+        label={editing === 'years' ? 'ასაკი — წელი' : 'ასაკი — თვე'}
+        value={editing === 'years' ? years : months}
+        onChange={(next) => (editing === 'years' ? setYears(next) : setMonths(next))}
+        onClose={() => setEditing(null)}
+      />
     </SkyBackground>
   );
+}
+
+/** ასაკის წარწერა — 26 თვე „2 წელი 2 თვედ" იკითხება. */
+function ageText(months: number): string {
+  if (months < 12) return `${months} თვე`;
+  const y = Math.floor(months / 12);
+  const r = months % 12;
+  return r === 0 ? `${y} წელი` : `${y} წელი ${r} თვე`;
 }
 
 const styles = StyleSheet.create({
@@ -271,4 +341,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   error: { ...typography.small, color: colors.danger, marginBottom: spacing.sm },
+  ageRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  ageField: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  ageLabel: { ...typography.small, fontSize: 11, color: colors.textMuted },
+  ageValue: { ...typography.h3, color: colors.textPrimary },
+  agePlaceholder: { color: colors.textMuted },
+  changeAge: { color: colors.primaryDeep, fontWeight: '700' },
 });
