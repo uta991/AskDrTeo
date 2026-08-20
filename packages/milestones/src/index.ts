@@ -79,6 +79,15 @@ export interface AssessmentResult {
  * ასაკობრივ ნორმად ითვლება, 60%-მდე კი ექიმთან საუბრის საბაბია —
  * ეს დასკვნა კი არაა, არამედ მითითება, რომ ღირს გადამოწმება.
  */
+/**
+ * ცნობარის ბოლო ეტაპი — 6 წელი.
+ *
+ * ამის შემდეგ კითხვარი აღარ ჩნდება: ცხრილი 5-6 წლით სრულდება და
+ * ხვრელის შევსების წესი სხვა შემთხვევაში 10 წლის ბავშვს 5 წლის
+ * კითხვებს დაუბრუნებდა, რაც შედეგს უაზროს გახდიდა.
+ */
+export const MAX_AGE_MONTHS = 72;
+
 const ON_TRACK_RATIO = 0.8;
 const WATCH_RATIO = 0.6;
 
@@ -109,6 +118,8 @@ export function questionsForAge(
   ageMonths: number,
   windowMonths = 6,
 ): Question[] {
+  if (ageMonths > MAX_AGE_MONTHS) return [];
+
   const eligible = all.filter((q) => q.ageMonths <= ageMonths);
   if (!eligible.length) return [];
 
