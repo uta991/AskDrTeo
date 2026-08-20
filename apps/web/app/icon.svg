@@ -6,8 +6,8 @@
   -->
   <defs>
     <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFCE1F"/>
-      <stop offset="1" stop-color="#F5B800"/>
+      <stop offset="0" stop-color="#FFEC4F"/>
+      <stop offset="1" stop-color="#F0D93A"/>
     </linearGradient>
   </defs>
 
@@ -28,6 +28,6 @@
     <!-- ჰორიზონტზე ნახევრად ამოსული დისკი -->
     <path d="M36 62 A24 24 0 0 1 84 62 Z" fill="url(#sun)"/>
     <rect x="26" y="66" width="68" height="4.5" rx="2.25" fill="url(#sun)"/>
-    <rect x="40" y="76" width="40" height="4" rx="2" fill="#FFE08A"/>
+    <rect x="40" y="76" width="40" height="4" rx="2" fill="#FFF6A8"/>
   </g>
 </svg>

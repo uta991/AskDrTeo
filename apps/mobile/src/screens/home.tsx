@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyBackground } from '@/components/SkyBackground';
 import { AuthCard } from '@/components/AuthCard';
 import { Icon } from '@/components/ui/Icon';
+import { FeatureTiles, type Tile } from '@/components/FeatureTiles';
+import { useTabs } from '@/features/tabs';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
@@ -22,6 +24,7 @@ export function HomeTab() {
   const activeChild = useActiveChild();
   const loadEntitlements = useEntitlements((s) => s.load);
   const isFree = useIsFreePlan();
+  const goToTab = useTabs((state) => state.goTo);
   const { posts: news, load: loadNews } = useNews();
 
   const isStaff = !!user && user.role !== 'PARENT';
@@ -123,6 +126,37 @@ export function HomeTab() {
               </Text>
             )}
           </AuthCard>
+        )}
+
+        {!isStaff && (
+          <FeatureTiles
+            tiles={[
+              {
+                key: 'development',
+                label: t('tabs', 'development'),
+                icon: 'growth',
+                onPress: () => goToTab('development'),
+              },
+              {
+                key: 'calculator',
+                label: t('tabs', 'calculator'),
+                icon: 'calculator',
+                onPress: () => goToTab('calculator'),
+              },
+              {
+                key: 'advice',
+                label: t('tabs', 'advice'),
+                icon: 'bulb',
+                onPress: () => goToTab('advice'),
+              },
+              {
+                key: 'booking',
+                label: t('tabs', 'booking'),
+                icon: 'calendar',
+                onPress: () => goToTab('booking'),
+              },
+            ] satisfies Tile[]}
+          />
         )}
 
         {/* ბავშვის პროფილის გარეშე ასაკობრივი კონტენტი ვერ შეირჩევა */}

@@ -21,15 +21,16 @@ export default async function CalculatorPage() {
         ← უკან
       </Link>
 
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <SunLogo size={52} />
-          <h1 className={styles.title}>დოზის კალკულატორი</h1>
-          <p className={styles.subtitle}>
+      <div className={styles.headerBar}>
+        <div className={styles.headerInner}>
+          <h1 className={styles.headerTitle}>დოზის კალკულატორი</h1>
+          <p className={styles.headerSubtitle}>
             აირჩიეთ წამალი, მიუთითეთ ბავშვის წონა და ასაკი
           </p>
         </div>
+      </div>
 
+      <div className={styles.card}>
         <CalculatorForm medications={medications ?? []} />
       </div>
     </main>

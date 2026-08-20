@@ -14,12 +14,14 @@ export const colors = {
   skyBottom: '#FFFFFF',
   cloud: '#FFFFFF',
 
-  // აქცენტი — მზე
-  primary: '#FFCE1F',
-  primaryDark: '#F5B800',
-  primaryDeep: '#E8A400',
-  primaryLight: '#FFE08A',
-  primarySoft: '#FFF6DC',
+  // აქცენტი — მზე. საბაზისო ტონი ექიმის მიერაა არჩეული (#FFEC4F);
+  // დანარჩენი მისგანაა გამოყვანილი. `primaryDeep` განზრახ ბევრად
+  // მუქია: ღია ყვითელი ტექსტად თეთრზე საერთოდ არ იკითხება.
+  primary: '#FFEC4F',
+  primaryDark: '#F0D93A',
+  primaryDeep: '#9C7C00',
+  primaryLight: '#FFF6A8',
+  primarySoft: '#FFFDEB',
 
   // ტექსტი
   textPrimary: '#2E2A22',
@@ -35,7 +37,7 @@ export const colors = {
   surfaceMuted: '#F7F7F7',
   surfaceTranslucent: 'rgba(255, 255, 255, 0.92)',
   border: '#E6E6E6',
-  borderFocus: '#FFCE1F',
+  borderFocus: '#FFEC4F',
 
   // სტატუსები
   danger: '#E5484D',
@@ -91,7 +93,7 @@ export const shadows = {
   }),
   button: Platform.select({
     ios: {
-      shadowColor: '#E8A400',
+      shadowColor: '#C9A800',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.35,
       shadowRadius: 14,

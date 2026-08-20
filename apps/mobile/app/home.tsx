@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { BottomTabBar, type TabDescriptor } from '@/components/BottomTabBar';
@@ -13,6 +13,7 @@ import { AdminNewsTab } from '@/screens/admin/news';
 import { colors } from '@/theme';
 import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
+import { useTabs } from '@/features/tabs';
 import { useActiveChild, useChildren } from '@/features/children/children.store';
 
 /**
@@ -61,6 +62,19 @@ export default function MainScreen() {
       },
     ];
   }, [t, isStaff, needsChildProfile, activeChild?.avatarUrl]);
+
+  // ფილიდან მოთხოვნილი ტაბი — ინდექსს იმავე სიიდან ვიღებთ, რომ
+  // ტაბების გადალაგებისას აღარაფერი დაგვჭირდეს
+  const requested = useTabs((state) => state.requested);
+  const clearRequest = useTabs((state) => state.clear);
+
+  useEffect(() => {
+    if (!requested) return;
+
+    const index = tabs.findIndex((tab) => tab.key === requested);
+    if (index >= 0) pager.current?.setPage(index);
+    clearRequest();
+  }, [requested, tabs, clearRequest]);
 
   const handleSelect = useCallback((next: number) => {
     // setPage ანიმაციით გადადის; index-ს onPageSelected დააყენებს

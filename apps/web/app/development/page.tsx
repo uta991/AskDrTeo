@@ -30,15 +30,17 @@ export default async function DevelopmentPage() {
         <UserMenu user={user} />
       </header>
 
-      <div className={styles.body}>
-        <div className={styles.intro}>
-          <h1 className={styles.title}>განვითარების მონიტორინგი</h1>
-          <p className={styles.subtitle}>
-            ოთხი მიმართულება — უხეში მოტორიკა, ნატიფი მოტორიკა, სოციალურ-ემოციური
-            და კოგნიტური/მეტყველება
+      <div className={styles.headerBar}>
+        <div className={styles.headerInner}>
+          <h1 className={styles.headerTitle}>განვითარების მონიტორინგი</h1>
+          <p className={styles.headerSubtitle}>
+            ოთხი მიმართულება — უხეში მოტორიკა, ნატიფი მოტორიკა,
+            სოციალურ-ემოციური და კოგნიტური/მეტყველება
           </p>
         </div>
+      </div>
 
+      <div className={styles.body}>
         {!children?.length ? (
           <section className="card">
             <p className={styles.empty}>

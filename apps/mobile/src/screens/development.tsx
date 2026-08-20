@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ANSWER_LABELS,
   DOMAIN_LABELS,
@@ -10,6 +9,7 @@ import {
   type MilestoneAnswer,
 } from '@askdrteo/milestones';
 import { SkyBackground } from '@/components/SkyBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { AuthCard } from '@/components/AuthCard';
 import { Button } from '@/components/ui/Button';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -33,7 +33,6 @@ const STATUS_COLOR: Record<string, string> = {
  * ანუ ვებთან იდენტურია.
  */
 export function DevelopmentTab() {
-  const insets = useSafeAreaInsets();
   const activeChild = useActiveChild();
   const { questions, loading, load, submit } = useMilestones();
 
@@ -93,14 +92,15 @@ export function DevelopmentTab() {
 
   return (
     <SkyBackground showDoves={false}>
+      <ScreenHeader title="განვითარების მონიტორინგი" />
+
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.md, paddingBottom: spacing.xxl },
+          { paddingTop: spacing.lg, paddingBottom: spacing.xxl },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>განვითარების მონიტორინგი</Text>
 
         {!activeChild && (
           <AuthCard style={styles.card}>

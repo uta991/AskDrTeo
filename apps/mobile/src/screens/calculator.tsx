@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyBackground } from '@/components/SkyBackground';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { AuthCard } from '@/components/AuthCard';
 import { Icon } from '@/components/ui/Icon';
 import { NumberPad } from '@/components/NumberPad';
@@ -16,7 +16,6 @@ function toMonths(years: string, months: string): number {
 }
 
 export function CalculatorTab() {
-  const insets = useSafeAreaInsets();
 
   const { medications, loading, load } = useMedications();
 
@@ -58,16 +57,16 @@ export function CalculatorTab() {
 
   return (
     <SkyBackground showDoves={false}>
+      <ScreenHeader title="დოზის კალკულატორი" />
+
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.md, paddingBottom: spacing.xl },
+          { paddingTop: spacing.lg, paddingBottom: spacing.xl },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>დოზის კალკულატორი</Text>
-        <Text style={styles.subtitle}>აირჩიეთ წამალი და მიუთითეთ წონა და ასაკი</Text>
 
         {loading && !medications.length && <ActivityIndicator color={colors.primary} />}
 
