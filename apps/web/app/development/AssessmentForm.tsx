@@ -102,7 +102,9 @@ export function AssessmentForm({ children }: { children: Child[] }) {
               </div>
 
               <div className={styles.domainMeta}>
-                <span>{STATUS_LABELS[domain.status]}</span>
+                <span className={styles[`status_${domain.status}` as keyof typeof styles]}>
+                  {STATUS_LABELS[domain.status]}
+                </span>
                 <span>
                   {domain.achieved} / {domain.total}
                 </span>

@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     // ჩრდილი ზემოთ — ზოლი კონტენტს „ზემოდან" ეფარება
     ...Platform.select({
       ios: {
-        shadowColor: '#8A6D3B',
+        shadowColor: '#000000',
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.1,
         shadowRadius: 16,

@@ -20,9 +20,9 @@ import { useMilestones } from '@/features/milestones/milestones.store';
 const ANSWERS: MilestoneAnswer[] = ['YES', 'SOMETIMES', 'NOT_YET', 'UNKNOWN'];
 
 const STATUS_COLOR: Record<string, string> = {
-  ON_TRACK: colors.success,
-  WATCH: colors.primaryDark,
-  DISCUSS: colors.danger,
+  ON_TRACK: colors.statusOk,
+  WATCH: colors.statusWatch,
+  DISCUSS: colors.statusAlert,
 };
 
 /**
@@ -224,7 +224,14 @@ export function DevelopmentTab() {
                 </View>
 
                 <View style={styles.domainMeta}>
-                  <Text style={styles.metaText}>{STATUS_LABELS[domain.status]}</Text>
+                  <Text
+                    style={[
+                      styles.metaText,
+                      { color: STATUS_COLOR[domain.status], fontWeight: '700' },
+                    ]}
+                  >
+                    {STATUS_LABELS[domain.status]}
+                  </Text>
                   <Text style={styles.metaText}>
                     {domain.achieved} / {domain.total}
                   </Text>

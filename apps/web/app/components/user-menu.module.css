@@ -116,11 +116,11 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: #e5484d;
+  color: var(--danger);
   text-align: left;
   cursor: pointer;
 }
 
 .logout:hover {
-  background: #fdf2f2;
+  background: var(--danger-soft);
 }

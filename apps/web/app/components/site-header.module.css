@@ -2,9 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  /* ნახევრად გამჭვირვალე — ფონის გრადიენტი ქვემოდან ჩანს */
-  background: rgba(255, 253, 246, 0.85);
-  backdrop-filter: blur(12px);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
@@ -27,6 +25,7 @@
 .name {
   font-weight: 700;
   font-size: 18px;
+  color: var(--text-primary);
 }
 
 .nav {
@@ -34,11 +33,12 @@
   gap: 24px;
   margin-left: auto;
   font-size: 15px;
-  color: var(--text-secondary);
+  color: var(--primary-text);
+  font-weight: 600;
 }
 
 .nav a:hover {
-  color: var(--text-primary);
+  text-decoration: underline;
 }
 
 .actions {

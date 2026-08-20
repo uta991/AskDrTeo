@@ -22,13 +22,16 @@ export const colors = {
   primaryDeep: '#9C7C00',
   primaryLight: '#FFF6A8',
   primarySoft: '#FFFDEB',
+  /** ყვითელი წვრილი ტექსტისთვის — #FFEC4F თეთრზე ძალიან ღიაა */
+  primaryText: '#E8A400',
 
-  // ტექსტი
-  textPrimary: '#2E2A22',
-  textSecondary: '#8A8072',
-  textMuted: '#BFB4A2',
-  /** ყვითელ ღილაკზე ტექსტი მუქია — ყვითელზე თეთრი არ იკითხება */
-  textOnPrimary: '#3A3020',
+  // ტექსტი — პალიტრა ორფერიანია: ყვითელი აქცენტად, შავი ტექსტად.
+  // ნაცრისფრები მხოლოდ იერარქიისთვისაა და ფერს არ ამატებს.
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B6B6B',
+  textMuted: '#9E9E9E',
+  /** ყვითელ ღილაკზე ტექსტი შავია — ყვითელზე თეთრი არ იკითხება */
+  textOnPrimary: '#1A1A1A',
 
   // ზედაპირები
   surface: '#FFFFFF',
@@ -40,10 +43,19 @@ export const colors = {
   borderFocus: '#FFEC4F',
 
   // სტატუსები
-  danger: '#E5484D',
-  dangerSoft: '#FDF2F2',
-  success: '#12A150',
-  warning: '#F5A524',
+  danger: '#D92D20',
+  /**
+   * განვითარების შედეგი — შუქნიშანი.
+   *
+   * სემანტიკური ფერებია და არა სტილი: მწვანე — რიგზეა, ყვითელი —
+   * ვიზიტი სასურველია, წითელი — პედიატრთან მისვლა საჭიროა.
+   */
+  statusOk: '#2F9E5E',
+  statusWatch: '#E8A400',
+  statusAlert: '#D92D20',
+  dangerSoft: '#FEF3F2',
+  success: '#9C7C00',
+  warning: '#9C7C00',
 } as const;
 
 export const spacing = {
@@ -83,7 +95,7 @@ export const typography = {
 export const shadows = {
   card: Platform.select({
     ios: {
-      shadowColor: '#8A6D3B',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.1,
       shadowRadius: 24,
@@ -93,7 +105,7 @@ export const shadows = {
   }),
   button: Platform.select({
     ios: {
-      shadowColor: '#C9A800',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.35,
       shadowRadius: 14,
@@ -103,7 +115,7 @@ export const shadows = {
   }),
   input: Platform.select({
     ios: {
-      shadowColor: '#8A6D3B',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.06,
       shadowRadius: 8,

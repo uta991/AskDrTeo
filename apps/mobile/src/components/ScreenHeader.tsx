@@ -5,10 +5,10 @@ import { Icon } from '@/components/ui/Icon';
 import { colors, radius, spacing, typography } from '@/theme';
 
 /**
- * ეკრანის ყვითელი თავსართი.
+ * ეკრანის თავსართი.
  *
- * ბრენდის ტონი ზედა ზოლშია და არა ფონზე — ასე ყვითელი მკაფიოდ ჩანს,
- * შიგთავსი კი თეთრზე რჩება და იკითხება.
+ * ფონი თეთრია, სათაური კი ბრენდის ყვითელით — ასე ყვითელი წარწერაშია
+ * და არა ფონზე.
  */
 export function ScreenHeader({
   title,
@@ -26,7 +26,7 @@ export function ScreenHeader({
       <View style={styles.row}>
         {!!onBack && (
           <Pressable onPress={onBack} hitSlop={12} style={styles.back}>
-            <Icon name="chevron-left" size={20} color={colors.textOnPrimary} strokeWidth={2.4} />
+            <Icon name="chevron-left" size={20} color={colors.textPrimary} strokeWidth={2.4} />
           </Pressable>
         )}
 
@@ -41,11 +41,11 @@ export function ScreenHeader({
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.md,
-    borderBottomLeftRadius: radius.xxl,
-    borderBottomRightRadius: radius.xxl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   back: {
@@ -54,9 +54,9 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceTranslucent,
+    backgroundColor: colors.surfaceMuted,
   },
   text: { flex: 1 },
-  title: { ...typography.h2, color: colors.textOnPrimary },
-  subtitle: { ...typography.small, color: colors.textOnPrimary, opacity: 0.75, marginTop: 2 },
+  title: { ...typography.h2, color: colors.primary },
+  subtitle: { ...typography.small, color: colors.textSecondary, marginTop: 2 },
 });

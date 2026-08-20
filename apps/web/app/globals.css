@@ -14,23 +14,44 @@
   --primary-deep: #9c7c00;
   --primary-light: #fff6a8;
   --primary-soft: #fffdeb;
+  /* ყვითელი წვრილი ტექსტისთვის — #ffec4f თეთრზე ძალიან ღიაა და
+     ნავიგაციის ბმულები გაფერმკრთალებული ჩანდა. დიდი სათაურები
+     ისევ სუფთა ტონზე რჩება. */
+  --primary-text: #e8a400;
 
-  --text-primary: #2e2a22;
-  --text-secondary: #8a8072;
-  --text-muted: #bfb4a2;
-  --text-on-primary: #3a3020;
+  /* პალიტრა განზრახ ორფერიანია: ყვითელი აქცენტად, შავი ტექსტად.
+     ნაცრისფრები მხოლოდ იერარქიისთვისაა და ფერს არ ამატებს. */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-muted: #9e9e9e;
+  --text-on-primary: #1a1a1a;
 
   --border: #e6e6e6;
   /* ოდნავ ნაცრისფერი ზედაპირი — ბარათებისა და ველების გამოსაყოფად */
   --surface-muted: #f7f7f7;
+
+  /* წითელი მხოლოდ საფრთხისთვისაა — წაშლა და შეცდომა.
+     დეკორაციად არსად გამოიყენება. */
+  --danger: #d92d20;
+  --danger-soft: #fef3f2;
+
+  /* განვითარების შედეგი — შუქნიშანი. ეს სამი ფერი სემანტიკურია
+     და არა სტილი: მშობელმა ერთი შეხედვით უნდა გაარჩიოს, რიგზეა
+     თუ ექიმთან მისვლა სჭირდება. */
+  --status-ok: #2f9e5e;
+  --status-ok-soft: #e9f7ef;
+  --status-watch: #e8a400;
+  --status-watch-soft: #fff6e0;
+  --status-alert: #d92d20;
+  --status-alert-soft: #fef3f2;
 
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-xxl: 28px;
   --radius-pill: 999px;
 
-  --shadow-card: 0 8px 24px rgba(138, 109, 59, 0.1);
-  --shadow-button: 0 6px 14px rgba(232, 164, 0, 0.35);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.07);
+  --shadow-button: 0 6px 14px rgba(255, 236, 79, 0.5);
 }
 
 * {

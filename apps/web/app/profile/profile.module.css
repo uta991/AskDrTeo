@@ -27,13 +27,14 @@
 .name {
   font-weight: 700;
   font-size: 18px;
+  color: var(--text-primary);
 }
 
 .logout {
   height: 40px;
   padding: 0 20px;
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--primary-text);
   background: var(--surface);
   font-family: inherit;
   font-size: 14px;
@@ -162,12 +163,12 @@
 
 .error {
   font-size: 13px;
-  color: #e5484d;
+  color: var(--danger);
 }
 
 .notice {
   font-size: 13px;
-  color: #2f9e5e;
+  color: var(--primary-deep);
   font-weight: 600;
 }
 

@@ -7,12 +7,12 @@
   background: var(--surface); border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 12px; }
-.role { font-size: 13px; color: var(--text-secondary); }
+.role { font-size: 13px; color: var(--primary-text); }
 .headerRight { display: flex; align-items: center; gap: 16px; }
-.userName { font-size: 14px; color: var(--text-secondary); }
+.userName { font-size: 14px; color: var(--primary-text); }
 .logout {
   height: 40px; padding: 0 20px; border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border); background: var(--surface);
+  border: 1.5px solid var(--primary-text); background: var(--surface);
   font-family: inherit; font-size: 14px; cursor: pointer;
 }
 .logout:hover { border-color: var(--primary); }
@@ -68,7 +68,7 @@
 }
 
 .tab {
-  color: var(--text-secondary);
+  color: var(--primary-text);
 }
 
 .tab:hover {
@@ -194,9 +194,9 @@
 }
 
 .roleParent { background: var(--text-muted); }
-.roleOperator { background: #2f9e5e; }
+.roleOperator { background: var(--primary-deep); }
 .roleAdmin { background: var(--primary-deep); }
-.roleSuper { background: #e5484d; }
+.roleSuper { background: var(--danger); }
 
 .chevron {
   color: var(--text-muted);
@@ -294,7 +294,7 @@
   padding: 0 20px;
   border-radius: var(--radius-pill);
   border: none;
-  background: #e5484d;
+  background: var(--danger);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -318,14 +318,14 @@
 }
 
 .confirmBox {
-  background: #fdf2f2;
-  border: 1.5px solid #f5c2c2;
+  background: var(--danger-soft);
+  border: 1.5px solid var(--danger);
 }
 
 /* სამუდამო წაშლა ვიზუალურად უფრო მკაცრია — შეცდომა შეუქცევადია */
 .purgeBox {
-  background: #fff5f5;
-  border: 2px solid #e5484d;
+  background: var(--danger-soft);
+  border: 2px solid var(--danger);
 }
 
 .confirmText {
@@ -347,19 +347,19 @@
   padding: 0;
   font-family: inherit;
   font-size: 13px;
-  color: #e5484d;
+  color: var(--danger);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .actionError {
   font-size: 13px;
-  color: #e5484d;
+  color: var(--danger);
 }
 
 .actionNotice {
   font-size: 13px;
-  color: #2f9e5e;
+  color: var(--primary-deep);
 }
 
 /* ── პერსონალის შექმნა ────────────────────────────────────── */
@@ -429,8 +429,8 @@
 }
 
 .badgeActive {
-  background: #e6f6ec;
-  color: #2f9e5e;
+  background: var(--primary-soft);
+  color: var(--primary-deep);
 }
 
 .badgeOff {
