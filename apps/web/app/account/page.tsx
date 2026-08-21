@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
+import { planColor } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
 import { UserMenu } from '../components/UserMenu';
 import { PromoRedeem } from './PromoRedeem';
@@ -129,7 +130,9 @@ export default async function AccountPage() {
           {/* ── პაკეტი ───────────────────────────────────── */}
           <section className="card">
             <h2 className={styles.cardTitle}>ჩემი პაკეტი</h2>
-            <p className={styles.plan}>{planLabel}</p>
+            <p className={styles.plan} style={{ color: planColor(entitlements?.planCode) }}>
+              {planLabel}
+            </p>
 
             {!!entitlements?.periodEnd && (
               <p className={styles.childMeta}>ვადა: {entitlements.periodEnd.slice(0, 10)}</p>
@@ -144,7 +147,7 @@ export default async function AccountPage() {
               ))}
             </ul>
 
-            <Link href="/#plans" className={styles.link}>
+            <Link href="/plans" className={styles.link}>
               ყველა პაკეტის ნახვა
             </Link>
           </section>

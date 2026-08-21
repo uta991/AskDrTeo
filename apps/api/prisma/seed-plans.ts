@@ -28,6 +28,13 @@ const FEATURES = [
   { key: 'dose_calculator', name: 'დოზის კალკულატორი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'development_monitoring', name: 'განვითარების მონიტორინგი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
   { key: 'ai_assistant', name: 'AI ასისტენტი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
+  {
+    key: 'monthly_free_visit',
+    name: 'უფასო ვიზიტი პედიატრთან',
+    type: FeatureType.LIMIT,
+    unit: 'visits',
+    defaultValue: '0',
+  },
   // ატვირთვის ლიმიტები ტიპების მიხედვით — ერთი საერთო რიცხვი 5MB-ს
   // ფოტოსთვის გონივრულს ხდიდა, ვიდეოსთვის კი უაზროს
   { key: 'max_upload_mb_image', name: 'სურათის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '5' },
@@ -39,11 +46,11 @@ const PLANS = [
   {
     code: 'free',
     name: 'უფასო',
-    description: 'გაეცანი აპლიკაციას და თვალი ადევნე ბავშვის ზრდას',
+    description: 'განვითარების მონიტორინგი და აპლიკაციის გაცნობა',
     isFree: true,
     isDefault: true,
     sortOrder: 1,
-    colorHex: '#94A3B8',
+    colorHex: '#c4574d',
     prices: [],
     features: {
       video_library: 'free_only',
@@ -53,12 +60,13 @@ const PLANS = [
       max_children: '1',
       max_upload_mb_image: '5',
       max_upload_mb_document: '5',
-      // ზრდის და განვითარების თვალყური უფასოშიც — მშობელი ამისთვის მოდის
-      growth_tracking: true,
+      // უფასოში მხოლოდ განვითარების მონიტორინგი — დანარჩენი ფასიანშია
       development_monitoring: true,
-      vaccination_calendar: true,
+      growth_tracking: false,
+      vaccination_calendar: false,
       dose_calculator: false,
       ai_assistant: false,
+      monthly_free_visit: false,
       ad_free: false,
     },
   },
@@ -70,7 +78,7 @@ const PLANS = [
     highlight: true,
     trialDays: 7,
     sortOrder: 2,
-    colorHex: '#F5B800',
+    colorHex: '#e8a400',
     prices: [
       { currency: 'GEL', amountMinor: 1990, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 19900, interval: BillingInterval.YEAR },
@@ -88,15 +96,16 @@ const PLANS = [
       vaccination_calendar: true,
       dose_calculator: true,
       ai_assistant: false,
+      monthly_free_visit: false,
       ad_free: true,
     },
   },
   {
     code: 'premium',
     name: 'პრემიუმი',
-    description: 'სტანდარტულის ყველა ფუნქცია და AI ასისტენტი პედიატრიაში',
+    description: 'AI ასისტენტი და თვეში ერთი უფასო ვიზიტი პედიატრ თეონა ტაბატაძესთან',
     sortOrder: 3,
-    colorHex: '#E8A400',
+    colorHex: '#007201',
     prices: [
       { currency: 'GEL', amountMinor: 3990, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 39900, interval: BillingInterval.YEAR },
@@ -114,6 +123,8 @@ const PLANS = [
       vaccination_calendar: true,
       dose_calculator: true,
       ai_assistant: true,
+      // თვეში ერთი უფასო ვიზიტი პედიატრ თეონა ტაბატაძესთან
+      monthly_free_visit: '1',
       ad_free: true,
     },
   },
@@ -137,7 +148,12 @@ export async function seedPlans(prisma: PrismaClient): Promise<void> {
 
     const plan = await prisma.plan.upsert({
       where: { code: p.code },
-      update: { name: p.name, description: p.description, sortOrder: p.sortOrder },
+      update: {
+        name: p.name,
+        description: p.description,
+        sortOrder: p.sortOrder,
+        colorHex: p.colorHex,
+      },
       create: { ...planData, status: PlanStatus.ACTIVE },
     });
 

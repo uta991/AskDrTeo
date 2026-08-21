@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { apiFetch, getSessionUser } from '@/lib/session';
-import { getEntitlements } from '@/lib/entitlements';
+import { getEntitlements, planColor } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
 import styles from './plans.module.css';
 
@@ -45,6 +45,11 @@ function priceLabel(prices: Price[]): { month: string; year: string | null } {
 
 /** ლიმიტის მნიშვნელობა ადამიანურ ენაზე. */
 function featureLabel(feature: PlanFeature): string {
+  // ვიზიტი თვეზეა მიბმული — მარტო რიცხვი გაუგებარია
+  if (feature.key === 'monthly_free_visit') {
+    return `${feature.name}: თვეში ${feature.value ?? 1}`;
+  }
+
   if (!feature.value) return feature.name;
   if (feature.value === 'unlimited') return `${feature.name}: ულიმიტო`;
   if (feature.value === 'free_only') return `${feature.name}: უფასო ნაწილი`;
@@ -73,8 +78,8 @@ export default async function PlansPage() {
         <SunLogo size={44} />
         <h1 className={styles.title}>პაკეტები</h1>
         <p className={styles.subtitle}>
-          ზრდისა და განვითარების თვალყური ყველა პაკეტშია. ფასიანი პაკეტები დოზის
-          კალკულატორსა და AI ასისტენტს ამატებს.
+          განვითარების მონიტორინგი უფასოშიც არის. ფასიანი პაკეტები ზრდის
+          დინამიკას, დოზის კალკულატორსა და AI ასისტენტს ამატებს.
         </p>
       </div>
 
@@ -86,11 +91,18 @@ export default async function PlansPage() {
           return (
             <section
               key={plan.id}
-              className={`${styles.card} ${plan.highlight ? styles.cardHighlight : ''}`}
+              className={styles.card}
+              style={{ borderColor: planColor(plan.code) }}
             >
-              {!!plan.badge && <span className={styles.badge}>{plan.badge}</span>}
+              {!!plan.badge && (
+                <span className={styles.badge} style={{ background: planColor(plan.code) }}>
+                  {plan.badge}
+                </span>
+              )}
 
-              <h2 className={styles.planName}>{plan.name}</h2>
+              <h2 className={styles.planName} style={{ color: planColor(plan.code) }}>
+                {plan.name}
+              </h2>
               <p className={styles.price}>{price.month}</p>
               {!!price.year && <p className={styles.priceYear}>{price.year}</p>}
 
@@ -99,7 +111,9 @@ export default async function PlansPage() {
               <ul className={styles.features}>
                 {plan.features.map((feature) => (
                   <li key={feature.key} className={styles.feature}>
-                    <span className={styles.check}>✓</span>
+                    <span className={styles.check} style={{ color: planColor(plan.code) }}>
+                      ✓
+                    </span>
                     {featureLabel(feature)}
                   </li>
                 ))}
@@ -110,11 +124,21 @@ export default async function PlansPage() {
               )}
 
               {isCurrent ? (
-                <span className={styles.currentTag}>თქვენი პაკეტი</span>
+                <span
+                  className={styles.currentTag}
+                  style={{ background: planColor(plan.code), color: '#ffffff' }}
+                >
+                  თქვენი პაკეტი
+                </span>
               ) : (
                 <Link
                   href={user ? '/account' : '/register'}
-                  className={`btn ${plan.highlight ? 'btn-primary' : 'btn-outline'} ${styles.cta}`}
+                  className={`btn ${styles.cta}`}
+                  style={{
+                    background: planColor(plan.code),
+                    borderColor: planColor(plan.code),
+                    color: '#ffffff',
+                  }}
                 >
                   {plan.isFree ? 'დაწყება' : 'პაკეტის აღება'}
                 </Link>
