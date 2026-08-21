@@ -211,6 +211,8 @@ export const ka = {
     publishNow: 'გამოქვეყნება და შეტყობინების გაგზავნა',
     published: 'გამოქვეყნებული',
     draft: 'მონახაზი',
+    videoProcessing: 'ვიდეო მუშავდება',
+    videoProcessingHint: 'ვიდეო მუშავდება — სიახლე დამუშავების დასრულებისთანავე გამოქვეყნდება',
     sentTo: 'გაეგზავნა {{count}} მშობელს',
 
     promoCode: 'კოდი',
@@ -466,6 +468,8 @@ export const en: Loose<Translations> = {
     publishNow: 'Publish and notify',
     published: 'Published',
     draft: 'Draft',
+    videoProcessing: 'Processing video',
+    videoProcessingHint: 'The video is still processing — the post goes live as soon as it is ready',
     sentTo: 'Sent to {{count}} parents',
 
     promoCode: 'Code',
@@ -716,6 +720,8 @@ export const ru: Loose<Translations> = {
     publishNow: 'Опубликовать и уведомить',
     published: 'Опубликовано',
     draft: 'Черновик',
+    videoProcessing: 'Видео обрабатывается',
+    videoProcessingHint: 'Видео ещё обрабатывается — новость опубликуется сразу после готовности',
     sentTo: 'Отправлено {{count}} родителям',
 
     promoCode: 'Код',

@@ -33,6 +33,7 @@ export function AdminNewsTab() {
   const [video, setVideo] = useState<PickedVideo | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // ოპერატორს ვიდეოს მიმაგრება არ შეუძლია — ღილაკიც არ უნდა ჩანდეს
   const canAttachVideo = role === 'ADMIN' || role === 'SUPER_ADMIN';
@@ -43,6 +44,7 @@ export function AdminNewsTab() {
 
   const handlePublish = async () => {
     setError(null);
+    setNotice(null);
     if (!title.trim() || !body.trim()) return;
 
     setBusy(true);
@@ -50,7 +52,16 @@ export function AdminNewsTab() {
       // ვიდეო ჯერ იტვირთება — ჩავარდნისას პოსტი არ უნდა შეიქმნას
       const videoId = video ? await uploadVideo(video, title.trim()) : undefined;
 
-      await createNews({ title: title.trim(), body: body.trim(), videoId, publishNow: true });
+      const post = await createNews({
+        title: title.trim(),
+        body: body.trim(),
+        videoId,
+        publishNow: true,
+      });
+
+      // ვიდეოს გადაშიფვრას დრო სჭირდება — თორემ ლენტში შავი კადრი დახვდებოდათ
+      if (post.publishAfterVideo) setNotice(t('admin', 'videoProcessingHint'));
+
       setTitle('');
       setBody('');
       setVideo(null);
@@ -121,6 +132,7 @@ export function AdminNewsTab() {
             )}
 
             {!!error && <Text style={styles.error}>{error}</Text>}
+            {!!notice && <Text style={styles.notice}>{notice}</Text>}
 
             <Button
               title={t('admin', 'publishNow')}
@@ -139,10 +151,15 @@ export function AdminNewsTab() {
                   style={[
                     styles.statusPill,
                     post.status === 'PUBLISHED' && styles.statusPublished,
+                    post.publishAfterVideo && styles.statusWaiting,
                   ]}
                 >
                   <Text style={styles.statusText}>
-                    {post.status === 'PUBLISHED' ? t('admin', 'published') : t('admin', 'draft')}
+                    {post.publishAfterVideo
+                      ? t('admin', 'videoProcessing')
+                      : post.status === 'PUBLISHED'
+                        ? t('admin', 'published')
+                        : t('admin', 'draft')}
                   </Text>
                 </View>
               </View>
@@ -204,6 +221,7 @@ const styles = StyleSheet.create({
   videoButtonFilled: { borderStyle: 'solid', borderColor: colors.success },
   videoButtonText: { ...typography.caption, color: colors.textSecondary },
   error: { ...typography.small, color: colors.danger, marginBottom: spacing.sm },
+  notice: { ...typography.small, color: colors.primaryDeep, marginBottom: spacing.sm },
   submit: { marginTop: spacing.xs },
   postCard: { marginBottom: spacing.sm },
   postHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
@@ -215,6 +233,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   statusPublished: { backgroundColor: colors.success },
+  statusWaiting: { backgroundColor: colors.primaryDeep },
   statusText: { ...typography.small, fontSize: 10, color: colors.surface, fontWeight: '700' },
   postBody: { ...typography.small, color: colors.textSecondary, marginTop: spacing.xs },
   postMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },

@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { MediaStatus, StorageProvider, VideoStatus } from '@prisma/client';
 import { timingSafeEqual } from 'node:crypto';
+import { NewsService } from '../news/news.service';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { VIDEO_STORAGE, type VideoStorageProvider } from '../storage/storage.types';
 
@@ -37,6 +38,7 @@ export class MediaWebhookService {
   private readonly logger = new Logger(MediaWebhookService.name);
 
   constructor(
+    private readonly news: NewsService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(VIDEO_STORAGE) private readonly videos: VideoStorageProvider,
@@ -161,6 +163,19 @@ export class MediaWebhookService {
     }
 
     this.logger.log(`ვიდეო მზადაა: ${providerAssetId} (${details?.durationSec ?? 0} წმ)`);
+
+    // ვიდეოს მოლოდინში მყოფი სიახლეები ახლა ქვეყნდება — ატვირთვისას
+    // მშობელს შავი კადრი დახვდებოდა, სანამ გადაშიფვრა დასრულდებოდა
+    const videos = await this.prisma.video.findMany({
+      where: { mediaAssetId: assetId },
+      select: { id: true },
+    });
+
+    for (const video of videos) {
+      await this.news.publishWaitingFor(video.id).catch((error) => {
+        this.logger.error(`სიახლეების გამოქვეყნება ჩავარდა: ${error}`);
+      });
+    }
   }
 
   private async markFailed(assetId: string, reason: string): Promise<void> {

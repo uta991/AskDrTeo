@@ -109,37 +109,34 @@ function score(answer: MilestoneAnswer): number | null {
 /**
  * კითხვების შერჩევა ასაკის მიხედვით.
  *
- * წინა თვეების კითხვებიც შედის: 8 თვის ბავშვს 6 თვის უნარებიც უნდა
- * ჰქონდეს. `windowMonths` ზღუდავს რამდენად შორს ვიხედებით უკან —
- * თორემ 5 წლის ბავშვს ასობით კითხვა დაუგროვდებოდა.
+ * მხოლოდ მონიშნული ასაკის ეტაპი — 5 თვის ბავშვს 1 თვის კითხვები აღარ
+ * უსვამს. ცნობარში ასაკები თანაბრად არ არის განაწილებული (16-ის შემდეგ
+ * 18, 20, 22, 24, 28…), ამიტომ შუალედური ასაკი უახლოეს დაწყებულ ეტაპს
+ * ეკუთვნის: 17 თვე → 16 თვის ეტაპი, 26 თვე → 24 თვის.
  */
-export function questionsForAge(
-  all: Question[],
-  ageMonths: number,
-  windowMonths = 6,
-): Question[] {
+export function questionsForAge(all: Question[], ageMonths: number): Question[] {
   if (ageMonths > MAX_AGE_MONTHS) return [];
 
-  const eligible = all.filter((q) => q.ageMonths <= ageMonths);
-  if (!eligible.length) return [];
+  const stages = [...new Set(all.map((q) => q.ageMonths))].sort((a, b) => a - b);
+  if (!stages.length) return [];
 
-  let lowerBound = Math.max(0, ageMonths - windowMonths);
+  // ასაკზე ნაკლები ან ტოლი ბოლო ეტაპი; თუ ბავშვი პირველ ეტაპზე პატარაა,
+  // ყველაზე ადრეული ეტაპი ეძლევა — ცარიელი კითხვარი აზრს კარგავს
+  const stage = stages.filter((s) => s <= ageMonths).pop() ?? stages[0];
 
-  // ცნობარში ასაკები თანაბრად არ არის განაწილებული — თუ ფანჯარაში
-  // ვერაფერი მოხვდა, უახლოეს წინა ეტაპამდე ვწევთ. სხვაგვარად ბავშვს,
-  // რომლის ასაკზეც ჯერ კითხვები არაა, ცარიელი კითხვარი დახვდებოდა.
-  if (!eligible.some((q) => q.ageMonths >= lowerBound)) {
-    lowerBound = Math.max(...eligible.map((q) => q.ageMonths));
-  }
-
-  return eligible
-    .filter((q) => q.ageMonths >= lowerBound)
+  return all
+    .filter((q) => q.ageMonths === stage)
     .sort(
       (a, b) =>
         DOMAIN_ORDER.indexOf(a.domain) - DOMAIN_ORDER.indexOf(b.domain) ||
-        a.ageMonths - b.ageMonths ||
         a.code.localeCompare(b.code),
     );
+}
+
+/** მონიშნული ასაკის ეტაპი — რომელი ეტაპის კითხვები დაისმება. */
+export function stageForAge(all: Question[], ageMonths: number): number | null {
+  const questions = questionsForAge(all, ageMonths);
+  return questions.length ? questions[0].ageMonths : null;
 }
 
 /** დომენის შედეგი პასუხების მიხედვით. */

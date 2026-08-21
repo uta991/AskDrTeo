@@ -141,7 +141,12 @@ export function DevelopmentTab() {
         {!!activeChild && !result && started && (
           <>
             <Text style={styles.subtitle}>
-              {activeChild.firstName} — {ageText(ageMonths)}.{' '}
+              {activeChild.firstName} — {ageText(ageMonths)}
+              {/* ცნობარში ყველა თვე არ არის — 17 თვე 16 თვის ეტაპს ეკუთვნის */}
+              {!!questions.length &&
+                questions[0].ageMonths !== ageMonths &&
+                ` (${ageText(questions[0].ageMonths)}ის ეტაპი)`}
+              .{' '}
               <Text style={styles.changeAge} onPress={() => setStarted(false)}>
                 ასაკის შეცვლა
               </Text>

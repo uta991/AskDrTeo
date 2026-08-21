@@ -50,6 +50,8 @@ export interface NewsPost {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   notifiedCount: number;
   publishedAt: string | null;
+  /** ვიდეო ჯერ მუშავდება — მზადყოფნისას სიახლე თავად გამოქვეყნდება */
+  publishAfterVideo: boolean;
   video: { id: string; title: string } | null;
 }
 
@@ -90,7 +92,7 @@ interface AdminState {
   loadPromos: (force?: boolean) => Promise<void>;
 
   grantPlan: (userId: string, planCode: string, expiresAt?: string) => Promise<void>;
-  createNews: (input: CreateNewsInput) => Promise<void>;
+  createNews: (input: CreateNewsInput) => Promise<NewsPost>;
   createPromo: (input: CreatePromoInput) => Promise<void>;
   reset: () => void;
 }
@@ -232,8 +234,9 @@ export const useAdmin = create<AdminState>((set, get) => ({
   },
 
   async createNews(input) {
-    await api('/admin/news', { method: 'POST', body: input });
+    const post = await api<NewsPost>('/admin/news', { method: 'POST', body: input });
     await get().loadNews(true);
+    return post;
   },
 
   async createPromo(input) {

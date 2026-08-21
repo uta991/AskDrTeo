@@ -207,7 +207,10 @@ export function AssessmentForm({ children }: { children: Child[] }) {
       <input type="hidden" name="ageMonths" value={ageMonths} />
 
       <p className={styles.intro}>
-        <strong>{child?.firstName}</strong> — {ageLabel(ageMonths)}.{' '}
+        <strong>{child?.firstName}</strong> — {ageLabel(ageMonths)}
+        {/* ცნობარში ყველა თვე არ არის — 17 თვე 16 თვის ეტაპს ეკუთვნის */}
+        {questions[0].ageMonths !== ageMonths && ` (${ageLabel(questions[0].ageMonths)}ის ეტაპი)`}
+        .{' '}
         <button type="button" className={styles.changeAge} onClick={() => setQuestions(null)}>
           ასაკის შეცვლა
         </button>

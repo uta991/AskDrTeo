@@ -144,8 +144,68 @@ export class NewsService {
       description: `სიახლე შეიქმნა: ${post.title}`,
     });
 
-    // publishNow — ერთი ნაბიჯით შექმნა და გამოქვეყნება
-    return dto.publishNow ? this.publish(post.id, actorId) : post;
+    if (!dto.publishNow) return post;
+
+    // ვიდეო ჯერ მუშავდება — გამოქვეყნება მოგვიანებით, webhook-ით.
+    // თორემ მშობელს ლენტში შავი კადრი დახვდებოდა, სანამ Bunny
+    // გადაშიფვრას დაასრულებდა.
+    if (await this.isVideoProcessing(dto.videoId)) {
+      this.logger.log(`სიახლე "${post.title}" ელოდება ვიდეოს დამუშავებას`);
+
+      return this.prisma.newsPost.update({
+        where: { id: post.id },
+        data: { publishAfterVideo: true },
+        include: NEWS_INCLUDE,
+      });
+    }
+
+    return this.publish(post.id, actorId);
+  }
+
+  /** ვიდეო ჯერ არ არის მზად თუ არა. */
+  private async isVideoProcessing(videoId?: string): Promise<boolean> {
+    if (!videoId) return false;
+
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+      select: { mediaAsset: { select: { status: true } } },
+    });
+
+    return !!video?.mediaAsset && video.mediaAsset.status !== MediaStatus.READY;
+  }
+
+  /**
+   * ვიდეოს დამუშავება დასრულდა — მისი მოლოდინში მყოფი სიახლეები ქვეყნდება.
+   *
+   * webhook იძახებს. `notify` პატივცემულია: შეტყობინება მაშინ მიდის,
+   * როცა მშობელს რეალურად აქვს რა ნახოს.
+   */
+  async publishWaitingFor(videoId: string): Promise<number> {
+    const waiting = await this.prisma.newsPost.findMany({
+      where: {
+        videoId,
+        publishAfterVideo: true,
+        status: NewsStatus.DRAFT,
+        deletedAt: null,
+      },
+      select: { id: true, authorId: true, title: true },
+    });
+
+    for (const post of waiting) {
+      await this.prisma.newsPost.update({
+        where: { id: post.id },
+        data: { publishAfterVideo: false },
+      });
+
+      await this.publish(post.id, post.authorId ?? undefined).catch((error) => {
+        this.logger.error(`"${post.title}" გამოქვეყნება ჩავარდა: ${error}`);
+      });
+    }
+
+    if (waiting.length) {
+      this.logger.log(`ვიდეო მზადაა — გამოქვეყნდა ${waiting.length} სიახლე`);
+    }
+    return waiting.length;
   }
 
   async update(id: string, dto: UpdateNewsDto, actorId: string) {
@@ -183,7 +243,7 @@ export class NewsService {
    * შეტყობინებები მხოლოდ პირველ გამოქვეყნებაზე იგზავნება — ხელახალი
    * გამოქვეყნება მომხმარებლებს იმავე ტექსტს მეორედ არ მიაწვდის.
    */
-  async publish(id: string, actorId: string) {
+  async publish(id: string, actorId?: string) {
     const post = await this.findOne(id);
     const firstPublish = !post.publishedAt;
 

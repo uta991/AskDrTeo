@@ -38,7 +38,7 @@ export async function createNews(_prev: NewsState, formData: FormData): Promise<
       videoId = uploaded.videoId ?? uploaded.id;
     }
 
-    await apiMutate('/admin/news', 'POST', {
+    const post = await apiMutate<{ publishAfterVideo?: boolean }>('/admin/news', 'POST', {
       title,
       body,
       videoId,
@@ -52,6 +52,14 @@ export async function createNews(_prev: NewsState, formData: FormData): Promise<
     });
 
     revalidatePath('/admin/news');
+
+    // ვიდეოს გადაშიფვრას დრო სჭირდება — სიახლე მზადყოფნისას თავად გამოჩნდება
+    if (post?.publishAfterVideo) {
+      return {
+        notice: 'ვიდეო მუშავდება — სიახლე დამუშავების დასრულებისთანავე გამოქვეყნდება',
+      };
+    }
+
     return { notice: notify ? 'სიახლე გამოქვეყნდა და შეტყობინება გაიგზავნა' : 'სიახლე გამოქვეყნდა' };
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'სიახლე ვერ გამოქვეყნდა' };

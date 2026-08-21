@@ -14,6 +14,7 @@ export interface NewsPost {
   createdAt: string;
   visibleFrom: string | null;
   visibleUntil: string | null;
+  publishAfterVideo?: boolean;
   video?: { id: string; title: string | null } | null;
 }
 
@@ -52,7 +53,11 @@ export function NewsRow({ post }: { post: NewsPost }) {
       <div className={styles.newsHead}>
         <strong>{post.title}</strong>
         <span className={post.status === 'PUBLISHED' && !expired ? styles.badgeActive : styles.badgeOff}>
-          {expired ? 'ვადა გასული' : (STATUS_LABELS[post.status] ?? post.status)}
+          {post.publishAfterVideo
+            ? 'ვიდეო მუშავდება'
+            : expired
+              ? 'ვადა გასული'
+              : (STATUS_LABELS[post.status] ?? post.status)}
         </span>
       </div>
 
@@ -62,6 +67,7 @@ export function NewsRow({ post }: { post: NewsPost }) {
         <span>{(post.publishedAt ?? post.createdAt).slice(0, 10)}</span>
         <span>{windowLabel(post.visibleFrom, post.visibleUntil)}</span>
         {!!post.video && <span>ვიდეო მიმაგრებულია</span>}
+        {post.publishAfterVideo && <span>დამუშავების შემდეგ თავად გამოქვეყნდება</span>}
       </div>
 
       {!confirming ? (
