@@ -658,3 +658,26 @@
   content: '·';
   margin-right: 8px;
 }
+
+@media (max-width: 720px) {
+  .header {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  /* ტაბები ჰორიზონტალურად სქროლდება — ჩამონაშალში გამეორება ზედმეტია */
+  .tabs {
+    order: 3;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .tab,
+  .tabActive {
+    flex-shrink: 0;
+    padding: 7px 13px;
+    font-size: 13px;
+  }
+}

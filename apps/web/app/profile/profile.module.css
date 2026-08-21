@@ -190,3 +190,13 @@
 .links a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 720px) {
+  .header {
+    padding: 10px 16px;
+  }
+
+  .body {
+    padding: 0 14px;
+  }
+}

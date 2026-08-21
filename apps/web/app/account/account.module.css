@@ -281,3 +281,15 @@
   background: var(--surface-muted);
   color: var(--text-primary);
 }
+
+@media (max-width: 720px) {
+  .header {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  /* კალკულატორი და განვითარება პროფილის მენიუშია */
+  .headerNav {
+    display: none;
+  }
+}

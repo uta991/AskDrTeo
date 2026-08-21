@@ -27,6 +27,15 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
 
+  // სენსორულ ეკრანზე hover არ არსებობს: შეხებაზე `mouseenter` ჯერ
+  // ხსნის, `click` კი მაშინვე ხურავს — მენიუ საერთოდ არ იხსნებოდა.
+  // ამიტომ კურსორის მოვლენებს მხოლოდ იქ ვაბამთ, სადაც hover მართლაც აქვს.
+  const [hasHover, setHasHover] = useState(false);
+
+  useEffect(() => {
+    setHasHover(window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  }, []);
+
   // გარეთ დაჭერა და Escape მენიუს ხურავს
   useEffect(() => {
     if (!open) return;
@@ -62,8 +71,8 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
     <div
       ref={wrapper}
       className={styles.wrapper}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={hasHover ? () => setOpen(true) : undefined}
+      onMouseLeave={hasHover ? () => setOpen(false) : undefined}
     >
       <button
         className={styles.trigger}
@@ -80,6 +89,8 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
           {open ? '▴' : '▾'}
         </span>
       </button>
+
+      {open && <div className={styles.backdrop} onClick={() => setOpen(false)} aria-hidden />}
 
       {open && (
         <div className={styles.dropdown} role="menu">

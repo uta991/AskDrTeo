@@ -328,3 +328,39 @@
 .status_ON_TRACK { color: var(--status-ok); font-weight: 600; }
 .status_WATCH { color: var(--status-watch); font-weight: 600; }
 .status_DISCUSS { color: var(--status-alert); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .header {
+    padding: 10px 16px;
+  }
+
+  .headerBar {
+    padding: 16px 16px 18px;
+    margin-bottom: 16px;
+  }
+
+  .body {
+    padding: 0 14px;
+  }
+
+  .domainBlock {
+    padding: 16px 14px;
+  }
+
+  /* პასუხის ღილაკები ორ სვეტად — ერთ რიგში ოთხივე არ ეტევა */
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .option,
+  .optionActive {
+    justify-content: center;
+    padding: 11px 8px;
+  }
+
+  .ageRow {
+    max-width: none;
+  }
+}

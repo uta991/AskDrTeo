@@ -69,3 +69,20 @@
     display: none;
   }
 }
+
+@media (max-width: 720px) {
+  .inner {
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  /* ბმულები პროფილის მენიუშია — ვიწრო ეკრანზე მათი გამეორება
+     header-ს ორ რიგად ჭიმავდა */
+  .nav {
+    display: none;
+  }
+
+  .name {
+    font-size: 16px;
+  }
+}

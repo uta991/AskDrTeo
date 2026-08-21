@@ -225,3 +225,22 @@
   color: var(--text-secondary);
   margin-top: 4px;
 }
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0 0 40px;
+  }
+
+  .headerBar {
+    padding: 16px 16px 18px;
+  }
+
+  .card {
+    padding: 20px 16px;
+    border-radius: var(--radius-xl);
+  }
+
+  .back {
+    margin-left: 6px;
+  }
+}

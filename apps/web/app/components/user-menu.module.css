@@ -124,3 +124,46 @@
 .logout:hover {
   background: var(--danger-soft);
 }
+
+/* ── ვიწრო ეკრანი ─────────────────────────────────────────── */
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /* ჩამონაშალი header-ის სიგანეს სცდებოდა და ნახევარი ეკრანს გარეთ
+     რჩებოდა — ვიწრო ეკრანზე ქვედა ფურცლად იხსნება */
+  .dropdown {
+    position: fixed;
+    inset: auto 10px 10px 10px;
+    min-width: 0;
+    max-height: 78vh;
+    overflow-y: auto;
+    border-radius: var(--radius-xxl);
+    padding: 10px;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .item,
+  .logout {
+    padding: 13px 14px;
+    font-size: 15px;
+  }
+
+  .triggerText {
+    display: none;
+  }
+
+  .trigger {
+    padding: 0 10px 0 6px;
+  }
+}
