@@ -1,0 +1,17 @@
+# Vercel მხოლოდ apps/web-ს აწყობს — დანარჩენის ატვირთვა ზედმეტია.
+# `ios/` 618 MB-ია და ატვირთვას წუთებამდე ჭიმავდა.
+
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+
+.next
+apps/web/.next
+
+**/node_modules
+
+# საერთო პაკეტების build — Vercel თავად აწყობს postinstall-ით
+packages/*/dist
+
+.git
+*.log
