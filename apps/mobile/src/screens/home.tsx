@@ -28,6 +28,9 @@ export function HomeTab() {
   const { posts: news, load: loadNews } = useNews();
 
   const isStaff = !!user && user.role !== 'PARENT';
+  // კალკულატორი ფასიან პაკეტშია; პერსონალს გამოწერა არ სჭირდება
+  const canUseCalculator = useEntitlements((state) => state.can('dose_calculator')) || isStaff;
+  const canUseAssistant = useEntitlements((state) => state.can('ai_assistant')) || isStaff;
 
   useEffect(() => {
     if (!user) return;
@@ -141,7 +144,18 @@ export function HomeTab() {
                 key: 'calculator',
                 label: t('tabs', 'calculator'),
                 icon: 'calculator',
-                onPress: () => goToTab('calculator'),
+                // ფასიან პაკეტშია — უფასოს პაკეტების გვერდი ხვდება
+                locked: !canUseCalculator,
+                onPress: () =>
+                  canUseCalculator ? goToTab('calculator') : router.push('/plans'),
+              },
+              {
+                key: 'assistant',
+                label: 'AI ასისტენტი',
+                icon: 'bulb',
+                // პრემიუმ პაკეტშია — დანარჩენებს პაკეტების გვერდი ხვდება
+                locked: !canUseAssistant,
+                onPress: () => router.push(canUseAssistant ? '/assistant' : '/plans'),
               },
               {
                 key: 'advice',

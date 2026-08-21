@@ -27,11 +27,12 @@ export async function SiteHeader() {
           <a href="#about">ჩვენ შესახებ</a>
           <a href="#features">შესაძლებლობები</a>
           <a href="#stages">ასაკები</a>
-          {/* პაკეტები მხოლოდ შესულს ეჩვენება — სექციაც მაშინ არსებობს */}
-          {!!user && <a href="#plans">პაკეტები</a>}
+          {/* პაკეტები ყველას ეხება — შესვლამდეც უნდა ჩანდეს, რა შედის რაში */}
+          <Link href="/plans">პაკეტები</Link>
           {/* დოზირება სამედიცინო ინფორმაციაა — მხოლოდ შესულს */}
           {!!user && <Link href="/development">განვითარება</Link>}
           {!!user && <Link href="/calculator">კალკულატორი</Link>}
+          {!!user && <Link href="/assistant">ასისტენტი</Link>}
         </nav>
 
         <div className={styles.actions}>

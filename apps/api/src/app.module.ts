@@ -13,6 +13,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ChildrenModule } from './modules/children/children.module';
+import { AiModule } from './modules/ai/ai.module';
 import { EntitlementsModule } from './modules/entitlements/entitlements.module';
 import { MediaModule } from './modules/media/media.module';
 import { MedicationsModule } from './modules/medications/medications.module';
@@ -34,6 +35,7 @@ import { SmsModule } from './modules/sms/sms.module';
     PrismaModule,
     AuditModule,
     EntitlementsModule,
+    AiModule,
     PermissionsModule,
     AuthModule,
     AdminUsersModule,

@@ -150,6 +150,14 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             დოზის კალკულატორი
           </Link>
 
+          <Link href="/assistant" className={styles.item} role="menuitem">
+            AI ასისტენტი
+          </Link>
+
+          <Link href="/plans" className={styles.item} role="menuitem">
+            პაკეტები
+          </Link>
+
           {/* გასვლა ბოლოშია და ცალკე გამოყოფილი — შემთხვევით არ დაიჭირო */}
           <form action={logout} className={styles.logoutForm}>
             <button className={styles.logout} role="menuitem">

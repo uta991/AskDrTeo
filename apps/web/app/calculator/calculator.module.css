@@ -244,3 +244,8 @@
     margin-left: 6px;
   }
 }
+
+.upgrade {
+  display: flex;
+  justify-content: center;
+}

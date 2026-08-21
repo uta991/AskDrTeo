@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { RequireFeature } from '@/common/decorators/require-feature.decorator';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { MedicationsService } from './medications.service';
 import { CreateMedicationDto, UpdateMedicationDto } from './dto/medication.dto';
@@ -20,6 +21,9 @@ export class MedicationsController {
   constructor(private readonly medications: MedicationsService) {}
 
   @Get()
+  // კალკულატორი ფასიან პაკეტშია — უფასოში ღილაკიც არ ჩანს, მაგრამ
+  // წვდომა სერვერზე უნდა შემოწმდეს და არა მხოლოდ ინტერფეისში
+  @RequireFeature('dose_calculator')
   @ApiOperation({ summary: 'დოზის კალკულატორის ცნობარი' })
   list() {
     return this.medications.listActive();

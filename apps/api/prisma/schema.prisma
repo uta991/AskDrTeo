@@ -98,6 +98,7 @@ model User {
   conversations   ConversationUser[]
   loginChallenges LoginChallenge[]
   trustedDevices  TrustedDevice[]
+  aiConversations AiConversation[]
   messages        Message[]
   operatorProfile OperatorProfile?
 
@@ -262,6 +263,7 @@ model Child {
   avatarAssetId String?
   avatarAsset   MediaAsset? @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   assessments   MilestoneAssessment[]
+  aiConversations AiConversation[]
 
   /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
   gestationalWeek Int?
@@ -1351,4 +1353,58 @@ model TrustedDevice {
 
   @@index([userId, revokedAt])
   @@map("trusted_devices")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI ასისტენტი — პრემიუმ პაკეტი
+// ═══════════════════════════════════════════════════════════════
+
+enum AiRole {
+  USER
+  ASSISTANT
+}
+
+/**
+ * მშობლის საუბარი ასისტენტთან.
+ *
+ * ოპერატორის ჩატისგან განზრახ ცალკეა: აქ მეორე მხარე ადამიანი არ არის,
+ * პასუხზე პასუხისმგებლობა კი სხვაგვარად ნაწილდება.
+ */
+model AiConversation {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// რომელ ბავშვზეა საუბარი — ასაკი პასუხს არსებითად ცვლის
+  childId String?
+  child   Child?  @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  title String
+
+  messages AiMessage[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, updatedAt])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role    AiRole
+  content String
+
+  /// ხარჯის აღრიცხვა — ლიმიტების დაწესება ციფრებს მოითხოვს
+  inputTokens  Int?
+  outputTokens Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
 }

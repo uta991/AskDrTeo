@@ -7,6 +7,10 @@ import { Icon } from '@/components/ui/Icon';
 import { NumberPad } from '@/components/NumberPad';
 import { SelectSheet } from '@/components/SelectSheet';
 import { colors, radius, spacing, typography } from '@/theme';
+import { router } from 'expo-router';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/features/auth/auth.store';
+import { useEntitlements } from '@/features/entitlements/entitlements.store';
 import { useMedications } from '@/features/medications/medications.store';
 import { calculateDose } from '@/features/medications/dose';
 
@@ -19,6 +23,11 @@ export function CalculatorTab() {
 
   const { medications, loading, load } = useMedications();
 
+  // კალკულატორი ფასიან პაკეტშია; პერსონალს გამოწერა არ სჭირდება
+  const role = useAuth((state) => state.user?.role);
+  const isStaff = !!role && role !== 'PARENT';
+  const allowed = useEntitlements((state) => state.can('dose_calculator')) || isStaff;
+
   const [slug, setSlug] = useState<string | null>(null);
   const [weight, setWeight] = useState('');
   const [years, setYears] = useState('');
@@ -30,8 +39,8 @@ export function CalculatorTab() {
   const [picking, setPicking] = useState<'medication' | 'concentration' | null>(null);
 
   useEffect(() => {
-    void load().catch(() => undefined);
-  }, [load]);
+    if (allowed) void load().catch(() => undefined);
+  }, [allowed, load]);
 
   const medication = medications.find((m) => m.slug === slug) ?? medications[0];
 
@@ -54,6 +63,28 @@ export function CalculatorTab() {
 
   const range = (min: number, max: number, unit: string) =>
     min === max ? `${min} ${unit}` : `${min}–${max} ${unit}`;
+
+  if (!allowed) {
+    return (
+      <SkyBackground showDoves={false}>
+        <ScreenHeader title="დოზის კალკულატორი" />
+
+        <View style={styles.locked}>
+          <View style={styles.lockIcon}>
+            <Icon name="lock" size={22} color={colors.primaryDeep} strokeWidth={2} />
+          </View>
+
+          <Text style={styles.lockedTitle}>ეს ფუნქცია ფასიან პაკეტშია</Text>
+          <Text style={styles.lockedText}>
+            დოზის კალკულატორი სტანდარტულ და პრემიუმ პაკეტს აქვს. ზრდისა და
+            განვითარების თვალყური უფასოშიც რჩება.
+          </Text>
+
+          <Button title="პაკეტების ნახვა" onPress={() => router.push('/plans')} />
+        </View>
+      </SkyBackground>
+    );
+  }
 
   return (
     <SkyBackground showDoves={false}>
@@ -279,6 +310,17 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  locked: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, gap: spacing.sm },
+  lockIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceMuted,
+  },
+  lockedTitle: { ...typography.h2, color: colors.textPrimary },
+  lockedText: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
   content: { flexGrow: 1, paddingHorizontal: spacing.xl },
   title: { ...typography.h2, color: colors.textPrimary },
   subtitle: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.md },

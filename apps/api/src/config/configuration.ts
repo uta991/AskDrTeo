@@ -45,6 +45,14 @@ export interface AppConfig {
     /** Bundle ID-ები / Services ID-ები, რომლებიც identityToken-ის `aud`-ში დაიშვება */
     clientIds: string[];
   };
+  ai: {
+    /** ცარიელი გასაღები = ასისტენტი გამორთულია და ამას ღიად ვამბობთ */
+    apiKey?: string;
+    model: string;
+    maxTokens: number;
+    /** დღიური ლიმიტი ერთ მშობელზე — ხარჯი კონტროლს საჭიროებს */
+    dailyLimit: number;
+  };
   storage: {
     /** "local" | "r2" */
     fileDriver: string;
@@ -114,6 +122,12 @@ export default (): AppConfig => ({
   },
   apple: {
     clientIds: csv(process.env.APPLE_CLIENT_IDS),
+  },
+  ai: {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    model: process.env.AI_MODEL ?? 'claude-sonnet-5',
+    maxTokens: Number(process.env.AI_MAX_TOKENS ?? 900),
+    dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 30),
   },
   storage: {
     fileDriver: process.env.FILE_STORAGE_DRIVER ?? 'local',

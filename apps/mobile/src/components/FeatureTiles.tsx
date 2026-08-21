@@ -10,6 +10,8 @@ export interface Tile {
   onPress: () => void;
   /** წითელი ნიშანი — შეუვსებელი პროფილი, საგანგაშო შედეგი და მისთ. */
   badge?: boolean;
+  /** ფუნქცია პაკეტში არ შედის — ფილა ჩანს, მაგრამ საკეტით */
+  locked?: boolean;
 }
 
 /**
@@ -27,8 +29,13 @@ export function FeatureTiles({ tiles }: { tiles: Tile[] }) {
           onPress={tile.onPress}
           style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
         >
-          <View style={styles.iconWrap}>
-            <Icon name={tile.icon} size={26} color={colors.textOnPrimary} strokeWidth={1.9} />
+          <View style={[styles.iconWrap, tile.locked && styles.iconWrapLocked]}>
+            <Icon
+              name={tile.locked ? 'lock' : tile.icon}
+              size={26}
+              color={tile.locked ? colors.textMuted : colors.textOnPrimary}
+              strokeWidth={1.9}
+            />
             {tile.badge && <View style={styles.badge} />}
           </View>
 
@@ -68,6 +75,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primary,
   },
+  iconWrapLocked: { backgroundColor: colors.surfaceMuted },
   badge: {
     position: 'absolute',
     top: -2,
