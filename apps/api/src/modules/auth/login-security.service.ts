@@ -85,7 +85,7 @@ export class LoginSecurityService {
    * გაფრთხილება რჩება; ნომრის დამატება პროფილიდან შეიძლება.
    */
   isTwoFactorRequired(user: User): boolean {
-    if (!user.phone) {
+    if (!user.twoFactorPhone && !user.phone) {
       if (user.role !== UserRole.PARENT) {
         this.logger.warn(
           `${user.email ?? user.id}: ნომრის გარეშე ორეტაპიანი შესვლა ვერ ირთვება`,

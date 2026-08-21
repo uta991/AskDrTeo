@@ -52,7 +52,8 @@ export class TwoFactorService {
 
   /** კოდის გაცემა და გაგზავნა. */
   async issue(user: User, ctx: SessionContext): Promise<ChallengeIssued> {
-    if (!user.phone) {
+    const target = codeTarget(user);
+    if (!target) {
       throw new BadRequestException('ანგარიშს ტელეფონის ნომერი არ აქვს — დაგვიკავშირდით');
     }
 
@@ -79,7 +80,7 @@ export class TwoFactorService {
 
     return {
       challengeId: challenge.id,
-      maskedPhone: maskPhone(user.phone),
+      maskedPhone: maskPhone(target),
       expiresAt: challenge.expiresAt,
     };
   }
@@ -195,15 +196,26 @@ export class TwoFactorService {
   }
 
   private async deliver(user: User, code: string): Promise<void> {
-    if (!user.phone) return;
+    const target = codeTarget(user);
+    if (!target) return;
 
     await this.sms.send({
-      phone: user.phone,
+      phone: target,
       userId: user.id,
       templateKey: 'login_code',
       body: `AskDrTeo: შესვლის კოდია ${code}. არავის გაუზიაროთ.`,
     });
   }
+}
+
+/**
+ * სად მიდის კოდი.
+ *
+ * `twoFactorPhone` პრიორიტეტულია: ერთი ფიზიკური ტელეფონი შეიძლება
+ * რამდენიმე ანგარიშს ემსახურებოდეს, `phone` კი უნიკალურია.
+ */
+function codeTarget(user: User): string | null {
+  return user.twoFactorPhone ?? user.phone ?? null;
 }
 
 /** `crypto.randomInt` — `Math.random` წინასწარმეტყველებადია. */
