@@ -1,10 +1,17 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { API_URL, clearSession, getSessionUser, saveSession } from '@/lib/session';
+
+/** ნდობის მოწყობილობის cookie — 30 დღე, httpOnly. */
+const DEVICE_COOKIE = 'adt_device';
 
 export interface LoginState {
   error?: string;
+  /** მეორე საფეხური — სერვერმა კოდი გააგზავნა და ტოკენს ელოდება */
+  challengeId?: string;
+  maskedPhone?: string;
 }
 
 /**
@@ -21,13 +28,21 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: 'შეავსეთ ორივე ველი' };
   }
 
-  let payload: { tokens?: { accessToken: string; refreshToken: string }; message?: string };
+  const deviceToken = (await cookies()).get(DEVICE_COOKIE)?.value;
+
+  let payload: {
+    twoFactorRequired?: boolean;
+    challengeId?: string;
+    maskedPhone?: string;
+    tokens?: { accessToken: string; refreshToken: string };
+    message?: string;
+  };
 
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ identifier, password, deviceToken }),
       cache: 'no-store',
     });
     payload = await res.json();
@@ -37,6 +52,11 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     }
   } catch {
     return { error: 'სერვერთან კავშირი ვერ დამყარდა' };
+  }
+
+  // ორეტაპიანი შესვლა — ტოკენი ჯერ არ გაცემულა
+  if (payload.twoFactorRequired) {
+    return { challengeId: payload.challengeId, maskedPhone: payload.maskedPhone };
   }
 
   if (!payload.tokens) return { error: 'სერვერმა ტოკენი არ დააბრუნა' };
@@ -199,4 +219,75 @@ export async function resendOtp(destination: string): Promise<void> {
     body: JSON.stringify({ destination, purpose: 'PHONE_VERIFICATION' }),
     cache: 'no-store',
   }).catch(() => undefined);
+}
+
+
+/** მეორე საფეხური — SMS კოდის დადასტურება. */
+export async function verifyLoginCode(
+  _prev: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
+  const challengeId = String(formData.get('challengeId') ?? '');
+  const code = String(formData.get('code') ?? '').replace(/\D/g, '');
+  const rememberDevice = formData.get('rememberDevice') === 'on';
+
+  if (code.length < 6) {
+    return { challengeId, error: 'შეიყვანეთ სრული კოდი' };
+  }
+
+  let payload: {
+    tokens?: { accessToken: string; refreshToken: string };
+    deviceToken?: string;
+    message?: string;
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/auth/login/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId, code, rememberDevice }),
+      cache: 'no-store',
+    });
+    payload = await res.json();
+
+    if (!res.ok) {
+      return { challengeId, error: payload.message ?? 'კოდი არასწორია' };
+    }
+  } catch {
+    return { challengeId, error: 'სერვერთან კავშირი ვერ დამყარდა' };
+  }
+
+  if (!payload.tokens) return { challengeId, error: 'სერვერმა ტოკენი არ დააბრუნა' };
+
+  await saveSession(payload.tokens.accessToken, payload.tokens.refreshToken);
+
+  if (payload.deviceToken) {
+    const store = await cookies();
+    store.set(DEVICE_COOKIE, payload.deviceToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    });
+  }
+
+  const user = await getSessionUser();
+  redirect(user && user.role !== 'PARENT' ? '/admin' : '/account');
+}
+
+/** ახალი კოდი იმავე სესიაზე. */
+export async function resendLoginCode(challengeId: string): Promise<{ message: string }> {
+  try {
+    const res = await fetch(`${API_URL}/auth/login/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId }),
+      cache: 'no-store',
+    });
+    const payload = await res.json();
+    return { message: payload.message ?? 'კოდი გამოგზავნილია' };
+  } catch {
+    return { message: 'სერვერთან კავშირი ვერ დამყარდა' };
+  }
 }

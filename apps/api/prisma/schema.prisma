@@ -40,6 +40,18 @@ model User {
   email        String?    @unique
   phone        String?    @unique // E.164 ფორმატი: +9955XXXXXXXX
   passwordHash String? // null = მხოლოდ სოციალური ავტორიზაცია
+
+  /// ორეტაპიანი შესვლა. პერსონალს ყოველთვის ჩართული აქვს — ეს ველი
+  /// მშობლისთვისაა, რომელსაც პროფილიდან შეუძლია ჩართვა.
+  twoFactorEnabled Boolean @default(false)
+
+  /// ზედიზედ არასწორი პაროლები. ბაზაშია და არა მეხსიერებაში —
+  /// სერვერის რესტარტი თავდამსხმელს არ უნდა შველოდეს.
+  failedLoginAttempts Int       @default(0)
+  lastFailedLoginAt   DateTime?
+  lockedUntil         DateTime?
+  /// ბოლო გაფრთხილება მფლობელს — რომ SMS-ითაც არ დაიბომბოს
+  lastLockAlertAt     DateTime?
   role         UserRole   @default(PARENT)
   status       UserStatus @default(PENDING_VERIFICATION)
 
@@ -76,6 +88,8 @@ model User {
   promoRedemptions PromoRedemption[]
   mediaAssets      MediaAsset[]
   conversations   ConversationUser[]
+  loginChallenges LoginChallenge[]
+  trustedDevices  TrustedDevice[]
   messages        Message[]
   operatorProfile OperatorProfile?
 
@@ -1265,4 +1279,64 @@ model MilestoneAnswerEntry {
   @@unique([assessmentId, questionId])
   @@index([questionId])
   @@map("milestone_answers")
+}
+
+/**
+ * შესვლის მეორე საფეხური.
+ *
+ * სწორი პაროლის შემდეგ ტოკენი მაშინვე აღარ გაიცემა — იქმნება ეს
+ * ჩანაწერი და ნომერზე მიდის კოდი. ტოკენს მხოლოდ კოდის დადასტურება
+ * იძლევა.
+ *
+ * კოდი ღიად არსად ინახება: ბაზაშია მხოლოდ argon2-ის hash, ისევე
+ * როგორც პაროლი. ბაზის მოპარვაც კი კოდს არ ამხელს.
+ */
+model LoginChallenge {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  codeHash String
+  /// კლიენტს ეს id უბრუნდება — userId გარეთ არ გადის
+  attempts Int  @default(0)
+  /// რამდენჯერ გაიგზავნა ხელახლა — spam-ის საწინააღმდეგოდ
+  resends  Int  @default(0)
+
+  ipAddress String?
+  userAgent String?
+  deviceId  String?
+
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  lastSentAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, consumedAt])
+  @@map("login_challenges")
+}
+
+/**
+ * ნდობის მოწყობილობა — „დაიმახსოვრე ეს მოწყობილობა".
+ *
+ * ტოკენი 32 შემთხვევითი ბაიტია და ბაზაში sha256-ითაა. argon2 აქ
+ * ზედმეტია: ტოკენი გრძელია და გამოცნობა ისედაც შეუძლებელია, hash კი
+ * მხოლოდ ბაზის გაჟონვისგან იცავს.
+ */
+model TrustedDevice {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String @unique
+  label     String?
+  ipAddress String?
+  userAgent String?
+
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, revokedAt])
+  @@map("trusted_devices")
 }

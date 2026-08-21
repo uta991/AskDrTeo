@@ -56,7 +56,17 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(identifier.trim(), password);
+      const challenge = await login(identifier.trim(), password);
+
+      // ორეტაპიანი შესვლა — ტოკენი ჯერ არ გაცემულა, კოდი ნომერზეა
+      if (challenge) {
+        router.push({
+          pathname: '/login-code',
+          params: { challengeId: challenge.challengeId, phone: challenge.maskedPhone },
+        });
+        return;
+      }
+
       router.replace('/home');
     } catch (e) {
       // დაუდასტურებელი ნომრის შემთხვევაში backend კოდს თავად აგზავნის

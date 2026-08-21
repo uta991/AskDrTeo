@@ -28,6 +28,13 @@ interface RegisterResult {
   tokens?: AuthResult['tokens'];
 }
 
+/** სწორი პაროლი ტოკენს ავტომატურად აღარ ნიშნავს — შეიძლება კოდი მოითხოვოს. */
+export interface LoginChallenge {
+  twoFactorRequired: true;
+  challengeId: string;
+  maskedPhone: string;
+}
+
 interface AuthResult {
   user: User;
   tokens: Tokens;
@@ -38,7 +45,13 @@ interface AuthState {
   /** true სანამ SecureStore-იდან სესიის აღდგენა მიმდინარეობს */
   initializing: boolean;
   restore: () => Promise<void>;
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<LoginChallenge | null>;
+  verifyLoginCode: (
+    challengeId: string,
+    code: string,
+    rememberDevice: boolean,
+  ) => Promise<void>;
+  resendLoginCode: (challengeId: string) => Promise<{ message: string }>;
   register: (input: RegisterInput) => Promise<RegisterResult>;
   verifyOtp: (destination: string, code: string, purpose: OtpPurpose) => Promise<void>;
   resendOtp: (destination: string, purpose: OtpPurpose) => Promise<void>;
@@ -89,12 +102,38 @@ export const useAuth = create<AuthState>((set) => {
     },
 
     async login(identifier, password) {
-      const result = await api<AuthResult>('/auth/login', {
+      // ნაცნობი მოწყობილობა კოდს არ ითხოვს — ტოკენს ვურთავთ მოთხოვნას
+      const deviceToken = await tokenStore.device();
+
+      const result = await api<AuthResult | LoginChallenge>('/auth/login', {
         method: 'POST',
         auth: false,
-        body: { identifier, password },
+        body: { identifier, password, deviceToken },
       });
+
+      if ('twoFactorRequired' in result && result.twoFactorRequired) return result;
+
+      await applySession(result as AuthResult);
+      return null;
+    },
+
+    async verifyLoginCode(challengeId, code, rememberDevice) {
+      const result = await api<AuthResult & { deviceToken?: string }>('/auth/login/verify', {
+        method: 'POST',
+        auth: false,
+        body: { challengeId, code, rememberDevice },
+      });
+
+      if (result.deviceToken) await tokenStore.setDevice(result.deviceToken);
       await applySession(result);
+    },
+
+    resendLoginCode(challengeId) {
+      return api<{ message: string }>('/auth/login/resend', {
+        method: 'POST',
+        auth: false,
+        body: { challengeId },
+      });
     },
 
     async register(input) {

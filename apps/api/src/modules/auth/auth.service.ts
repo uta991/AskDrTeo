@@ -36,6 +36,8 @@ import {
 } from './dto/auth.dto';
 import { OtpService } from './otp.service';
 import { AppleService } from './providers/apple.service';
+import { LoginSecurityService } from './login-security.service';
+import { TwoFactorService } from './two-factor.service';
 import { SessionContext, TokenPair, TokensService } from './tokens.service';
 
 const TERMS_VERSION = '1.0';
@@ -43,7 +45,24 @@ const TERMS_VERSION = '1.0';
 export interface AuthResult {
   user: PublicUser;
   tokens: TokenPair;
+  /** ნდობის ტოკენი — მხოლოდ „დაიმახსოვრე ეს მოწყობილობა"-ს დროს */
+  deviceToken?: string;
 }
+
+/**
+ * შესვლის შედეგი.
+ *
+ * სწორი პაროლი ტოკენს ავტომატურად აღარ ნიშნავს: თუ ორეტაპიანი
+ * შესვლაა ჩართული, ჯერ SMS კოდის დადასტურებაა საჭირო.
+ */
+export type LoginResult =
+  | ({ twoFactorRequired: false } & AuthResult)
+  | {
+      twoFactorRequired: true;
+      challengeId: string;
+      maskedPhone: string;
+      expiresAt: Date;
+    };
 
 /**
  * რეგისტრაციის პასუხი.
@@ -84,6 +103,8 @@ export class AuthService {
     private readonly otp: OtpService,
     private readonly apple: AppleService,
     private readonly config: ConfigService,
+    private readonly security: LoginSecurityService,
+    private readonly twoFactor: TwoFactorService,
   ) {}
 
   // ─── რეგისტრაცია ───────────────────────────────────────────────────────
@@ -278,7 +299,7 @@ export class AuthService {
 
   // ─── შესვლა ────────────────────────────────────────────────────────────
 
-  async login(dto: LoginDto, ctx: SessionContext): Promise<AuthResult> {
+  async login(dto: LoginDto, ctx: SessionContext): Promise<LoginResult> {
     const { kind, value } = resolveIdentifier(dto.identifier);
 
     const user = await this.prisma.user.findFirst({
@@ -289,7 +310,16 @@ export class AuthService {
     const invalid = new UnauthorizedException('ელ. ფოსტა/ტელეფონი ან პაროლი არასწორია');
 
     if (!user?.passwordHash) throw invalid;
-    if (!(await argon2.verify(user.passwordHash, dto.password))) throw invalid;
+
+    // ჩაკეტვა პაროლის შემოწმებამდე — თორემ ბლოკირებას აზრი ეკარგება
+    this.security.assertNotLocked(user);
+
+    if (!(await argon2.verify(user.passwordHash, dto.password))) {
+      await this.security.registerFailure(user);
+      throw invalid;
+    }
+
+    await this.security.registerSuccess(user.id);
 
     if (user.status === UserStatus.PENDING_VERIFICATION) {
       // SMS-ის გარეშე კოდს ვერსად ვაგზავნით — ასეთი ანგარიში სამუდამოდ
@@ -314,7 +344,43 @@ export class AuthService {
       throw new UnauthorizedException('ანგარიში დაბლოკილია. დაგვიკავშირდით');
     }
 
-    return this.buildAuthResult(user, ctx, { deviceId: dto.deviceId });
+    // ─── მეორე საფეხური ────────────────────────────────────────────
+    const needsCode =
+      this.security.isTwoFactorRequired(user) &&
+      !(await this.twoFactor.isTrustedDevice(user.id, dto.deviceToken));
+
+    if (needsCode) {
+      const challenge = await this.twoFactor.issue(user, ctx);
+      return { twoFactorRequired: true, ...challenge };
+    }
+
+    const result = await this.buildAuthResult(user, ctx, { deviceId: dto.deviceId });
+    return { twoFactorRequired: false, ...result };
+  }
+
+  /** მეორე საფეხურის დადასტურება — აქ გაიცემა ტოკენები. */
+  async verifyLoginCode(
+    challengeId: string,
+    code: string,
+    ctx: SessionContext,
+    rememberDevice: boolean,
+  ): Promise<AuthResult> {
+    const user = await this.twoFactor.verify(challengeId, code);
+
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('ანგარიში დაბლოკილია. დაგვიკავშირდით');
+    }
+
+    const result = await this.buildAuthResult(user, ctx);
+
+    return rememberDevice
+      ? { ...result, deviceToken: await this.twoFactor.trustDevice(user.id, ctx) }
+      : result;
+  }
+
+  /** ახალი კოდი იმავე სესიაზე. */
+  resendLoginCode(challengeId: string) {
+    return this.twoFactor.resend(challengeId);
   }
 
   async loginWithGoogle(dto: GoogleAuthDto, ctx: SessionContext): Promise<AuthResult> {

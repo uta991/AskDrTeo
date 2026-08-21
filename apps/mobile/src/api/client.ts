@@ -48,6 +48,8 @@ function devServerHost(): string | null {
 const API_URL = resolveApiUrl();
 
 const ACCESS_KEY = 'access_token';
+/** ნდობის ტოკენი — 30 დღე კოდს არ ითხოვს. SecureStore-ში, Keychain-ში. */
+const DEVICE_KEY = 'device_token';
 const REFRESH_KEY = 'refresh_token';
 
 export class ApiError extends Error {
@@ -62,6 +64,10 @@ export class ApiError extends Error {
 }
 
 export const tokenStore = {
+  device: () => SecureStore.getItemAsync(DEVICE_KEY),
+  setDevice: (token: string) => SecureStore.setItemAsync(DEVICE_KEY, token),
+  clearDevice: () => SecureStore.deleteItemAsync(DEVICE_KEY),
+
   get: (key: string) => SecureStore.getItemAsync(key),
   async save(accessToken: string, refreshToken: string) {
     await SecureStore.setItemAsync(ACCESS_KEY, accessToken);

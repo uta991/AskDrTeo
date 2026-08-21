@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   MaxLength,
@@ -53,6 +54,23 @@ export class SendPhoneCodeDto {
   phone!: string;
 }
 
+export class VerifyLoginCodeDto {
+  @IsUUID()
+  challengeId!: string;
+
+  @IsString() @Length(4, 8, { message: 'კოდი არასწორია' })
+  code!: string;
+
+  /** true — 30 დღე ამ მოწყობილობაზე კოდი აღარ იკითხება */
+  @IsOptional() @IsBoolean()
+  rememberDevice?: boolean;
+}
+
+export class ResendLoginCodeDto {
+  @IsUUID()
+  challengeId!: string;
+}
+
 export class LoginDto {
   /** ელ. ფოსტა ან ტელეფონი — ერთი ველი, როგორც დიზაინშია. */
   @IsString() @IsNotEmpty({ message: 'შეიყვანეთ ელ. ფოსტა ან ტელეფონი' })
@@ -63,6 +81,10 @@ export class LoginDto {
 
   @IsOptional() @IsString()
   deviceId?: string;
+
+  /** ნდობის ტოკენი წინა შესვლიდან — ასეთ მოწყობილობაზე კოდი აღარ იგზავნება */
+  @IsOptional() @IsString()
+  deviceToken?: string;
 }
 
 export class VerifyOtpDto {

@@ -14,8 +14,10 @@ import {
   LoginDto,
   RefreshDto,
   RegisterDto,
+  ResendLoginCodeDto,
   ResendOtpDto,
   SendPhoneCodeDto,
+  VerifyLoginCodeDto,
   ResetPasswordDto,
   VerifyOtpDto,
 } from './dto/auth.dto';
@@ -69,6 +71,32 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   login(@Body() dto: LoginDto, @Req() req: Request) {
     return this.auth.login(dto, this.ctx(req));
+  }
+
+  @Public()
+  @Post('login/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'შესვლის მეორე საფეხური — SMS კოდის დადასტურება',
+    description: 'ტოკენები მხოლოდ აქ გაიცემა. `rememberDevice` 30 დღით იმახსოვრებს მოწყობილობას.',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  verifyLoginCode(@Body() dto: VerifyLoginCodeDto, @Req() req: Request) {
+    return this.auth.verifyLoginCode(
+      dto.challengeId,
+      dto.code,
+      this.ctx(req),
+      dto.rememberDevice ?? false,
+    );
+  }
+
+  @Public()
+  @Post('login/resend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'შესვლის კოდის ხელახლა გაგზავნა' })
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  resendLoginCode(@Body() dto: ResendLoginCodeDto) {
+    return this.auth.resendLoginCode(dto.challengeId);
   }
 
   @Public()
