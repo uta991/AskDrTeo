@@ -85,10 +85,37 @@
   font-weight: 700;
 }
 
+.yearBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: -2px;
+}
+
 .priceYear {
   color: var(--text-secondary);
   font-size: 13px;
-  margin-top: -4px;
+}
+
+.priceCrossed {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.priceNow {
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+/* დანაზოგის ნიშანი — პაკეტის ფერზე, თეთრი ტექსტით */
+.saveSticker {
+  display: inline-block;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
 }
 
 .description {

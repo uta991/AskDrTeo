@@ -80,7 +80,7 @@ const PLANS = [
     sortOrder: 2,
     colorHex: '#e8a400',
     prices: [
-      { currency: 'GEL', amountMinor: 1990, interval: BillingInterval.MONTH },
+      { currency: 'GEL', amountMinor: 2000, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 19900, interval: BillingInterval.YEAR },
     ],
     features: {
@@ -105,7 +105,7 @@ const PLANS = [
     sortOrder: 3,
     colorHex: '#007201',
     prices: [
-      { currency: 'GEL', amountMinor: 3990, interval: BillingInterval.MONTH },
+      { currency: 'GEL', amountMinor: 4000, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 39900, interval: BillingInterval.YEAR },
     ],
     features: {

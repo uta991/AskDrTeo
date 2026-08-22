@@ -75,6 +75,22 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   }
 }
 
+/**
+ * საჯარო მონაცემები — ავტორიზაციის გარეშე.
+ *
+ * `apiFetch` ტოკენს ითხოვს და შესვლამდე ყოველთვის `null`-ს აბრუნებდა.
+ * პაკეტების ვიტრინა კი სწორედ შეუსვლელს სჭირდება.
+ */
+export async function apiFetchPublic<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 /** API-ს გამოძახება სესიის ტოკენით — სერვერის მხარეს. */
 export async function apiFetch<T>(path: string): Promise<T | null> {
   const token = await getAccessToken();

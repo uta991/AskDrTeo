@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { apiFetch, getSessionUser } from '@/lib/session';
+import { apiFetchPublic, getSessionUser } from '@/lib/session';
 import { getEntitlements, planColor } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
 import styles from './plans.module.css';
@@ -33,13 +33,41 @@ interface Plan {
 }
 
 /** თეთრები ლარად — ფულთან მცურავი წერტილი არასდროს. */
-function priceLabel(prices: Price[]): { month: string; year: string | null } {
+function gel(minor: number): string {
+  return `${(minor / 100).toFixed(0)} ₾`;
+}
+
+interface PriceView {
+  month: string;
+  /** წლიური ფასი და დანაზოგი თვიურთან შედარებით */
+  year: { full: string; discounted: string; saveAmount: string; savePercent: number } | null;
+}
+
+/**
+ * ფასები.
+ *
+ * წლიური პაკეტის აზრი დანაზოგშია: 20 ₾ თვეში წელიწადში 240 ₾-ია,
+ * ჩვენ კი 199-ს ვთხოვთ. თუ ეს გვერდზე არ წერია, მშობელი განსხვავებას
+ * ვერ ხედავს და თვიურს ირჩევს.
+ */
+function priceLabel(prices: Price[]): PriceView {
   const month = prices.find((p) => p.interval === 'MONTH');
   const year = prices.find((p) => p.interval === 'YEAR');
 
+  if (!month) return { month: 'უფასო', year: null };
+  if (!year) return { month: `${gel(month.amountMinor)} / თვე`, year: null };
+
+  const full = month.amountMinor * 12;
+  const save = full - year.amountMinor;
+
   return {
-    month: month ? `${(month.amountMinor / 100).toFixed(0)} ₾ / თვე` : 'უფასო',
-    year: year ? `${(year.amountMinor / 100).toFixed(0)} ₾ წელიწადში` : null,
+    month: `${gel(month.amountMinor)} / თვე`,
+    year: {
+      full: gel(full),
+      discounted: gel(year.amountMinor),
+      saveAmount: gel(save),
+      savePercent: Math.round((save / full) * 100),
+    },
   };
 }
 
@@ -62,7 +90,8 @@ export default async function PlansPage() {
   const user = await getSessionUser();
 
   const [plans, entitlements] = await Promise.all([
-    apiFetch<Plan[]>('/plans'),
+    // ვიტრინა შესვლამდეც უნდა ჩანდეს — პაკეტების სია საჯაროა
+    apiFetchPublic<Plan[]>('/plans'),
     user ? getEntitlements() : Promise.resolve(null),
   ]);
 
@@ -104,7 +133,23 @@ export default async function PlansPage() {
                 {plan.name}
               </h2>
               <p className={styles.price}>{price.month}</p>
-              {!!price.year && <p className={styles.priceYear}>{price.year}</p>}
+
+              {!!price.year && (
+                <div className={styles.yearBox}>
+                  <p className={styles.priceYear}>
+                    წელიწადში <s className={styles.priceCrossed}>{price.year.full}</s>{' '}
+                    <strong className={styles.priceNow}>{price.year.discounted}</strong>
+                  </p>
+
+                  {/* დანაზოგის ნიშანი — ფასის მთავარი არგუმენტი */}
+                  <span
+                    className={styles.saveSticker}
+                    style={{ background: planColor(plan.code) }}
+                  >
+                    დაზოგე {price.year.saveAmount} · −{price.year.savePercent}%
+                  </span>
+                </div>
+              )}
 
               {!!plan.description && <p className={styles.description}>{plan.description}</p>}
 
