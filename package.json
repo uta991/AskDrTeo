@@ -12,7 +12,8 @@
     "api:seed": "npm run prisma:seed --workspace=@baby/api",
     "mobile:start": "npm run start --workspace=@baby/mobile",
     "build:packages": "npm run build --workspace=@askdrteo/dosing --workspace=@askdrteo/milestones",
-    "postinstall": "npm run build:packages"
+    "postinstall": "npm run build:packages",
+    "secrets:apply": "node scripts/apply-secrets.mjs"
   },
   "engines": {
     "node": ">=20"
