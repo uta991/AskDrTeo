@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post } from '@nest
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 import { RequireFeature } from '@/common/decorators/require-feature.decorator';
 import { AiService } from './ai.service';
 import { AskDto } from './dto/ai.dto';
@@ -17,6 +18,19 @@ import { AskDto } from './dto/ai.dto';
 @RequireFeature('ai_assistant')
 export class AiController {
   constructor(private readonly ai: AiService) {}
+
+  /**
+   * ჩართულია თუ არა — ავტორიზაციის გარეშე.
+   *
+   * მხოლოდ დიახ/არა ბრუნდება; გასაღები ან სხვა დეტალი არსად ჩანს.
+   * განთავსების შემოწმებას ეს სჭირდება, თორემ „მუშაობს თუ არა"
+   * მხოლოდ ბრაუზერიდან შესვლით დგინდებოდა.
+   */
+  @Public()
+  @Get('health')
+  health() {
+    return { enabled: this.ai.enabled };
+  }
 
   @Get('status')
   @ApiOperation({ summary: 'ასისტენტი ჩართულია თუ არა' })
