@@ -113,10 +113,13 @@ export function ChatThread({
         return;
       }
 
-      if (current?.id) {
-        const next = await refreshThread(current.id, staff);
-        if (next) setCurrent(next);
-      }
+      // პირველ წერილზე საუბარი ახლა შეიქმნა — ძაფი id-ით მოგვაქვს,
+      // თორემ ავტომატური პასუხი გვერდის განახლებამდე არ გამოჩნდებოდა
+      const id = current?.id ?? result.conversationId;
+      if (!id) return;
+
+      const next = await refreshThread(id, staff);
+      if (next) setCurrent(next);
     });
   };
 

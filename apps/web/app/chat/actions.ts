@@ -42,6 +42,8 @@ export interface Thread {
 
 export interface ChatState {
   error?: string;
+  /** ახლად გახსნილი საუბარი — კლიენტმა ძაფი მაშინვე უნდა ჩატვირთოს */
+  conversationId?: string;
 }
 
 /** მშობლის მხარე: პირველი წერილი ხსნის საუბარს, შემდეგი მას აგრძელებს. */
@@ -58,19 +60,23 @@ export async function sendParentMessage(
         body: message.trim() || undefined,
         assetIds,
       });
-    } else {
-      // ახალი საუბარი ტექსტს ითხოვს; ფაილი მეორე შეტყობინებად მიდის
-      const started = await apiMutate<{ id: string }>('/chat/conversations', 'POST', {
-        message: message.trim() || 'ფაილი მიმაგრებულია',
-      });
 
-      if (assetIds.length) {
-        await apiMutate(`/chat/conversations/${started.id}/messages`, 'POST', { assetIds });
-      }
+      revalidatePath('/chat');
+      return { conversationId };
+    }
+
+    // ახალი საუბარი ტექსტს ითხოვს; ფაილი მეორე შეტყობინებად მიდის
+    const started = await apiMutate<{ id: string }>('/chat/conversations', 'POST', {
+      message: message.trim() || 'ფაილი მიმაგრებულია',
+    });
+
+    if (assetIds.length) {
+      await apiMutate(`/chat/conversations/${started.id}/messages`, 'POST', { assetIds });
     }
 
     revalidatePath('/chat');
-    return {};
+    // ავტომატური პასუხი უკვე ჩაწერილია — id-ით ძაფს კლიენტი მოიტანს
+    return { conversationId: started.id };
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'გაგზავნა ვერ მოხერხდა' };
   }
