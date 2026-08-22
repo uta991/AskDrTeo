@@ -176,7 +176,8 @@ export class AiService {
    * ღამით ასობით მოთხოვნას გააგზავნიდა.
    */
   private async assertWithinDailyLimit(userId: string): Promise<void> {
-    const limit = this.config.get<number>('ai.dailyLimit') ?? 10;
+    // 0 = შეზღუდვის გარეშე (სატესტო ეტაპი)
+    const limit = this.config.get<number>('ai.dailyLimit') ?? 0;
     if (limit <= 0) return;
 
     // ტესტის ანგარიშებს ლიმიტი არ ეხებათ — შემოწმებას ხელს შეუშლიდა
