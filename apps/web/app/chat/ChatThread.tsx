@@ -6,6 +6,7 @@ import {
   refreshThread,
   sendParentMessage,
   sendStaffMessage,
+  startConversation,
   takeConversation,
   uploadAttachment,
   type ChatMessage,
@@ -177,8 +178,29 @@ export function ChatThread({
             გიპასუხებთ.
           </p>
 
-          <button type="button" className="btn btn-primary" onClick={() => setStarted(true)}>
-            ჩატის დაწყება
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                setError(null);
+                setStarted(true);
+
+                const result = await startConversation();
+                if (result.error) {
+                  setError(result.error);
+                  return;
+                }
+
+                if (result.conversationId) {
+                  const next = await refreshThread(result.conversationId, false);
+                  if (next) setCurrent(next);
+                }
+              })
+            }
+          >
+            {pending ? 'იხსნება…' : 'ჩატის დაწყება'}
           </button>
         </div>
       )}

@@ -251,3 +251,13 @@ export interface UserConversation {
 export async function loadUserChats(userId: string): Promise<UserConversation[]> {
   return (await apiFetch<UserConversation[]>(`/admin/chat/users/${userId}/conversations`)) ?? [];
 }
+
+/** წაუკითხავი შეკითხვები — მენიუს ნიშნისთვის. */
+export async function loadChatUnread(): Promise<{ conversations: number; messages: number }> {
+  return (
+    (await apiFetch<{ conversations: number; messages: number }>('/admin/chat/unread')) ?? {
+      conversations: 0,
+      messages: 0,
+    }
+  );
+}

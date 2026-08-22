@@ -156,6 +156,40 @@ export class ChatService {
     });
   }
 
+  /**
+   * წაუკითხავი შეკითხვები პერსონალისთვის.
+   *
+   * ორი რიცხვი: რამდენ საუბარში წერენ და სულ რამდენი შეტყობინებაა
+   * უპასუხოდ — ნიშანს პირველი სჭირდება, რიგის შეფასებას მეორე.
+   */
+  async unreadForStaff(userId: string) {
+    const conversations = await this.prisma.conversation.findMany({
+      where: { status: { not: ConversationStatus.CLOSED } },
+      select: {
+        id: true,
+        participants: { where: { userId }, select: { lastReadAt: true } },
+      },
+    });
+
+    let messages = 0;
+    let waiting = 0;
+
+    for (const conversation of conversations) {
+      const unread = await this.unreadCount(
+        conversation.id,
+        conversation.participants[0]?.lastReadAt,
+        true,
+      );
+
+      if (unread > 0) {
+        waiting += 1;
+        messages += unread;
+      }
+    }
+
+    return { conversations: waiting, messages };
+  }
+
   async start(dto: StartConversationDto, userId: string) {
     // მიმდინარე საუბარი უკვე თუ აქვს, ახალს არ ვხსნით — ოპერატორს ორ
     // ადგილას ერთი და იგივე კითხვა დახვდებოდა
@@ -167,7 +201,13 @@ export class ChatService {
       select: { id: true },
     });
 
-    if (open) return this.send(open.id, { body: dto.message }, userId, UserRole.PARENT);
+    const text = dto.message?.trim();
+
+    // მიმდინარე საუბარი უკვე აქვს — ახალ წერილს იქ ვამატებთ
+    if (open) {
+      if (text) await this.send(open.id, { body: text }, userId, UserRole.PARENT);
+      return this.messages(open.id, userId, UserRole.PARENT);
+    }
 
     const conversation = await this.prisma.conversation.create({
       data: {
@@ -175,15 +215,21 @@ export class ChatService {
         status: ConversationStatus.OPEN,
         lastMessageAt: new Date(),
         participants: { create: { userId } },
-        messages: {
-          create: { senderId: userId, type: MessageType.TEXT, body: dto.message.trim() },
-        },
+        ...(text
+          ? {
+              messages: {
+                create: { senderId: userId, type: MessageType.TEXT, body: text },
+              },
+            }
+          : {}),
       },
       select: { id: true },
     });
 
     await this.autoReply(conversation.id, userId);
-    await this.notifyStaff(conversation.id, dto.message.trim());
+
+    // ოპერატორს მაშინ ვაწუხებთ, როცა კითხვა უკვე დაწერილია
+    if (text) await this.notifyStaff(conversation.id, text);
 
     return this.messages(conversation.id, userId, UserRole.PARENT);
   }

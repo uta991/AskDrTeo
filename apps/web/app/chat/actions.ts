@@ -82,6 +82,22 @@ export async function sendParentMessage(
   }
 }
 
+/**
+ * ჩატის გახსნა ღილაკით.
+ *
+ * ტექსტის გარეშე იხსნება — მშობელს მაშინვე ხვდება ავტომატური
+ * მისალმება და ხედავს, რომ სისტემა მუშაობს.
+ */
+export async function startConversation(): Promise<ChatState> {
+  try {
+    const thread = await apiMutate<{ id: string }>('/chat/conversations', 'POST', {});
+    revalidatePath('/chat');
+    return { conversationId: thread.id };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'ჩატი ვერ გაიხსნა' };
+  }
+}
+
 /** ოპერატორის პასუხი. */
 export async function sendStaffMessage(
   conversationId: string,

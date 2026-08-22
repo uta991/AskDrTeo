@@ -15,10 +15,14 @@ export class StartConversationDto {
   @IsOptional() @IsString() @MaxLength(120)
   subject?: string;
 
-  @IsString()
-  @IsNotEmpty({ message: 'შეტყობინება ცარიელია' })
-  @MaxLength(4000)
-  message!: string;
+  /**
+   * პირველი წერილი.
+   *
+   * არასავალდებულოა: „ჩატის დაწყებაზე" საუბარი მაშინვე იხსნება და
+   * მშობელს ავტომატური მისალმება ხვდება, ტექსტის აკრეფამდე.
+   */
+  @IsOptional() @IsString() @MaxLength(4000)
+  message?: string;
 }
 
 export class SendMessageDto {

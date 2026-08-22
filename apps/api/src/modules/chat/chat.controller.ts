@@ -110,6 +110,13 @@ export class AdminChatController {
     return this.chat.send(id, dto, user.id, user.role ?? UserRole.OPERATOR);
   }
 
+  @Get('unread')
+  @RequirePermission('chat.view')
+  @ApiOperation({ summary: 'წაუკითხავი შეკითხვების რაოდენობა' })
+  unread(@CurrentUser('id') userId: string) {
+    return this.chat.unreadForStaff(userId);
+  }
+
   @Get('users/:userId/conversations')
   @RequirePermission('chat.view')
   @ApiOperation({

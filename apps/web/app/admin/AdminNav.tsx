@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SunLogo } from '../components/Brand';
+import { ChatTabBadge } from './ChatTabBadge';
 import { NotificationBell } from '../components/NotificationBell';
 import { UserMenu } from '../components/UserMenu';
 import type { SessionUser } from '@/lib/session';
@@ -54,10 +55,8 @@ export function AdminNav({
           სიახლეები
         </Link>
 
-        {/* ოპერატორის ძირითადი სამუშაო ადგილი */}
-        <Link href="/admin/chat" className={active === 'chat' ? styles.tabActive : styles.tab}>
-          ჩატი
-        </Link>
+        {/* ოპერატორის ძირითადი სამუშაო ადგილი — წაუკითხავი წითლად ჩანს */}
+        <ChatTabBadge active={active === 'chat'} />
 
         <Link
           href="/admin/appointments"
