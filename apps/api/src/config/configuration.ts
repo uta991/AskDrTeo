@@ -129,7 +129,7 @@ export default (): AppConfig => ({
   ai: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: process.env.AI_MODEL ?? 'claude-sonnet-5',
-    maxTokens: Number(process.env.AI_MAX_TOKENS ?? 900),
+    maxTokens: Number(process.env.AI_MAX_TOKENS ?? 2000),
     dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 30),
   },
   storage: {

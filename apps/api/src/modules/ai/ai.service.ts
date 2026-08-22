@@ -292,6 +292,12 @@ export class AiService {
 
         if (!text) throw new ServiceUnavailableException('ასისტენტმა პასუხი ვერ დააბრუნა');
 
+        // ლიმიტმა შეაწყვეტინა — მშობელს ნახევარი წინადადება არ უნდა დარჩეს
+        if (payload.stop_reason === 'max_tokens') {
+          this.logger.warn('პასუხი ტოკენების ლიმიტს მიაღწია — AI_MAX_TOKENS გაზრდას საჭიროებს');
+          return { text: `${text}…`, inputTokens, outputTokens };
+        }
+
         return { text, inputTokens, outputTokens };
       }
 
