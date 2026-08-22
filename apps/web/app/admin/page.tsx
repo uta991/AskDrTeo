@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { apiFetch, getSessionUser } from '@/lib/session';
+import { FeedbackSummary, type Feedback } from './chat/FeedbackSummary';
 import { AdminNav } from './AdminNav';
 import styles from './admin.module.css';
 
@@ -32,9 +34,10 @@ export default async function AdminPage() {
   // მშობელს პანელი არ ეკუთვნის — კაბინეტში მიდის, ჩიხის ნაცვლად
   if (user.role === 'PARENT') redirect('/account');
 
-  const [overview, financial] = await Promise.all([
+  const [overview, financial, feedback] = await Promise.all([
     apiFetch<Overview>('/admin/stats'),
     apiFetch<Financial>('/admin/stats/financial'),
+    apiFetch<Feedback>('/admin/chat/feedback'),
   ]);
 
   return (
@@ -58,7 +61,20 @@ export default async function AdminPage() {
               <Stat label="აქტიური გამოწერა" value={overview.subscriptions.active} />
               <Stat label="ფასიანი" value={overview.subscriptions.paid} />
               <Stat label="ვიდეო" value={overview.content.videos} />
+              {/* ხარისხის მაჩვენებელი დანარჩენ ციფრებთან ერთად უნდა ჩანდეს */}
+              <Stat
+                label="ჩატის შეფასება"
+                value={feedback?.average ? `${feedback.average} / 5` : '—'}
+              />
             </div>
+
+            <h2 className={styles.sectionTitle}>
+              მშობლების შეფასებები{' '}
+              <Link href="/admin/chat" className={styles.muted}>
+                ჩატის რიგი →
+              </Link>
+            </h2>
+            <FeedbackSummary feedback={feedback} />
 
             {!!financial && (
               <>
@@ -94,7 +110,16 @@ export default async function AdminPage() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  // შეფასება ტექსტია („4.6 / 5"), დანარჩენი — რიცხვი
+  value: number | string;
+  highlight?: boolean;
+}) {
   return (
     <div className={`${styles.stat} ${highlight ? styles.statHighlight : ''}`}>
       <div className={styles.statValue}>{value}</div>
