@@ -19,8 +19,15 @@ const STAFF_ROLES = ['OPERATOR', 'ADMIN', 'SUPER_ADMIN'];
 /** ახალი შეტყობინების მოსატანი ინტერვალი — websocket-ის გარეშე ესეც საკმარისია. */
 const POLL_MS = 12_000;
 
+/**
+ * ჩვენი მხრიდან წერილია თუ არა.
+ *
+ * ავტორის გარეშე შეტყობინება ავტომატური პასუხია — მშობელს ყოველთვის
+ * ავტორი აქვს, ამიტომ ცარიელი ავტორი ჩვენს მხარეს ნიშნავს.
+ */
 function isStaffMessage(message: ChatMessage): boolean {
-  return !!message.sender && STAFF_ROLES.includes(message.sender.role);
+  if (!message.sender) return true;
+  return STAFF_ROLES.includes(message.sender.role);
 }
 
 function time(value: string): string {
@@ -231,8 +238,10 @@ export function ChatThread({
             <div key={message.id} className={mine ? styles.bubbleMine : styles.bubbleTheirs}>
               {/* სახელით — ერთ საუბარს რამდენიმე ოპერატორი პასუხობს და
                   მშობელმა უნდა იცოდეს, ვის ელაპარაკება */}
-              {!mine && !!message.sender && (
-                <span className={styles.author}>{message.sender.firstName}</span>
+              {!mine && (
+                <span className={styles.author}>
+                  {message.sender?.firstName ?? 'AskDrTeo'}
+                </span>
               )}
               {!!message.body && <span className={styles.body}>{message.body}</span>}
 

@@ -916,6 +916,9 @@ model Conversation {
   subject            String?
   status             ConversationStatus @default(OPEN)
   assignedOperatorId String?
+
+  /// ბოლოს გამოცხადებული ადგილი რიგში — გამეორებას კეტავს
+  queueNoticePosition Int?
   lastMessageAt      DateTime?
   closedAt           DateTime?
   createdAt          DateTime           @default(now())

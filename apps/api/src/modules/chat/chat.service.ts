@@ -370,7 +370,9 @@ export class ChatService {
       create: { conversationId, userId },
     });
 
-    const greeting = `გამარჯობა, მე ვარ ${operator?.firstName ?? 'კონსულტანტი'}. რით შემიძლია დაგეხმაროთ?`;
+    const greeting =
+      `ოპერატორი ${operator?.firstName ?? 'კონსულტანტი'} გისმენთ. ` +
+      'რით შემიძლია დაგეხმაროთ?';
 
     await this.prisma.message.create({
       data: {
@@ -383,7 +385,97 @@ export class ChatService {
 
     await this.notifyParent(conversationId, greeting);
 
+    // ერთი გავიდა რიგიდან — დანარჩენებმა ახალი ადგილი უნდა იცოდნენ
+    await this.announceQueue(conversationId);
+
     return { message: 'საუბარი აღებულია', id: conversationId };
+  }
+
+
+  /**
+   * ლოდინის რიგი.
+   *
+   * მხოლოდ აუღებელი საუბრები: აღებულს ოპერატორი უკვე პასუხობს.
+   * თანმიმდევრობა იგივეა, რაც ოპერატორის რიგში — პრიორიტეტული
+   * პაკეტი წინ დგას, დანარჩენი მოსვლის მიხედვით.
+   */
+  private async waitingQueue(): Promise<{ id: string; parentId: string | null }[]> {
+    const waiting = await this.prisma.conversation.findMany({
+      where: { status: ConversationStatus.OPEN },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        participants: {
+          where: { user: { role: UserRole.PARENT } },
+          select: { userId: true },
+        },
+      },
+    });
+
+    const rows = await Promise.all(
+      waiting.map(async (conversation) => {
+        const parentId = conversation.participants[0]?.userId ?? null;
+
+        return {
+          id: conversation.id,
+          parentId,
+          priority: parentId ? await this.entitlements.can(parentId, 'chat_priority') : false,
+        };
+      }),
+    );
+
+    return rows.sort((a, b) => (a.priority === b.priority ? 0 : a.priority ? -1 : 1));
+  }
+
+  /**
+   * რიგის განახლება.
+   *
+   * ოპერატორი როცა ერთს გაისტუმრებს, დანარჩენები წინ იწევენ და ამის
+   * თქმა ჩვენი საქმეა — თორემ მშობელი ვერ გაიგებს, დაავიწყდნენ თუ არა.
+   * შეტყობინება მხოლოდ მაშინ იგზავნება, როცა ადგილი შეიცვალა.
+   */
+  private async announceQueue(skipConversationId?: string): Promise<void> {
+    const queue = await this.waitingQueue();
+
+    for (const [index, item] of queue.entries()) {
+      const position = index + 1;
+      if (item.id === skipConversationId) continue;
+
+      const conversation = await this.prisma.conversation.findUnique({
+        where: { id: item.id },
+        select: { queueNoticePosition: true },
+      });
+      if (conversation?.queueNoticePosition === position) continue;
+
+      await this.prisma.conversation.update({
+        where: { id: item.id },
+        data: { queueNoticePosition: position },
+      });
+
+      // პირველ ადგილს ცალკე ტექსტი აქვს — „რიგში პირველი" ბუნდოვანია
+      const body =
+        position === 1
+          ? 'თქვენ შემდეგი ხართ — კონსულტანტი უახლოეს წუთებში გიპასუხებთ.'
+          : `თქვენ ხართ რიგში ${ordinal(position)} — კონსულტანტი მალე გიპასუხებთ.`;
+
+      await this.prisma.message.create({
+        data: { conversationId: item.id, type: MessageType.TEXT, body },
+      });
+
+      if (item.parentId) {
+        await this.prisma.notification.create({
+          data: {
+            userId: item.parentId,
+            channel: NotificationChannel.IN_APP,
+            status: NotificationStatus.SENT,
+            title: 'რიგი ჩატში',
+            body,
+            data: { conversationId: item.id } as Prisma.InputJsonValue,
+            sentAt: new Date(),
+          },
+        });
+      }
+    }
   }
 
   /**
@@ -410,13 +502,27 @@ export class ChatService {
       select: { firstName: true },
     });
 
+    const queue = await this.waitingQueue();
+    const position = queue.findIndex((item) => item.id === conversationId) + 1;
+
+    const waitLine =
+      position > 1
+        ? `თქვენ ხართ რიგში ${ordinal(position)} — კონსულტანტი მალე გიპასუხებთ.`
+        : 'კონსულტანტი მალე გიპასუხებთ.';
+
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { queueNoticePosition: position || 1 },
+    });
+
+    // TEXT და არა SYSTEM: მშობელს ცოცხალი პასუხივით უნდა დაუჯდეს
+    // თვალში, ნაცრისფერ სისტემურ წარწერად კი არა. ავტორი ცარიელია —
+    // კონკრეტული ოპერატორი ჯერ არ ჰყავს.
     await this.prisma.message.create({
       data: {
         conversationId,
-        type: MessageType.SYSTEM,
-        body:
-          `გამარჯობა, ${parent?.firstName ?? ''}! თქვენი შეკითხვა მივიღეთ — ` +
-          'კონსულტანტი მალე გიპასუხებთ.',
+        type: MessageType.TEXT,
+        body: `გამარჯობა, ${parent?.firstName ?? ''}! თქვენი შეკითხვა მივიღეთ. ${waitLine}`,
       },
     });
   }
@@ -447,6 +553,7 @@ export class ChatService {
     });
 
     await this.requestFeedback(conversationId, userId);
+    await this.announceQueue(conversationId);
 
     return { message: 'საუბარი დაიხურა', id: conversationId };
   }
@@ -857,4 +964,23 @@ export class ChatService {
       skipDuplicates: true,
     });
   }
+}
+
+/** რიგითი რიცხვი ქართულად — „მე-14" ხმამაღლა წაკითხვისას უფრო ბუნებრივია. */
+function ordinal(position: number): string {
+  const words = [
+    '',
+    'პირველი',
+    'მეორე',
+    'მესამე',
+    'მეოთხე',
+    'მეხუთე',
+    'მეექვსე',
+    'მეშვიდე',
+    'მერვე',
+    'მეცხრე',
+    'მეათე',
+  ];
+
+  return words[position] ?? `მე-${position}`;
 }
