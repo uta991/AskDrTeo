@@ -40,6 +40,9 @@ export function ChatThread({
   thread: Thread | null;
   staff?: boolean;
 }) {
+  // ცარიელ ჩატში ჯერ ღილაკია: შემკრები ველი მაშინ ჩნდება, როცა
+  // მშობელმა საუბრის დაწყება გადაწყვიტა
+  const [started, setStarted] = useState(!!thread);
   const [current, setCurrent] = useState<Thread | null>(thread);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +54,10 @@ export function ChatThread({
 
   const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setCurrent(thread), [thread]);
+  useEffect(() => {
+    setCurrent(thread);
+    if (thread) setStarted(true);
+  }, [thread]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -160,6 +166,21 @@ export function ChatThread({
         </div>
       )}
 
+      {/* ახალი საუბრის დაწყება — მშობელს ცარიელი ველი არ ხვდება */}
+      {!staff && !started && (
+        <div className={styles.startBox}>
+          <p className={styles.startText}>
+            შეკითხვა გაქვთ ბავშვის ჯანმრთელობაზე? კონსულტანტი სამუშაო საათებში
+            გიპასუხებთ.
+          </p>
+
+          <button type="button" className="btn btn-primary" onClick={() => setStarted(true)}>
+            ჩატის დაწყება
+          </button>
+        </div>
+      )}
+
+      {(staff || started) && (
       <div className={styles.messages}>
         {!current?.messages.length && (
           <p className={styles.empty}>
@@ -225,10 +246,11 @@ export function ChatThread({
         {!!error && <p className={styles.error}>{error}</p>}
         <div ref={endRef} />
       </div>
+      )}
 
       {closed ? (
         <p className={styles.closedNote}>
-          საუბარი დახურულია.{!staff && ' ახალი შეკითხვისთვის დაწერეთ ქვემოთ.'}
+          საუბარი დახურულია.{!staff && ' ახალი შეკითხვა ქვემოთ დაწერეთ — ცალკე საუბრად შეინახება.'}
         </p>
       ) : null}
 
@@ -249,7 +271,7 @@ export function ChatThread({
         </div>
       )}
 
-      {(!closed || !staff) && (
+      {(staff || started) && (!closed || !staff) && (
         <form
           className={styles.composer}
           onSubmit={(event) => {

@@ -407,3 +407,20 @@
   color: var(--primary-text);
   white-space: nowrap;
 }
+
+/* ცარიელი ჩატი — დაწყების ღილაკი */
+.startBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 36px 12px;
+}
+
+.startText {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 380px;
+}
