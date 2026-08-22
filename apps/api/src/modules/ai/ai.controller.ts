@@ -13,24 +13,29 @@ import { AskDto } from './dto/ai.dto';
  * წვდომას `ai_assistant` განსაზღვრავს და არა პაკეტის სახელი: რომელ
  * პაკეტში შედის, ადმინის გადასაწყვეტია და ბაზაშია.
  */
+/**
+ * ასისტენტი ჩართულია თუ არა — ავტორიზაციის გარეშე.
+ *
+ * ცალკე კონტროლერია: მთავარ კონტროლერზე პაკეტის შემოწმება ჰკიდია და
+ * შეუსვლელს 403 ხვდებოდა. მხოლოდ დიახ/არა ბრუნდება, გასაღები არსად ჩანს.
+ */
 @ApiTags('ai')
 @Controller('ai')
-@RequireFeature('ai_assistant')
-export class AiController {
+export class AiHealthController {
   constructor(private readonly ai: AiService) {}
 
-  /**
-   * ჩართულია თუ არა — ავტორიზაციის გარეშე.
-   *
-   * მხოლოდ დიახ/არა ბრუნდება; გასაღები ან სხვა დეტალი არსად ჩანს.
-   * განთავსების შემოწმებას ეს სჭირდება, თორემ „მუშაობს თუ არა"
-   * მხოლოდ ბრაუზერიდან შესვლით დგინდებოდა.
-   */
   @Public()
   @Get('health')
   health() {
     return { enabled: this.ai.enabled };
   }
+}
+
+@ApiTags('ai')
+@Controller('ai')
+@RequireFeature('ai_assistant')
+export class AiController {
+  constructor(private readonly ai: AiService) {}
 
   @Get('status')
   @ApiOperation({ summary: 'ასისტენტი ჩართულია თუ არა' })
