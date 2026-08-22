@@ -59,7 +59,8 @@ export class PlansService {
       })),
       // მხოლოდ ჩართული ფუნქციები — აპი მათ სიად აჩვენებს ბარათზე
       features: plan.features
-        .filter((pf) => pf.enabled && pf.feature.isActive)
+        // ტექნიკური ლიმიტები (ატვირთვის ზომა) ვიტრინაში არ ჩანს
+        .filter((pf) => pf.enabled && pf.feature.isActive && pf.feature.isPublic)
         .sort((a, b) => a.feature.sortOrder - b.feature.sortOrder)
         .map((pf) => ({
           key: pf.feature.key,

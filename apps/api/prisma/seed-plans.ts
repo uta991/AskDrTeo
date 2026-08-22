@@ -39,9 +39,9 @@ const FEATURES = [
   },
   // ატვირთვის ლიმიტები ტიპების მიხედვით — ერთი საერთო რიცხვი 5MB-ს
   // ფოტოსთვის გონივრულს ხდიდა, ვიდეოსთვის კი უაზროს
-  { key: 'max_upload_mb_image', name: 'სურათის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '5' },
-  { key: 'max_upload_mb_video', name: 'ვიდეოს მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '200' },
-  { key: 'max_upload_mb_document', name: 'დოკუმენტის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '10' },
+  { isPublic: false, key: 'max_upload_mb_image', name: 'სურათის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '5' },
+  { isPublic: false, key: 'max_upload_mb_video', name: 'ვიდეოს მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '200' },
+  { isPublic: false, key: 'max_upload_mb_document', name: 'დოკუმენტის მაქს. ზომა', type: FeatureType.LIMIT, unit: 'MB', defaultValue: '10' },
 ];
 
 const PLANS = [
@@ -142,6 +142,7 @@ export async function seedPlans(prisma: PrismaClient): Promise<void> {
         unit: f.unit,
         defaultValue: f.defaultValue,
         isActive: f.isActive ?? true,
+        isPublic: f.isPublic ?? true,
       },
       create: { ...f, sortOrder: i + 1 },
     });

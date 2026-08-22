@@ -318,6 +318,9 @@ model Feature {
   unit         String? // LIMIT-ისთვის: "videos/month", "children"
   defaultValue String? // უფასო მომხმარებლის ნაგულისხმევი მნიშვნელობა
   isActive     Boolean     @default(true)
+  /// პაკეტების სიაში ჩანს თუ არა. ატვირთვის ლიმიტები ტექნიკურია —
+  /// კონტროლს ექვემდებარება, მაგრამ მშობელს ვიტრინაში არ სჭირდება.
+  isPublic     Boolean     @default(true)
   sortOrder    Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
