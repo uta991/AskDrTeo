@@ -54,6 +54,8 @@ export interface AppConfig {
     maxTokens: number;
     /** დღიური ლიმიტი ერთ მშობელზე — ხარჯი კონტროლს საჭიროებს */
     dailyLimit: number;
+    /** ანგარიშები ლიმიტის გარეშე — ტესტირებისთვის */
+    unlimitedEmails: string[];
   };
   storage: {
     /** "local" | "r2" */
@@ -130,7 +132,8 @@ export default (): AppConfig => ({
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: process.env.AI_MODEL ?? 'claude-sonnet-5',
     maxTokens: Number(process.env.AI_MAX_TOKENS ?? 2000),
-    dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 30),
+    dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 10),
+    unlimitedEmails: csv(process.env.AI_UNLIMITED_EMAILS).map((email) => email.toLowerCase()),
   },
   storage: {
     fileDriver: process.env.FILE_STORAGE_DRIVER ?? 'local',

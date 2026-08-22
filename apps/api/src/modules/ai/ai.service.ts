@@ -176,8 +176,19 @@ export class AiService {
    * ღამით ასობით მოთხოვნას გააგზავნიდა.
    */
   private async assertWithinDailyLimit(userId: string): Promise<void> {
-    const limit = this.config.get<number>('ai.dailyLimit') ?? 30;
+    const limit = this.config.get<number>('ai.dailyLimit') ?? 10;
     if (limit <= 0) return;
+
+    // ტესტის ანგარიშებს ლიმიტი არ ეხებათ — შემოწმებას ხელს შეუშლიდა
+    const exempt = this.config.get<string[]>('ai.unlimitedEmails') ?? [];
+    if (exempt.length) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (user?.email && exempt.includes(user.email.toLowerCase())) return;
+    }
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const used = await this.prisma.aiMessage.count({
