@@ -52,6 +52,36 @@ export async function getAccessToken(): Promise<string | null> {
 }
 
 /**
+ * სესიის გაგრძელება Server Action-ში.
+ *
+ * ნავიგაციისას middleware ანახლებს, მაგრამ ფორმის გაგზავნა შეიძლება
+ * ზუსტად ვადის ამოწურვის მომენტს დაემთხვეს. აქ refresh ტოკენით ვცდით,
+ * სანამ მომხმარებელს ხელახლა შესვლას ვთხოვდეთ.
+ */
+async function renewAccessToken(): Promise<string | null> {
+  const store = await cookies();
+  const refreshToken = store.get(REFRESH_COOKIE)?.value;
+  if (!refreshToken) return null;
+
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+
+    const tokens = (await res.json()) as { accessToken: string; refreshToken: string };
+    await saveSession(tokens.accessToken, tokens.refreshToken);
+
+    return tokens.accessToken;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * მიმდინარე მომხმარებელი.
  *
  * access token-ის ვადა 15 წუთია; ამოწურვისას `null` ბრუნდება და
@@ -121,7 +151,7 @@ export async function apiMutate<T>(
   method: 'POST' | 'PATCH' | 'DELETE',
   body?: unknown,
 ): Promise<T> {
-  const token = await getAccessToken();
+  const token = (await getAccessToken()) ?? (await renewAccessToken());
   if (!token) throw new Error('სესია ამოიწურა — გაიარეთ ავტორიზაცია თავიდან');
 
   let res: Response;
@@ -162,7 +192,7 @@ export async function apiUpload<T>(
   file: File,
   fields?: Record<string, string>,
 ): Promise<T> {
-  const token = await getAccessToken();
+  const token = (await getAccessToken()) ?? (await renewAccessToken());
   if (!token) throw new Error('სესია ამოიწურა — გაიარეთ ავტორიზაცია თავიდან');
 
   const body = new FormData();

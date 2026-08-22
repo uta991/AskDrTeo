@@ -6,9 +6,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiRole } from '@prisma/client';
+import { AiRole, UserRole } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { SYSTEM_PROMPT, childContext } from './ai.prompt';
+import { AI_TOOLS, AiToolsService, type ToolContext } from './ai.tools';
 import { AskDto } from './dto/ai.dto';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -17,10 +18,29 @@ const API_VERSION = '2023-06-01';
 /** რამდენი წინა შეტყობინება მიჰყვება კითხვას — საუბრის ძაფი და ხარჯი ბალანსშია. */
 const HISTORY_LIMIT = 20;
 
+interface ContentBlock {
+  type: string;
+  text?: string;
+  /** tool_use ბლოკისთვის */
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+}
+
 interface AnthropicResponse {
-  content: { type: string; text?: string }[];
+  content: ContentBlock[];
+  stop_reason?: string;
   usage?: { input_tokens: number; output_tokens: number };
 }
+
+/**
+ * რამდენჯერ დაიშვება ინსტრუმენტის გამოძახება ერთ პასუხზე.
+ *
+ * ყოველი რაუნდი ცალკე მოთხოვნაა Anthropic-თან, ანუ ერთი შეკითხვა
+ * რამდენიმე გამოძახებად იქცევა. სამი საკმარისია (მაგ. „ბავშვის ასაკი →
+ * დოზა → პასუხი"), მეტი კი ლიმიტსა და ხარჯს ტყუილად ხარჯავს.
+ */
+const MAX_TOOL_ROUNDS = 3;
 
 @Injectable()
 export class AiService {
@@ -29,6 +49,7 @@ export class AiService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly tools: AiToolsService,
   ) {}
 
   /** ასისტენტი ჩართულია თუ არა — გასაღების გარეშე ღილაკიც არ უნდა ჩანდეს. */
@@ -59,7 +80,11 @@ export class AiService {
       { role: 'user' as const, content: dto.message.trim() },
     ];
 
-    const answer = await this.call(messages, await this.systemFor(conversation.childId));
+    const answer = await this.call(
+      messages,
+      await this.systemFor(conversation.childId),
+      { userId, role: UserRole.PARENT },
+    );
 
     // ორივე მხარე ერთ ტრანზაქციაში — კითხვა უპასუხოდ ბაზაში არ უნდა დარჩეს
     const [, assistantMessage] = await this.prisma.$transaction([
@@ -231,10 +256,75 @@ export class AiService {
    * SDK-ის ნაცვლად პირდაპირი HTTP: ერთადერთი ენდპოინტისთვის დამატებითი
    * დამოკიდებულება Docker-ის ხატულას უმიზეზოდ ზრდის.
    */
+  /**
+   * მოთხოვნა მოდელთან, ინსტრუმენტების ციკლით.
+   *
+   * ციფრი და ფაქტი მოდელის მეხსიერებიდან არ უნდა მოდიოდეს: როცა
+   * პასუხს დოზა, აცრის ვადა თუ ბავშვის მონაცემი სჭირდება, მოდელი
+   * ინსტრუმენტს იძახებს, ჩვენი კოდი ითვლის და შედეგი უბრუნდება.
+   *
+   * SDK-ის ნაცვლად პირდაპირი HTTP: ერთადერთი ენდპოინტისთვის დამატებითი
+   * დამოკიდებულება Docker-ის ხატულას უმიზეზოდ ზრდის.
+   */
   private async call(
-    messages: { role: 'user' | 'assistant'; content: string }[],
+    messages: { role: 'user' | 'assistant'; content: unknown }[],
     system: string,
+    ctx: ToolContext,
   ): Promise<{ text: string; inputTokens?: number; outputTokens?: number }> {
+    const thread = [...messages];
+    let inputTokens = 0;
+    let outputTokens = 0;
+
+    for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
+      const payload = await this.request(thread, system);
+
+      inputTokens += payload.usage?.input_tokens ?? 0;
+      outputTokens += payload.usage?.output_tokens ?? 0;
+
+      const toolCalls = payload.content.filter((block) => block.type === 'tool_use');
+
+      if (!toolCalls.length || round === MAX_TOOL_ROUNDS) {
+        const text = payload.content
+          .filter((block) => block.type === 'text')
+          .map((block) => block.text ?? '')
+          .join('\n')
+          .trim();
+
+        if (!text) throw new ServiceUnavailableException('ასისტენტმა პასუხი ვერ დააბრუნა');
+
+        return { text, inputTokens, outputTokens };
+      }
+
+      thread.push({ role: 'assistant', content: payload.content });
+
+      const results = await Promise.all(
+        toolCalls.map(async (call) => {
+          const data = await this.tools
+            .run(call.name ?? '', call.input ?? {}, ctx)
+            .catch((error: unknown) => {
+              this.logger.warn(`ინსტრუმენტი "${call.name}" ჩავარდა: ${String(error)}`);
+              return { error: 'მონაცემი ვერ წამოვიღეთ' };
+            });
+
+          return {
+            type: 'tool_result' as const,
+            tool_use_id: call.id,
+            content: JSON.stringify(data),
+          };
+        }),
+      );
+
+      thread.push({ role: 'user', content: results });
+    }
+
+    throw new ServiceUnavailableException('ასისტენტი დროებით მიუწვდომელია');
+  }
+
+  /** ერთი მოთხოვნა Anthropic-თან. */
+  private async request(
+    messages: { role: 'user' | 'assistant'; content: unknown }[],
+    system: string,
+  ): Promise<AnthropicResponse> {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -246,6 +336,7 @@ export class AiService {
         model: this.config.get<string>('ai.model'),
         max_tokens: this.config.get<number>('ai.maxTokens') ?? 900,
         system,
+        tools: AI_TOOLS,
         messages,
       }),
     }).catch((error: unknown) => {
@@ -256,22 +347,17 @@ export class AiService {
     if (!response.ok) {
       const detail = await response.text().catch(() => '');
       this.logger.error(`ასისტენტმა დააბრუნა ${response.status}: ${detail.slice(0, 300)}`);
+
+      // 429 — მოთხოვნების ლიმიტი; მშობელს ლოდინი უნდა ვურჩიოთ და არა ხელახლა ცდა
+      if (response.status === 429) {
+        throw new ServiceUnavailableException(
+          'ასისტენტი ამ წუთას გადატვირთულია — სცადეთ ერთ წუთში',
+        );
+      }
+
       throw new ServiceUnavailableException('ასისტენტი დროებით მიუწვდომელია');
     }
 
-    const payload = (await response.json()) as AnthropicResponse;
-    const text = payload.content
-      .filter((block) => block.type === 'text')
-      .map((block) => block.text ?? '')
-      .join('\n')
-      .trim();
-
-    if (!text) throw new ServiceUnavailableException('ასისტენტმა პასუხი ვერ დააბრუნა');
-
-    return {
-      text,
-      inputTokens: payload.usage?.input_tokens,
-      outputTokens: payload.usage?.output_tokens,
-    };
+    return (await response.json()) as AnthropicResponse;
   }
 }
