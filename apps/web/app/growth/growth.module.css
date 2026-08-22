@@ -1,0 +1,253 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+.back {
+  align-self: flex-start;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+}
+
+.back:hover {
+  color: var(--text-primary);
+  background: var(--surface-muted);
+}
+
+.card {
+  width: 100%;
+  max-width: 820px;
+  background: var(--surface);
+  border-radius: var(--radius-xxl);
+  box-shadow: var(--shadow-card);
+  padding: 28px 24px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 22px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.upgrade {
+  display: flex;
+  justify-content: center;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.link {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.childRow,
+.metricRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.childChip,
+.metricTab {
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  padding: 7px 15px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.childChipActive,
+.metricTabActive {
+  border-color: var(--primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 700;
+  margin-right: 10px;
+}
+
+.summaryMeta {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.delta {
+  color: var(--status-ok);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chartWrap {
+  overflow-x: auto;
+}
+
+.chart {
+  width: 100%;
+  min-width: 420px;
+  height: auto;
+}
+
+.chartEmpty {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.line {
+  fill: none;
+  stroke: var(--primary-text);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--primary-text);
+}
+
+.tick {
+  fill: var(--text-secondary);
+  font-size: 11px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.input {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.history {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.historyTitle {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.historyDate {
+  color: var(--text-secondary);
+  min-width: 88px;
+}
+
+.historyValues {
+  flex: 1;
+}
+
+.removeLink {
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+@media (max-width: 700px) {
+  .formRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

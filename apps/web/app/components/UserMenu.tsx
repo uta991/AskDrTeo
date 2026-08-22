@@ -146,8 +146,28 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             განვითარების მონიტორინგი
           </Link>
 
+          <Link href="/growth" className={styles.item} role="menuitem">
+            ზრდის დინამიკა
+          </Link>
+
+          <Link href="/vaccinations" className={styles.item} role="menuitem">
+            აცრების კალენდარი
+          </Link>
+
+          <Link href="/videos" className={styles.item} role="menuitem">
+            ვიდეო ბიბლიოთეკა
+          </Link>
+
+          <Link href="/booking" className={styles.item} role="menuitem">
+            ვიზიტის ჯავშანი
+          </Link>
+
           <Link href="/calculator" className={styles.item} role="menuitem">
             დოზის კალკულატორი
+          </Link>
+
+          <Link href="/chat" className={styles.item} role="menuitem">
+            ჩატი კონსულტანტთან
           </Link>
 
           <Link href="/assistant" className={styles.item} role="menuitem">

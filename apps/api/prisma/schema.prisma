@@ -99,6 +99,7 @@ model User {
   loginChallenges LoginChallenge[]
   trustedDevices  TrustedDevice[]
   aiConversations AiConversation[]
+  appointments    Appointment[]
   messages        Message[]
   operatorProfile OperatorProfile?
 
@@ -264,6 +265,9 @@ model Child {
   avatarAsset   MediaAsset? @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   assessments   MilestoneAssessment[]
   aiConversations AiConversation[]
+  growthEntries GrowthEntry[]
+  vaccinations  ChildVaccination[]
+  appointments  Appointment[]
 
   /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
   gestationalWeek Int?
@@ -1407,4 +1411,136 @@ model AiMessage {
 
   @@index([conversationId, createdAt])
   @@map("ai_messages")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ზრდის დინამიკა
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * ერთი გაზომვა.
+ *
+ * პროცენტილს განზრახ არ ვთვლით: ეს პედიატრის შეფასებაა და მშობელს
+ * ციფრი დასკვნად მოეჩვენებოდა. აქ მხოლოდ ბავშვის საკუთარი მრუდია.
+ */
+model GrowthEntry {
+  id      String @id @default(uuid())
+  childId String
+  child   Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  measuredAt DateTime
+
+  weightKg Decimal? @db.Decimal(5, 2)
+  heightCm Decimal? @db.Decimal(5, 1)
+  headCm   Decimal? @db.Decimal(4, 1)
+
+  note String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([childId, measuredAt])
+  @@map("growth_entries")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// აცრების კალენდარი
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * ეროვნული კალენდრის ერთი აცრა.
+ *
+ * ცნობარი ბაზაშია და არა კოდში: კალენდარი იცვლება და ცვლილება
+ * ადმინის პანელიდან უნდა შედიოდეს, აპლიკაციის განახლების გარეშე.
+ */
+model Vaccine {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+  /// რისგან იცავს — მშობლისთვის ერთი წინადადებით
+  description String?
+
+  /// რომელ ასაკში კეთდება, თვეებში დაბადებიდან
+  ageMonths Int
+  /// მრავალდოზიანი აცრის მერამდენე დოზაა
+  doseNumber Int @default(1)
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  records ChildVaccination[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([ageMonths, sortOrder])
+  @@map("vaccines")
+}
+
+/** კონკრეტული ბავშვის აცრა — გაკეთებულია თუ არა და როდის. */
+model ChildVaccination {
+  id        String  @id @default(uuid())
+  childId   String
+  child     Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+
+  doneAt DateTime?
+  note   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([childId, vaccineId])
+  @@index([childId])
+  @@map("child_vaccinations")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ვიზიტის ჯავშანი
+// ═══════════════════════════════════════════════════════════════
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  DECLINED
+  CANCELED
+  DONE
+}
+
+/**
+ * ვიზიტის მოთხოვნა პედიატრთან.
+ *
+ * `usedFreeVisit` აღრიცხავს პაკეტის თვიურ უფასო ვიზიტს — თორემ
+ * კვოტა მხოლოდ დაპირება იქნებოდა და არა წესი.
+ */
+model Appointment {
+  id       String @id @default(uuid())
+  parentId String
+  parent   User   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  childId String?
+  child   Child?  @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  /// მშობლის სასურველი დრო
+  preferredAt DateTime
+  reason      String?
+
+  status AppointmentStatus @default(REQUESTED)
+  /// დადასტურებული დრო — შეიძლება სასურველს არ ემთხვეოდეს
+  scheduledAt DateTime?
+  staffNote   String?
+
+  /// პაკეტის უფასო ვიზიტით იქმნება თუ ფასიანი
+  usedFreeVisit Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([parentId, createdAt])
+  @@index([status, preferredAt])
+  @@map("appointments")
 }

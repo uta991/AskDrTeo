@@ -21,7 +21,18 @@ export function AdminNav({
   active,
 }: {
   user: SessionUser;
-  active: 'dashboard' | 'users' | 'news' | 'promo' | 'medications' | 'staff' | 'profile';
+  active:
+    | 'dashboard'
+    | 'users'
+    | 'news'
+    | 'chat'
+    | 'appointments'
+    | 'videos'
+    | 'vaccines'
+    | 'promo'
+    | 'medications'
+    | 'staff'
+    | 'profile';
 }) {
   return (
     <header className={styles.header}>
@@ -40,6 +51,18 @@ export function AdminNav({
         {/* სიახლეს ოპერატორიც წერს — ვიდეოს მიბმა კი ადმინის უფლებაა */}
         <Link href="/admin/news" className={active === 'news' ? styles.tabActive : styles.tab}>
           სიახლეები
+        </Link>
+
+        {/* ოპერატორის ძირითადი სამუშაო ადგილი */}
+        <Link href="/admin/chat" className={active === 'chat' ? styles.tabActive : styles.tab}>
+          ჩატი
+        </Link>
+
+        <Link
+          href="/admin/appointments"
+          className={active === 'appointments' ? styles.tabActive : styles.tab}
+        >
+          ვიზიტები
         </Link>
 
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}

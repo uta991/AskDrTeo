@@ -14,6 +14,11 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { ChildrenModule } from './modules/children/children.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { GrowthModule } from './modules/growth/growth.module';
+import { VideosModule } from './modules/videos/videos.module';
+import { VaccinationsModule } from './modules/vaccinations/vaccinations.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { EntitlementsModule } from './modules/entitlements/entitlements.module';
 import { MediaModule } from './modules/media/media.module';
 import { MedicationsModule } from './modules/medications/medications.module';
@@ -36,6 +41,11 @@ import { SmsModule } from './modules/sms/sms.module';
     AuditModule,
     EntitlementsModule,
     AiModule,
+    ChatModule,
+    GrowthModule,
+    VideosModule,
+    VaccinationsModule,
+    AppointmentsModule,
     PermissionsModule,
     AuthModule,
     AdminUsersModule,

@@ -18,13 +18,15 @@ import {
 
 const FEATURES = [
   { key: 'video_library', name: 'ვიდეო ბიბლიოთეკა', type: FeatureType.ACCESS, defaultValue: 'free_only' },
-  { key: 'video_download', name: 'ოფლაინ ჩამოტვირთვა', type: FeatureType.BOOLEAN, defaultValue: 'false' },
+  // ოფლაინ ჩამოტვირთვა აპლიკაციის ფუნქციაა — პაკეტში მაშინ დაბრუნდება
+  { key: 'video_download', name: 'ოფლაინ ჩამოტვირთვა', type: FeatureType.BOOLEAN, defaultValue: 'false', isActive: false },
   { key: 'chat_with_operator', name: 'ჩატი კონსულტანტთან', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'chat_priority', name: 'პრიორიტეტული პასუხი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'max_children', name: 'ბავშვის პროფილები', type: FeatureType.LIMIT, unit: 'children', defaultValue: '1' },
   { key: 'growth_tracking', name: 'ზრდის დინამიკა', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'vaccination_calendar', name: 'აცრების კალენდარი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
-  { key: 'ad_free', name: 'რეკლამის გარეშე', type: FeatureType.BOOLEAN, defaultValue: 'false' },
+  // რეკლამა აპლიკაციაში საერთოდ არ არის — დაპირება ცარიელი იქნებოდა
+  { key: 'ad_free', name: 'რეკლამის გარეშე', type: FeatureType.BOOLEAN, defaultValue: 'false', isActive: false },
   { key: 'dose_calculator', name: 'დოზის კალკულატორი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'development_monitoring', name: 'განვითარების მონიტორინგი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
   { key: 'ai_assistant', name: 'AI ასისტენტი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
@@ -54,7 +56,6 @@ const PLANS = [
     prices: [],
     features: {
       video_library: 'free_only',
-      video_download: false,
       chat_with_operator: false,
       chat_priority: false,
       max_children: '1',
@@ -67,7 +68,6 @@ const PLANS = [
       dose_calculator: false,
       ai_assistant: false,
       monthly_free_visit: false,
-      ad_free: false,
     },
   },
   {
@@ -85,7 +85,6 @@ const PLANS = [
     ],
     features: {
       video_library: 'all',
-      video_download: false,
       chat_with_operator: true,
       chat_priority: false,
       max_children: '3',
@@ -97,7 +96,6 @@ const PLANS = [
       dose_calculator: true,
       ai_assistant: false,
       monthly_free_visit: false,
-      ad_free: true,
     },
   },
   {
@@ -112,7 +110,6 @@ const PLANS = [
     ],
     features: {
       video_library: 'all',
-      video_download: true,
       chat_with_operator: true,
       chat_priority: true,
       max_children: 'unlimited',
@@ -125,10 +122,12 @@ const PLANS = [
       ai_assistant: true,
       // თვეში ერთი უფასო ვიზიტი პედიატრ თეონა ტაბატაძესთან
       monthly_free_visit: '1',
-      ad_free: true,
     },
   },
 ];
+
+/** ფუნქციები, რომლებიც პაკეტებიდან მოიხსნა — სიაში აღარ ჩანს. */
+const RETIRED_FEATURES = ['ad_free', 'video_download'];
 
 /** პაკეტები, რომლებიც აღარ იყიდება — გამომწერები მითითებულზე გადადიან. */
 const RETIRED: { code: string; movedTo: string }[] = [{ code: 'unlimited', movedTo: 'premium' }];
@@ -137,7 +136,13 @@ export async function seedPlans(prisma: PrismaClient): Promise<void> {
   for (const [i, f] of FEATURES.entries()) {
     await prisma.feature.upsert({
       where: { key: f.key },
-      update: { name: f.name, type: f.type, unit: f.unit, defaultValue: f.defaultValue },
+      update: {
+        name: f.name,
+        type: f.type,
+        unit: f.unit,
+        defaultValue: f.defaultValue,
+        isActive: f.isActive ?? true,
+      },
       create: { ...f, sortOrder: i + 1 },
     });
   }
@@ -186,7 +191,28 @@ export async function seedPlans(prisma: PrismaClient): Promise<void> {
   }
   console.log(`✓ ${PLANS.length} პაკეტი ფასებითა და ფუნქციებით`);
 
+  await retireFeatures(prisma);
   await retirePlans(prisma);
+}
+
+/**
+ * მოხსნილი ფუნქციის გასუფთავება.
+ *
+ * ცნობარში ჩანაწერი რჩება (isActive: false), პაკეტებიდან კი ქრება —
+ * თორემ მშობელს ისეთი დაპირება ეწერებოდა, რასაც სისტემა არ ასრულებს.
+ */
+async function retireFeatures(prisma: PrismaClient): Promise<void> {
+  const features = await prisma.feature.findMany({
+    where: { key: { in: RETIRED_FEATURES } },
+    select: { id: true },
+  });
+  if (!features.length) return;
+
+  const removed = await prisma.planFeature.deleteMany({
+    where: { featureId: { in: features.map((f) => f.id) } },
+  });
+
+  if (removed.count) console.log(`✓ ${removed.count} ცარიელი დაპირება მოიხსნა პაკეტებიდან`);
 }
 
 /**

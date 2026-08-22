@@ -31,8 +31,10 @@ export async function SiteHeader() {
           <Link href="/plans">პაკეტები</Link>
           {/* დოზირება სამედიცინო ინფორმაციაა — მხოლოდ შესულს */}
           {!!user && <Link href="/development">განვითარება</Link>}
+          {!!user && <Link href="/videos">ვიდეოები</Link>}
           {!!user && <Link href="/calculator">კალკულატორი</Link>}
           {!!user && <Link href="/assistant">ასისტენტი</Link>}
+          {!!user && <Link href={isStaff ? '/admin/chat' : '/chat'}>ჩატი</Link>}
         </nav>
 
         <div className={styles.actions}>

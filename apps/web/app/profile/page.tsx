@@ -101,7 +101,15 @@ export default async function ProfilePage({
               <div className={styles.links}>
                 <Link href="/account">ჩემი კაბინეტი</Link>
                 <Link href="/account/child">ბავშვის დამატება</Link>
+                <Link href="/development">განვითარების მონიტორინგი</Link>
+                <Link href="/growth">ზრდის დინამიკა</Link>
+                <Link href="/vaccinations">აცრების კალენდარი</Link>
+                <Link href="/videos">ვიდეო ბიბლიოთეკა</Link>
                 <Link href="/calculator">დოზის კალკულატორი</Link>
+                <Link href="/chat">ჩატი კონსულტანტთან</Link>
+                <Link href="/assistant">AI ასისტენტი</Link>
+                <Link href="/booking">ვიზიტის ჯავშანი</Link>
+                <Link href="/plans">პაკეტები</Link>
               </div>
             </section>
           </>
@@ -166,6 +174,19 @@ export default async function ProfilePage({
               {(promos ?? []).map((promo) => (
                 <PromoRow key={promo.id} promo={promo} />
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── ცნობარები ───────────────────────────────────────── */}
+        {canManageContent && (
+          <section className="card">
+            <h2 className={styles.sectionTitle}>ცნობარები</h2>
+            <div className={styles.links}>
+              <Link href="/admin/vaccines">აცრების ცნობარი</Link>
+              <Link href="/admin/videos">ვიდეოების მართვა</Link>
+              <Link href="/admin/appointments">ვიზიტის მოთხოვნები</Link>
+              <Link href="/admin/chat">ჩატის რიგი</Link>
             </div>
           </section>
         )}
