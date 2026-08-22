@@ -8,14 +8,20 @@ import styles from '../admin.module.css';
 
 export const metadata = { title: 'ჩატი — AskDrTeo' };
 
-export default async function AdminChatPage() {
+export default async function AdminChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ operator?: string }>;
+}) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
   if (user.role === 'PARENT') redirect('/chat');
 
+  const { operator } = await searchParams;
+
   const [rows, feedback] = await Promise.all([
     apiFetch<QueueRow[]>('/admin/chat/conversations'),
-    apiFetch<Feedback>('/admin/chat/feedback'),
+    apiFetch<Feedback>(`/admin/chat/feedback${operator ? `?operatorId=${operator}` : ''}`),
   ]);
 
   // პირველი საუბარი მაშინვე გახსნილი — ოპერატორს ზედმეტი კლიკი არ სჭირდება
@@ -38,7 +44,7 @@ export default async function AdminChatPage() {
         <ChatQueue rows={rows ?? []} first={first} />
 
         <h2 className={styles.sectionTitle}>მშობლების შეფასებები</h2>
-        <FeedbackSummary feedback={feedback} />
+        <FeedbackSummary feedback={feedback} selectedOperator={operator} />
       </div>
     </main>
   );

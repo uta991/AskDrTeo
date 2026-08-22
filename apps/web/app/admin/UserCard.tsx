@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { grantPlan, type ActionState } from './actions';
 import { AccountActions } from './AccountActions';
+import { UserChatHistory } from './UserChatHistory';
 import styles from './admin.module.css';
 
 export interface AdminUser {
@@ -111,6 +112,14 @@ export function UserCard({
               </div>
               {!!planState.error && <p className={styles.actionError}>{planState.error}</p>}
               {!!planState.notice && <p className={styles.actionNotice}>{planState.notice}</p>}
+            </>
+          )}
+
+          {/* ჩატის ისტორია — რაზე მოიწერა და ვინ უპასუხა */}
+          {user.role === 'PARENT' && (
+            <>
+              <h4 className={styles.actionsTitle}>ჩატის ისტორია</h4>
+              <UserChatHistory userId={user.id} />
             </>
           )}
 

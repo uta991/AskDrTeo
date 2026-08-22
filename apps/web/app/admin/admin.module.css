@@ -690,3 +690,60 @@
   align-items: center;
   margin-top: 10px;
 }
+
+/* ოპერატორის მონიშვნა შეფასებებში */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.filterChip,
+.filterChipActive {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.filterChipActive {
+  border-color: var(--primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* მომხმარებლის ჩატის ისტორია ბარათში */
+.chatHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chatHistoryRow {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+}
+
+.chatHistoryHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.chatHistoryStatus {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.chatHistoryText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 4px 0;
+}

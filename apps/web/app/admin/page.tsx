@@ -27,17 +27,23 @@ function money(minor: number, currency = 'GEL'): string {
   return `${(minor / 100).toFixed(2)} ${currency === 'GEL' ? '₾' : currency}`;
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ operator?: string }>;
+}) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
 
   // მშობელს პანელი არ ეკუთვნის — კაბინეტში მიდის, ჩიხის ნაცვლად
   if (user.role === 'PARENT') redirect('/account');
 
+  const { operator } = await searchParams;
+
   const [overview, financial, feedback] = await Promise.all([
     apiFetch<Overview>('/admin/stats'),
     apiFetch<Financial>('/admin/stats/financial'),
-    apiFetch<Feedback>('/admin/chat/feedback'),
+    apiFetch<Feedback>(`/admin/chat/feedback${operator ? `?operatorId=${operator}` : ''}`),
   ]);
 
   return (
@@ -74,7 +80,7 @@ export default async function AdminPage() {
                 ჩატის რიგი →
               </Link>
             </h2>
-            <FeedbackSummary feedback={feedback} />
+            <FeedbackSummary feedback={feedback} basePath="/admin" selectedOperator={operator} />
 
             {!!financial && (
               <>

@@ -6,6 +6,8 @@ import {
   refreshThread,
   sendParentMessage,
   sendStaffMessage,
+  takeConversation,
+  uploadAttachment,
   type ChatMessage,
   type Thread,
 } from './actions';
@@ -43,6 +45,10 @@ export function ChatThread({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // მიმაგრებული, მაგრამ ჯერ გაუგზავნელი ფაილები
+  const [attachments, setAttachments] = useState<{ id: string; name: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setCurrent(thread), [thread]);
@@ -66,17 +72,35 @@ export function ChatThread({
 
   const closed = current?.status === 'CLOSED';
 
+  const upload = (file: File) => {
+    setError(null);
+    setUploading(true);
+
+    const form = new FormData();
+    form.append('file', file);
+
+    void uploadAttachment(form)
+      .then((result) => {
+        if (result.error) setError(result.error);
+        else if (result.id) setAttachments((prev) => [...prev, { id: result.id!, name: file.name }]);
+      })
+      .finally(() => setUploading(false));
+  };
+
   const send = () => {
     const text = input.trim();
-    if (!text || pending) return;
+    if ((!text && !attachments.length) || pending) return;
+
+    const assetIds = attachments.map((item) => item.id);
 
     setError(null);
     setInput('');
+    setAttachments([]);
 
     startTransition(async () => {
       const result = staff
-        ? await sendStaffMessage(current!.id, text)
-        : await sendParentMessage(text, current?.id);
+        ? await sendStaffMessage(current!.id, text, assetIds)
+        : await sendParentMessage(text, current?.id, assetIds);
 
       if (result.error) {
         setError(result.error);
@@ -95,6 +119,28 @@ export function ChatThread({
       {staff && !!current && (
         <div className={styles.threadHead}>
           <span className={styles.threadSubject}>{current.subject ?? 'შეკითხვა'}</span>
+
+          {/* აღება მშობელს ოპერატორის სახელით ესალმება */}
+          {!closed && current.status === 'OPEN' && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const result = await takeConversation(current.id);
+                  if (result.error) {
+                    setError(result.error);
+                    return;
+                  }
+                  const next = await refreshThread(current.id, true);
+                  if (next) setCurrent(next);
+                })
+              }
+            >
+              საუბრის აღება
+            </button>
+          )}
 
           {!closed && (
             <button
@@ -137,12 +183,40 @@ export function ChatThread({
 
           return (
             <div key={message.id} className={mine ? styles.bubbleMine : styles.bubbleTheirs}>
+              {/* სახელით — ერთ საუბარს რამდენიმე ოპერატორი პასუხობს და
+                  მშობელმა უნდა იცოდეს, ვის ელაპარაკება */}
               {!mine && !!message.sender && (
-                <span className={styles.author}>
-                  {fromStaff ? 'კონსულტანტი' : message.sender.firstName}
-                </span>
+                <span className={styles.author}>{message.sender.firstName}</span>
               )}
-              <span className={styles.body}>{message.body}</span>
+              {!!message.body && <span className={styles.body}>{message.body}</span>}
+
+              {message.attachments?.map((attachment) =>
+                attachment.type === 'VIDEO' ? (
+                  <span key={attachment.id} className={styles.attachment}>
+                    {attachment.url ? (
+                      <iframe
+                        src={attachment.url}
+                        title="ვიდეო"
+                        allow="encrypted-media; fullscreen; picture-in-picture"
+                        allowFullScreen
+                        className={styles.attachmentVideo}
+                      />
+                    ) : (
+                      <span className={styles.attachmentPending}>ვიდეო მუშავდება…</span>
+                    )}
+                  </span>
+                ) : attachment.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer">
+                    <img src={attachment.url} alt="" className={styles.attachmentImage} />
+                  </a>
+                ) : (
+                  <span key={attachment.id} className={styles.attachmentPending}>
+                    ფაილი ვერ ჩაიტვირთა
+                  </span>
+                ),
+              )}
+
               <span className={styles.time}>{time(message.createdAt)}</span>
             </div>
           );
@@ -157,6 +231,23 @@ export function ChatThread({
           საუბარი დახურულია.{!staff && ' ახალი შეკითხვისთვის დაწერეთ ქვემოთ.'}
         </p>
       ) : null}
+
+      {attachments.length > 0 && (
+        <div className={styles.pendingFiles}>
+          {attachments.map((item) => (
+            <span key={item.id} className={styles.pendingFile}>
+              {item.name}
+              <button
+                type="button"
+                className={styles.removeFile}
+                onClick={() => setAttachments((prev) => prev.filter((f) => f.id !== item.id))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {(!closed || !staff) && (
         <form
@@ -181,7 +272,26 @@ export function ChatThread({
             maxLength={4000}
           />
 
-          <button type="submit" className="btn btn-primary" disabled={pending || !input.trim()}>
+          {/* ფოტო/ვიდეო — ტელეფონზე კამერას ხსნის, კომპიუტერზე ფაილს */}
+          <label className={styles.attachButton} title="ფოტო ან ვიდეო">
+            {uploading ? '…' : '+'}
+            <input
+              type="file"
+              accept="image/*,video/*"
+              className={styles.fileInput}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) upload(file);
+                event.target.value = '';
+              }}
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={pending || uploading || (!input.trim() && !attachments.length)}
+          >
             გაგზავნა
           </button>
         </form>

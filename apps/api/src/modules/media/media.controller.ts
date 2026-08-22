@@ -115,7 +115,8 @@ export class MediaController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: tempStorage(),
-      limits: { fileSize: UploadPolicyService.maxBytesFor('image') },
+      // ვიდეოს ჭერი უფრო მაღალია — მშობელი ხშირად კადრს იღებს ადგილზე
+      limits: { fileSize: UploadPolicyService.maxBytesFor('video') },
     }),
   )
   async uploadChatAttachment(
@@ -124,7 +125,9 @@ export class MediaController {
   ) {
     if (!file) throw new BadRequestException('ფაილი არ არის მიმაგრებული');
 
-    await this.policy.assertAllowed(file, 'image', actor);
+    const kind = file.mimetype.startsWith('video/') ? 'video' : 'image';
+    await this.policy.assertAllowed(file, kind, actor);
+
     return this.media.uploadChatAttachment(file, actor.id);
   }
 }

@@ -102,6 +102,7 @@ model User {
   appointments    Appointment[]
   chatFeedback    ConversationFeedback[]
   feedbackAsOperator ConversationFeedback[] @relation("FeedbackOperator")
+  feedbackShares  ConversationFeedbackOperator[]
   messages        Message[]
   operatorProfile OperatorProfile?
 
@@ -1573,9 +1574,12 @@ model ConversationFeedback {
   parentId String?
   parent   User?   @relation(fields: [parentId], references: [id], onDelete: SetNull)
 
-  /// ვინ უპასუხა — ოპერატორების შედარებისთვის
+  /// ვინ დახურა საუბარი — შეფასების ძირითადი ადრესატი
   operatorId String?
   operator   User?   @relation("FeedbackOperator", fields: [operatorId], references: [id], onDelete: SetNull)
+
+  /// ერთ საუბარს რამდენიმე ოპერატორი პასუხობს — შეფასება ყველას ეკუთვნის
+  operators ConversationFeedbackOperator[]
 
   token String @unique
 
@@ -1588,4 +1592,28 @@ model ConversationFeedback {
 
   @@index([operatorId, rating])
   @@map("conversation_feedback")
+}
+
+/**
+ * შეფასების ავტორები.
+ *
+ * ცალკე ცხრილია, რადგან ერთ საუბარს რამდენიმე ოპერატორი პასუხობს:
+ * ერთი იწყებს, მეორე ცვლაში აგრძელებს. ერთი `operatorId` ქულას
+ * მხოლოდ ბოლოს მიაწერდა და შედარება უაზრო გახდებოდა.
+ */
+model ConversationFeedbackOperator {
+  id         String               @id @default(uuid())
+  feedbackId String
+  feedback   ConversationFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  operatorId String
+  operator   User                 @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  /// რამდენი შეტყობინება დაწერა ამ საუბარში — წვლილის საზომი
+  messageCount Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([feedbackId, operatorId])
+  @@index([operatorId])
+  @@map("conversation_feedback_operators")
 }

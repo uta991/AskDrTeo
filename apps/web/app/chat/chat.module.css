@@ -281,3 +281,129 @@
     max-width: 92%;
   }
 }
+
+/* ── დანართები ───────────────────────────────────────── */
+
+.attachment {
+  display: block;
+  width: min(320px, 100%);
+}
+
+.attachmentImage {
+  width: min(280px, 100%);
+  border-radius: var(--radius-lg);
+  display: block;
+}
+
+.attachmentVideo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: #000000;
+}
+
+.attachmentPending {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pendingFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pendingFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+.removeFile {
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.attachButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.attachButton:hover {
+  border-color: var(--primary);
+}
+
+.fileInput {
+  display: none;
+}
+
+/* ── წინა საუბრები ───────────────────────────────────── */
+
+.history {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.historyTitle {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  color: inherit;
+}
+
+.historyRow:hover {
+  background: var(--surface-muted);
+}
+
+.historyMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.historyDate {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.historyPreview {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyMeta {
+  font-size: 12px;
+  color: var(--primary-text);
+  white-space: nowrap;
+}

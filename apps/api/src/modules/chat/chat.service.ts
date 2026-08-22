@@ -1,6 +1,14 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ConversationStatus,
+  MediaStatus,
+  MediaType,
   MessageType,
   NotificationChannel,
   NotificationStatus,
@@ -11,7 +19,9 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { MediaAccessService } from '../media/media-access.service';
 import { SmsService } from '../sms/sms.service';
+import { VIDEO_STORAGE, type VideoStorageProvider } from '../storage/storage.types';
 import { RateConversationDto, SendMessageDto, StartConversationDto } from './dto/chat.dto';
 
 const STAFF_ROLES: UserRole[] = [UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN];
@@ -26,6 +36,13 @@ const MESSAGE_SELECT = {
   createdAt: true,
   senderId: true,
   sender: { select: { id: true, firstName: true, lastName: true, role: true } },
+  attachments: {
+    orderBy: { position: 'asc' },
+    select: {
+      assetId: true,
+      asset: { select: { id: true, type: true, status: true, playbackId: true } },
+    },
+  },
 } satisfies Prisma.MessageSelect;
 
 @Injectable()
@@ -37,6 +54,8 @@ export class ChatService {
     private readonly entitlements: EntitlementsService,
     private readonly sms: SmsService,
     private readonly config: ConfigService,
+    private readonly mediaAccess: MediaAccessService,
+    @Inject(VIDEO_STORAGE) private readonly videoStorage: VideoStorageProvider,
   ) {}
 
   /**
@@ -53,8 +72,12 @@ export class ChatService {
         participants: { where: { userId }, select: { lastReadAt: true } },
         messages: {
           orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { body: true, createdAt: true, senderId: true },
+          select: {
+            body: true,
+            createdAt: true,
+            senderId: true,
+            sender: { select: { firstName: true, lastName: true, role: true } },
+          },
         },
       },
     });
@@ -64,8 +87,12 @@ export class ChatService {
         id: conversation.id,
         subject: conversation.subject,
         status: conversation.status,
+        createdAt: conversation.createdAt,
+        closedAt: conversation.closedAt,
         lastMessageAt: conversation.lastMessageAt,
         lastMessage: conversation.messages[0]?.body ?? null,
+        // ვისთან ჰქონდა საუბარი — ისტორიაში სახელი უნდა ჩანდეს
+        operators: this.staffNames(conversation.messages),
         unread: await this.unreadCount(conversation.id, conversation.participants[0]?.lastReadAt),
       })),
     );
@@ -155,6 +182,7 @@ export class ChatService {
       select: { id: true },
     });
 
+    await this.autoReply(conversation.id, userId);
     await this.notifyStaff(conversation.id, dto.message.trim());
 
     return this.messages(conversation.id, userId, UserRole.PARENT);
@@ -176,7 +204,13 @@ export class ChatService {
       id: conversation.id,
       subject: conversation.subject,
       status: conversation.status,
-      messages,
+      assignedOperatorId: conversation.assignedOperatorId,
+      messages: await Promise.all(
+        messages.map(async (message) => ({
+          ...message,
+          attachments: await this.presentAttachments(message.attachments, { id: userId, role }),
+        })),
+      ),
     };
   }
 
@@ -185,6 +219,23 @@ export class ChatService {
 
     if (!WRITABLE.includes(conversation.status)) {
       throw new ForbiddenException('საუბარი დახურულია — გახსენით ახალი');
+    }
+
+    const assetIds = dto.assetIds ?? [];
+    const text = dto.body?.trim() ?? '';
+
+    if (!text && !assetIds.length) {
+      throw new ForbiddenException('შეტყობინება ცარიელია');
+    }
+
+    // მხოლოდ საკუთარი ატვირთული ფაილი — სხვისი ბმულით მიმაგრება დაუშვებელია
+    if (assetIds.length) {
+      const owned = await this.prisma.mediaAsset.count({
+        where: { id: { in: assetIds }, ownerId: userId, deletedAt: null },
+      });
+      if (owned !== assetIds.length) {
+        throw new ForbiddenException('მიმაგრებული ფაილი ვერ მოიძებნა');
+      }
     }
 
     // პერსონალი პასუხისას საუბრის მონაწილე ხდება, რომ წაკითხვა აღირიცხოს
@@ -200,8 +251,11 @@ export class ChatService {
       data: {
         conversationId,
         senderId: userId,
-        type: MessageType.TEXT,
-        body: dto.body.trim(),
+        type: assetIds.length && !text ? MessageType.IMAGE : MessageType.TEXT,
+        body: text || null,
+        attachments: {
+          create: assetIds.map((assetId, position) => ({ assetId, position })),
+        },
       },
       select: MESSAGE_SELECT,
     });
@@ -220,13 +274,105 @@ export class ChatService {
       },
     });
 
+    const preview = text || (assetIds.length ? 'ფაილი მიმაგრებულია' : '');
+
     if (STAFF_ROLES.includes(role)) {
-      await this.notifyParent(conversationId, dto.body.trim());
+      await this.notifyParent(conversationId, preview);
     } else {
-      await this.notifyStaff(conversationId, dto.body.trim());
+      await this.autoReply(conversationId, userId);
+      await this.notifyStaff(conversationId, preview);
     }
 
     return message;
+  }
+
+  /**
+   * საუბრის აღება.
+   *
+   * ოპერატორი საკუთარ თავს ამბობს — მშობელმა უნდა იცოდეს, ვის
+   * ელაპარაკება. მიმაგრება ცალკე ღილაკია და არა გახსნისას: რიგის
+   * დათვალიერება ჯერ არ ნიშნავს, რომ პასუხს ეს ოპერატორი აგებს.
+   */
+  async take(conversationId: string, userId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { id: true, status: true, assignedOperatorId: true },
+    });
+    if (!conversation) throw new NotFoundException('საუბარი ვერ მოიძებნა');
+
+    if (conversation.assignedOperatorId && conversation.assignedOperatorId !== userId) {
+      throw new ForbiddenException('საუბარი სხვა ოპერატორს აქვს აღებული');
+    }
+
+    const operator = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true },
+    });
+
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        status: ConversationStatus.ASSIGNED,
+        assignedOperatorId: userId,
+        lastMessageAt: new Date(),
+      },
+    });
+
+    await this.prisma.conversationUser.upsert({
+      where: { conversationId_userId: { conversationId, userId } },
+      update: {},
+      create: { conversationId, userId },
+    });
+
+    const greeting = `გამარჯობა, მე ვარ ${operator?.firstName ?? 'კონსულტანტი'}. რით შემიძლია დაგეხმაროთ?`;
+
+    await this.prisma.message.create({
+      data: {
+        conversationId,
+        senderId: userId,
+        type: MessageType.TEXT,
+        body: greeting,
+      },
+    });
+
+    await this.notifyParent(conversationId, greeting);
+
+    return { message: 'საუბარი აღებულია', id: conversationId };
+  }
+
+  /**
+   * ავტომატური პასუხი.
+   *
+   * მშობელს დაწერისთანავე უნდა დაუდასტურდეს, რომ შეკითხვა მივიდა —
+   * თორემ ცარიელ ეკრანს უყურებს და ვერ ხვდება, გაიგზავნა თუ არა.
+   * ერთხელ იგზავნება: ცოცხალი პასუხის შემდეგ აღარ მეორდება.
+   */
+  private async autoReply(conversationId: string, parentId: string): Promise<void> {
+    const existing = await this.prisma.message.findFirst({
+      where: {
+        conversationId,
+        OR: [{ type: MessageType.SYSTEM }, { sender: { role: { in: STAFF_ROLES } } }],
+      },
+      select: { id: true },
+    });
+
+    // ან უკვე გავეცით, ან ოპერატორმა ცოცხლად უპასუხა
+    if (existing) return;
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { firstName: true },
+    });
+
+    await this.prisma.message.create({
+      data: {
+        conversationId,
+        type: MessageType.SYSTEM,
+        body:
+          `გამარჯობა, ${parent?.firstName ?? ''}! თქვენი შეკითხვა მივიღეთ — ` +
+          'კონსულტანტი მალე გიპასუხებთ.',
+      },
+    });
   }
 
   /**
@@ -281,8 +427,10 @@ export class ChatService {
         operatorId,
         token: randomBytes(16).toString('hex'),
       },
-      select: { token: true, rating: true },
+      select: { id: true, token: true, rating: true },
     });
+
+    await this.recordOperators(conversationId, feedback.id, operatorId);
 
     // უკვე შეფასებულს მეორედ არ ვთხოვთ
     if (feedback.rating) return;
@@ -314,6 +462,138 @@ export class ChatService {
       .catch((error: unknown) => {
         this.logger.warn(`შეფასების SMS ვერ გაიგზავნა: ${String(error)}`);
       });
+  }
+
+  /**
+   * ერთი მომხმარებლის ჩატის ისტორია — ადმინის პანელისთვის.
+   *
+   * ანგარიშის ქვეშ უნდა ჩანდეს, რა თარიღში მოიწერა, ვინ უპასუხა და
+   * რაზე იყო საუბარი: ერთი დახურული ჩატი ისტორიაა და არა ნაგავი.
+   */
+  async historyFor(userId: string) {
+    const conversations = await this.prisma.conversation.findMany({
+      where: { participants: { some: { userId } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            body: true,
+            createdAt: true,
+            type: true,
+            sender: { select: { firstName: true, lastName: true, role: true } },
+          },
+        },
+        feedback: { select: { rating: true, comment: true } },
+      },
+    });
+
+    return conversations.map((conversation) => ({
+      id: conversation.id,
+      subject: conversation.subject,
+      status: conversation.status,
+      createdAt: conversation.createdAt,
+      closedAt: conversation.closedAt,
+      messageCount: conversation.messages.length,
+      operators: this.staffNames(conversation.messages),
+      firstMessage:
+        conversation.messages.find((message) => message.sender?.role === UserRole.PARENT)?.body ??
+        null,
+      rating: conversation.feedback?.rating ?? null,
+      comment: conversation.feedback?.comment ?? null,
+    }));
+  }
+
+  /**
+   * დანართების ბმულები.
+   *
+   * ფოტოს ხელმოწერილი ბმული გამოაქვს, ვიდეოს — iframe. ბმული ყოველ
+   * ჯერზე ახლიდან იწერება: ვადიანი მისამართის ბაზაში შენახვას აზრი
+   * არ აქვს.
+   */
+  private async presentAttachments(
+    attachments: {
+      assetId: string;
+      asset: { id: string; type: MediaType; status: MediaStatus; playbackId: string | null };
+    }[],
+    viewer: { id: string; role: UserRole },
+  ) {
+    return Promise.all(
+      attachments.map(async (attachment) => {
+        const video = attachment.asset.type === MediaType.VIDEO;
+        const ready = attachment.asset.status === MediaStatus.READY;
+
+        if (video) {
+          return {
+            id: attachment.assetId,
+            type: 'VIDEO' as const,
+            processing: !ready,
+            url:
+              ready && attachment.asset.playbackId
+                ? this.videoStorage.embedUrl(attachment.asset.playbackId)
+                : null,
+          };
+        }
+
+        const url = await this.mediaAccess
+          .urlFor(attachment.assetId, viewer)
+          .catch(() => null);
+
+        return { id: attachment.assetId, type: 'IMAGE' as const, processing: false, url };
+      }),
+    );
+  }
+
+  /** მოპასუხე ოპერატორების სახელები — გამეორების გარეშე. */
+  private staffNames(
+    messages: { sender?: { firstName: string; lastName: string | null; role: UserRole } | null }[],
+  ): string[] {
+    const names = messages
+      .filter((message) => message.sender && STAFF_ROLES.includes(message.sender.role))
+      .map((message) => `${message.sender!.firstName} ${message.sender!.lastName ?? ''}`.trim());
+
+    return [...new Set(names)];
+  }
+
+  /**
+   * ვინ პასუხობდა ამ საუბარს.
+   *
+   * ერთი საუბარი ხშირად ორ ოპერატორზე გადის — ერთი იწყებს, მეორე
+   * ცვლაში აგრძელებს. შეფასება ორივეს უნდა მიეწეროს.
+   */
+  private async recordOperators(
+    conversationId: string,
+    feedbackId: string,
+    closedBy: string,
+  ): Promise<void> {
+    const replies = await this.prisma.message.groupBy({
+      by: ['senderId'],
+      where: {
+        conversationId,
+        deletedAt: null,
+        type: MessageType.TEXT,
+        sender: { role: { in: STAFF_ROLES } },
+      },
+      _count: { _all: true },
+    });
+
+    const counts = new Map(
+      replies
+        .filter((row): row is typeof row & { senderId: string } => !!row.senderId)
+        .map((row) => [row.senderId, row._count._all]),
+    );
+
+    // დამხურავიც ითვლება, თუნდაც პასუხი არ დაეწეროს
+    if (!counts.has(closedBy)) counts.set(closedBy, 0);
+
+    for (const [operatorId, messageCount] of counts) {
+      await this.prisma.conversationFeedbackOperator.upsert({
+        where: { feedbackId_operatorId: { feedbackId, operatorId } },
+        update: { messageCount },
+        create: { feedbackId, operatorId, messageCount },
+      });
+    }
   }
 
   /** შეფასების ფორმა ბმულით — ავტორიზაციის გარეშე. */
@@ -353,10 +633,23 @@ export class ChatService {
     return { message: 'გმადლობთ შეფასებისთვის' };
   }
 
-  /** ოპერატორების შეფასებები — ვის როგორ პასუხობენ. */
-  async feedbackSummary() {
+  /**
+   * შეფასებების შეჯამება.
+   *
+   * ქულა ყველა მოპასუხე ოპერატორს ეწერება: ერთი საუბარი ხშირად
+   * ორ ცვლაზე გადის და მხოლოდ დამხურავისთვის მიწერა არასწორი იქნებოდა.
+   */
+  async feedbackSummary(operatorId?: string) {
     const rated = await this.prisma.conversationFeedback.findMany({
-      where: { rating: { not: null } },
+      where: {
+        rating: { not: null },
+        // მონიშნული ოპერატორი: მისი მონაწილეობით საუბრები
+        ...(operatorId
+          ? {
+              OR: [{ operatorId }, { operators: { some: { operatorId } } }],
+            }
+          : {}),
+      },
       orderBy: { ratedAt: 'desc' },
       take: 100,
       select: {
@@ -364,15 +657,61 @@ export class ChatService {
         comment: true,
         ratedAt: true,
         operator: { select: { id: true, firstName: true, lastName: true } },
+        operators: {
+          select: {
+            messageCount: true,
+            operator: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
       },
     });
 
     const sum = rated.reduce((total, row) => total + (row.rating ?? 0), 0);
 
+    // ოპერატორების ჭრილი — ვის რა საშუალო აქვს
+    const perOperator = new Map<string, { name: string; total: number; count: number }>();
+
+    for (const row of rated) {
+      const participants = row.operators.length
+        ? row.operators.map((item) => item.operator)
+        : row.operator
+          ? [row.operator]
+          : [];
+
+      for (const operator of participants) {
+        const name = `${operator.firstName} ${operator.lastName ?? ''}`.trim();
+        const current = perOperator.get(operator.id) ?? { name, total: 0, count: 0 };
+
+        current.total += row.rating ?? 0;
+        current.count += 1;
+        perOperator.set(operator.id, current);
+      }
+    }
+
+    const operators = [...perOperator.entries()]
+      .map(([id, row]) => ({
+        id,
+        name: row.name,
+        count: row.count,
+        average: Number((row.total / row.count).toFixed(2)),
+      }))
+      .sort((a, b) => b.average - a.average);
+
     return {
       count: rated.length,
       average: rated.length ? Number((sum / rated.length).toFixed(2)) : null,
-      items: rated,
+      operators,
+      items: rated.map((row) => ({
+        rating: row.rating,
+        comment: row.comment,
+        ratedAt: row.ratedAt,
+        operator: row.operator,
+        operators: row.operators.map((item) => ({
+          id: item.operator.id,
+          name: `${item.operator.firstName} ${item.operator.lastName ?? ''}`.trim(),
+          messageCount: item.messageCount,
+        })),
+      })),
     };
   }
 

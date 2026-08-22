@@ -4,21 +4,17 @@ import { apiFetch, getSessionUser } from '@/lib/session';
 import { can, getEntitlements } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
 import { ChatThread } from './ChatThread';
-import type { Thread } from './actions';
+import { ChatHistory } from './ChatHistory';
+import type { ConversationRow, Thread } from './actions';
 import styles from './chat.module.css';
 
 export const metadata = { title: 'ჩატი კონსულტანტთან — AskDrTeo' };
 
-interface ConversationRow {
-  id: string;
-  subject: string | null;
-  status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'CLOSED';
-  lastMessageAt: string | null;
-  lastMessage: string | null;
-  unread: number;
-}
-
-export default async function ChatPage() {
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
 
@@ -54,10 +50,14 @@ export default async function ChatPage() {
     );
   }
 
-  const conversations = await apiFetch<ConversationRow[]>('/chat/conversations');
+  const params = await searchParams;
+  const conversations = (await apiFetch<ConversationRow[]>('/chat/conversations')) ?? [];
 
-  // მიმდინარე საუბარი — თუ არ არის, ცარიელი ძაფი პირველი წერილისთვის
-  const active = conversations?.find((c) => c.status !== 'CLOSED') ?? conversations?.[0] ?? null;
+  // მითითებული საუბარი, თუ არა — მიმდინარე; დახურულები ისტორიაშია
+  const active = params.id
+    ? (conversations.find((row) => row.id === params.id) ?? null)
+    : (conversations.find((row) => row.status !== 'CLOSED') ?? null);
+
   const thread = active ? await apiFetch<Thread>(`/chat/conversations/${active.id}`) : null;
 
   return (
@@ -77,6 +77,8 @@ export default async function ChatPage() {
         </div>
 
         <ChatThread thread={thread} />
+
+        <ChatHistory conversations={conversations} activeId={active?.id ?? null} />
       </div>
     </main>
   );

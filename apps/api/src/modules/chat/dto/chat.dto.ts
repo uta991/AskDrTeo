@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class StartConversationDto {
   @IsOptional() @IsString() @MaxLength(120)
@@ -12,10 +22,13 @@ export class StartConversationDto {
 }
 
 export class SendMessageDto {
-  @IsString()
-  @IsNotEmpty({ message: 'შეტყობინება ცარიელია' })
-  @MaxLength(4000)
-  body!: string;
+  // ტექსტი არასავალდებულოა, თუ ფოტო ან ვიდეო მიმაგრებულია
+  @IsOptional() @IsString() @MaxLength(4000)
+  body?: string;
+
+  /** მიმაგრებული ფოტო/ვიდეო — `/media/chat-attachment`-ის პასუხიდან */
+  @IsOptional() @IsArray() @IsUUID('4', { each: true })
+  assetIds?: string[];
 }
 
 export class RateConversationDto {

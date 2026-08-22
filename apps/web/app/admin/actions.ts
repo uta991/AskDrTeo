@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiMutate, getSessionUser } from '@/lib/session';
+import { apiFetch, apiMutate, getSessionUser } from '@/lib/session';
 
 export interface ActionState {
   error?: string;
@@ -232,4 +232,22 @@ export async function deletePromo(
   } catch (error) {
     return toState(error);
   }
+}
+
+export interface UserConversation {
+  id: string;
+  subject: string | null;
+  status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'CLOSED';
+  createdAt: string;
+  closedAt: string | null;
+  messageCount: number;
+  operators: string[];
+  firstMessage: string | null;
+  rating: number | null;
+  comment: string | null;
+}
+
+/** მომხმარებლის ჩატის ისტორია — ბარათის გახსნისას იტვირთება. */
+export async function loadUserChats(userId: string): Promise<UserConversation[]> {
+  return (await apiFetch<UserConversation[]>(`/admin/chat/users/${userId}/conversations`)) ?? [];
 }

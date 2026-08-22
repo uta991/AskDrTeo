@@ -110,15 +110,38 @@ export class AdminChatController {
     return this.chat.send(id, dto, user.id, user.role ?? UserRole.OPERATOR);
   }
 
+  @Get('users/:userId/conversations')
+  @RequirePermission('chat.view')
+  @ApiOperation({
+    summary: 'მომხმარებლის ჩატის ისტორია',
+    description: 'რა თარიღში მოიწერა, ვინ უპასუხა და რაზე იყო საუბარი.',
+  })
+  userHistory(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.chat.historyFor(userId);
+  }
+
   @Get('feedback')
   @RequirePermission('chat.view')
-  @ApiOperation({ summary: 'მშობლების შეფასებები' })
-  feedback() {
-    return this.chat.feedbackSummary();
+  @ApiOperation({
+    summary: 'მშობლების შეფასებები',
+    description: '`operatorId` — კონკრეტული ოპერატორის ან ადმინის შეფასებები.',
+  })
+  feedback(@Query('operatorId') operatorId?: string) {
+    return this.chat.feedbackSummary(operatorId);
+  }
+
+  @Patch('conversations/:id/take')
+  @RequirePermission('chat.reply')
+  @ApiOperation({
+    summary: 'საუბრის აღება',
+    description: 'ოპერატორი მიემაგრება და მშობელს საკუთარი სახელით ესალმება.',
+  })
+  take(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+    return this.chat.take(id, userId);
   }
 
   @Patch('conversations/:id/close')
-  @RequirePermission('chat.assign')
+  @RequirePermission('chat.reply')
   close(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.chat.close(id, userId);
   }

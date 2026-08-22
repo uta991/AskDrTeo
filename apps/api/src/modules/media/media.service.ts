@@ -140,8 +140,40 @@ export class MediaService {
    * `MediaSource.CHAT` განზრახ ცალკეა: ეს ფაილები კონფიდენციალურია და
    * მათზე წვდომა საუბრის მონაწილეობით უნდა შემოწმდეს, საჯარო ბმულით არა.
    */
+  /**
+   * ჩატის დანართი — ფოტო ან ვიდეო.
+   *
+   * ვიდეო პროვაიდერთან იტვირთება (გადაშიფვრა მას სჭირდება), ფოტო კი
+   * პირდაპირ საცავში. ორივე კერძოა: ბავშვის ფოტო საჯარო ბმულით
+   * არავის უნდა გაეხსნას.
+   */
   async uploadChatAttachment(file: Express.Multer.File, ownerId: string) {
-    return this.uploadImage(file, ownerId, MediaSource.CHAT, MediaVisibility.PRIVATE);
+    if (!file.mimetype.startsWith('video/')) {
+      return this.uploadImage(file, ownerId, MediaSource.CHAT, MediaVisibility.PRIVATE);
+    }
+
+    const uploaded = await this.videos.upload({
+      path: file.path,
+      title: 'ჩატის ვიდეო',
+      contentType: file.mimetype,
+    });
+
+    return this.prisma.mediaAsset.create({
+      data: {
+        ownerId,
+        type: MediaType.VIDEO,
+        source: MediaSource.CHAT,
+        visibility: MediaVisibility.PRIVATE,
+        // გადაშიფვრა პროვაიდერთან გრძელდება — READY webhook-ით დადგება
+        status: MediaStatus.PROCESSING,
+        provider: this.videoProviderEnum(),
+        storageKey: uploaded.assetId,
+        playbackId: uploaded.playbackId,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        duration: uploaded.durationSec || null,
+      },
+    });
   }
 
   /** რბილი წაშლა — ფიზიკურად background-ით იშლება. */
