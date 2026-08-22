@@ -45,6 +45,8 @@ export interface AppConfig {
     /** Bundle ID-ები / Services ID-ები, რომლებიც identityToken-ის `aud`-ში დაიშვება */
     clientIds: string[];
   };
+  /** საიტის საჯარო მისამართი — SMS-ში ბმულისთვის */
+  webUrl: string;
   ai: {
     /** ცარიელი გასაღები = ასისტენტი გამორთულია და ამას ღიად ვამბობთ */
     apiKey?: string;
@@ -123,6 +125,7 @@ export default (): AppConfig => ({
   apple: {
     clientIds: csv(process.env.APPLE_CLIENT_IDS),
   },
+  webUrl: process.env.WEB_URL ?? 'https://askdrteo.com',
   ai: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: process.env.AI_MODEL ?? 'claude-sonnet-5',

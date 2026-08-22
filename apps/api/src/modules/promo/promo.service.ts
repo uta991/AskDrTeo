@@ -11,6 +11,7 @@ import {
   SubscriptionStatus,
 } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { VaccinationsService } from '../vaccinations/vaccinations.service';
 import { AuditService } from '../audit/audit.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 import { CreatePromoDto, UpdatePromoDto } from './dto/promo.dto';
@@ -28,6 +29,7 @@ export interface RedeemResult {
 @Injectable()
 export class PromoService {
   constructor(
+    private readonly vaccinations: VaccinationsService,
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly entitlements: EntitlementsService,
@@ -245,6 +247,9 @@ export class PromoService {
 
       // ტრანზაქციის შემდეგ უფლებები შეიცვალა
       this.entitlements.invalidate(userId);
+
+      // ახალ პაკეტში აცრების კალენდარიც შედის — ისტორიის შევსება ვთხოვოთ
+      await this.vaccinations.promptHistory(userId).catch(() => undefined);
 
       return result;
     });

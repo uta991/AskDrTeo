@@ -14,6 +14,7 @@ import {
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { VaccinationsService } from '../vaccinations/vaccinations.service';
 import { normalizeEmail, normalizePhone } from '@/common/utils/identifier.util';
 import { AuditService } from '../audit/audit.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
@@ -61,6 +62,7 @@ const ACTIVE_SUBSCRIPTION_SELECT = {
 @Injectable()
 export class AdminUsersService {
   constructor(
+    private readonly vaccinations: VaccinationsService,
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly entitlements: EntitlementsService,
@@ -342,6 +344,9 @@ export class AdminUsersService {
     });
 
     this.entitlements.invalidate(userId);
+
+    // ახალ პაკეტში აცრების კალენდარიც შედის — ისტორიის შევსება ვთხოვოთ
+    await this.vaccinations.promptHistory(userId).catch(() => undefined);
 
     await this.audit.record({
       actorId,

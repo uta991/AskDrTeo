@@ -4,6 +4,7 @@ import { apiFetch, getSessionUser } from '@/lib/session';
 import { can, getEntitlements } from '@/lib/entitlements';
 import { getChildren } from '@/lib/children';
 import { SunLogo } from '../components/Brand';
+import { HistoryForm } from './HistoryForm';
 import { VaccinationList } from './VaccinationList';
 import type { VaccinationRow } from './actions';
 import styles from './vaccinations.module.css';
@@ -13,7 +14,7 @@ export const metadata = { title: 'აცრების კალენდარ
 export default async function VaccinationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ child?: string }>;
+  searchParams: Promise<{ child?: string; mode?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
@@ -51,8 +52,13 @@ export default async function VaccinationsPage({
   const children = (await getChildren()) ?? [];
   const activeChild = children.find((child) => child.id === params.child) ?? children[0] ?? null;
 
+  // „ისტორია" — მხოლოდ ის აცრები, რაც ამ ასაკში უკვე უნდა ჰქონდეს
+  const history = params.mode === 'history';
+
   const rows = activeChild
-    ? ((await apiFetch<VaccinationRow[]>(`/children/${activeChild.id}/vaccinations`)) ?? [])
+    ? ((await apiFetch<VaccinationRow[]>(
+        `/children/${activeChild.id}/vaccinations${history ? '/history' : ''}`,
+      )) ?? [])
     : [];
 
   return (
@@ -64,21 +70,26 @@ export default async function VaccinationsPage({
       <div className={styles.card}>
         <div className={styles.head}>
           <SunLogo size={44} />
-          <h1 className={styles.title}>აცრების კალენდარი</h1>
+          <h1 className={styles.title}>
+            {history ? 'აცრების ისტორია' : 'აცრების კალენდარი'}
+          </h1>
           <p className={styles.subtitle}>
-            ვადა ბავშვის დაბადების თარიღიდან ითვლება. გაკეთებული აცრა თქვენ
-            მონიშნეთ — ჩანაწერი მხოლოდ თქვენთვისაა.
+            {history
+              ? 'შენახვის შემდეგ დარჩენილ აცრებს SMS-ითაც გამოგიგზავნით.'
+              : 'ვადა ბავშვის დაბადების თარიღიდან ითვლება. გაკეთებული აცრა თქვენ მონიშნეთ — ჩანაწერი მხოლოდ თქვენთვისაა.'}
           </p>
         </div>
 
         {!activeChild ? (
           <p className={styles.empty}>ჯერ დაამატეთ ბავშვის პროფილი.</p>
-        ) : (
-          <VaccinationList
-            children={children}
-            activeChildId={activeChild.id}
+        ) : history ? (
+          <HistoryForm
+            childId={activeChild.id}
+            childName={activeChild.firstName}
             rows={rows}
           />
+        ) : (
+          <VaccinationList children={children} activeChildId={activeChild.id} rows={rows} />
         )}
       </div>
     </main>

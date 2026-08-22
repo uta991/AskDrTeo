@@ -38,3 +38,27 @@ export async function markVaccination(
     return { error: error instanceof Error ? error.message : 'შენახვა ვერ მოხერხდა' };
   }
 }
+
+/**
+ * ისტორიის შენახვა.
+ *
+ * მონიშნულის გარდა ყველა დარჩენილად ითვლება — სერვერი მშობელს
+ * SMS-ს უგზავნის დარჩენილი აცრებითა და ჯავშნის ბმულით.
+ */
+export async function saveHistory(
+  childId: string,
+  doneVaccineIds: string[],
+): Promise<VaccinationState & { missing?: number }> {
+  try {
+    const result = await apiMutate<{ saved: number; missing: number }>(
+      `/children/${childId}/vaccinations/history`,
+      'POST',
+      { doneVaccineIds },
+    );
+
+    revalidatePath('/vaccinations');
+    return { missing: result.missing };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'შენახვა ვერ მოხერხდა' };
+  }
+}

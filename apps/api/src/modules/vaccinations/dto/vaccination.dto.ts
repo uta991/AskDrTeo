@@ -1,11 +1,13 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -41,4 +43,11 @@ export class CreateVaccineDto {
 
   @IsOptional() @IsBoolean()
   isActive?: boolean;
+}
+
+export class SaveHistoryDto {
+  /** რომელი აცრები აქვს უკვე გაკეთებული — დანარჩენი დარჩენილად ითვლება */
+  @IsArray()
+  @IsUUID('4', { each: true })
+  doneVaccineIds!: string[];
 }

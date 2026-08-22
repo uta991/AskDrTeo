@@ -266,6 +266,9 @@ model Child {
   assessments   MilestoneAssessment[]
   aiConversations AiConversation[]
   growthEntries GrowthEntry[]
+
+  /// როდის შეავსო მშობელმა აცრების ისტორია — შევსებამდე ვთხოვთ შევსებას
+  vaccinationHistoryAt DateTime?
   vaccinations  ChildVaccination[]
   appointments  Appointment[]
 
@@ -1489,6 +1492,9 @@ model ChildVaccination {
 
   doneAt DateTime?
   note   String?
+
+  /// შეხსენება უკვე გაიგზავნა — ერთი აცრა ორჯერ არ უნდა შეგვახსენებინოს
+  reminderSentAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

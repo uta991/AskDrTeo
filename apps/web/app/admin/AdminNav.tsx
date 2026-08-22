@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SunLogo } from '../components/Brand';
+import { NotificationBell } from '../components/NotificationBell';
 import { UserMenu } from '../components/UserMenu';
 import type { SessionUser } from '@/lib/session';
 import styles from './admin.module.css';
@@ -82,6 +83,8 @@ export function AdminNav({
       </nav>
 
       <div className={styles.headerRight}>
+        {/* ჩატში წერენ თუ ვიზიტს ითხოვენ — ოპერატორმა მაშინვე უნდა დაინახოს */}
+        <NotificationBell isStaff />
         <UserMenu user={user} />
       </div>
     </header>

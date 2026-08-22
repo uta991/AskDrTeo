@@ -207,3 +207,30 @@
     padding-left: 34px;
   }
 }
+
+.saved {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.savedTitle {
+  font-size: 18px;
+}
+
+.savedText {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+.savedActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}

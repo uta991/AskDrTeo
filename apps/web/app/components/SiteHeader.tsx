@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 import { SunLogo } from './Brand';
+import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 import styles from './site-header.module.css';
 
@@ -38,6 +39,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className={styles.actions}>
+          {!!user && <NotificationBell isStaff={isStaff} />}
           <UserMenu user={user} />
         </div>
       </div>
