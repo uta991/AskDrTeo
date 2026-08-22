@@ -100,6 +100,8 @@ model User {
   trustedDevices  TrustedDevice[]
   aiConversations AiConversation[]
   appointments    Appointment[]
+  chatFeedback    ConversationFeedback[]
+  feedbackAsOperator ConversationFeedback[] @relation("FeedbackOperator")
   messages        Message[]
   operatorProfile OperatorProfile?
 
@@ -920,6 +922,7 @@ model Conversation {
 
   participants ConversationUser[]
   messages     Message[]
+  feedback     ConversationFeedback?
 
   @@index([status, lastMessageAt])
   @@index([assignedOperatorId, status])
@@ -1549,4 +1552,40 @@ model Appointment {
   @@index([parentId, createdAt])
   @@index([status, preferredAt])
   @@map("appointments")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ჩატის შეფასება
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * მშობლის შეფასება დასრულებულ საუბარზე.
+ *
+ * `token` იმისთვისაა, რომ SMS-ის ბმული ავტორიზაციის გარეშეც
+ * გაიხსნას — მშობელი ტელეფონში შესული ხშირად არ არის, ხელახალი
+ * შესვლის მოთხოვნა კი შეფასებას მოკლავდა.
+ */
+model ConversationFeedback {
+  id             String       @id @default(uuid())
+  conversationId String       @unique
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   User?   @relation(fields: [parentId], references: [id], onDelete: SetNull)
+
+  /// ვინ უპასუხა — ოპერატორების შედარებისთვის
+  operatorId String?
+  operator   User?   @relation("FeedbackOperator", fields: [operatorId], references: [id], onDelete: SetNull)
+
+  token String @unique
+
+  /// 1–5; ცარიელი = ჯერ არ შეუფასებია
+  rating  Int?
+  comment String?
+
+  ratedAt   DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([operatorId, rating])
+  @@map("conversation_feedback")
 }

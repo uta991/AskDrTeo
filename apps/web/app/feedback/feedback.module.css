@@ -1,0 +1,105 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border-radius: var(--radius-xxl);
+  box-shadow: var(--shadow-card);
+  padding: 32px 26px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.title {
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.star {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--border);
+  padding: 0 2px;
+}
+
+/* შევსებული ვარსკვლავი ბრენდის ყვითელია */
+.starOn {
+  color: var(--primary);
+}
+
+.ratingLabel {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-text);
+  min-height: 20px;
+}
+
+.textarea {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.doneText {
+  font-size: 16px;
+  font-weight: 600;
+}

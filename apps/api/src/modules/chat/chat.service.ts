@@ -7,9 +7,12 @@ import {
   Prisma,
   UserRole,
 } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'node:crypto';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
-import { SendMessageDto, StartConversationDto } from './dto/chat.dto';
+import { SmsService } from '../sms/sms.service';
+import { RateConversationDto, SendMessageDto, StartConversationDto } from './dto/chat.dto';
 
 const STAFF_ROLES: UserRole[] = [UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN];
 
@@ -32,6 +35,8 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly entitlements: EntitlementsService,
+    private readonly sms: SmsService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -224,7 +229,12 @@ export class ChatService {
     return message;
   }
 
-  /** საუბრის დახურვა — მხოლოდ პერსონალს. */
+  /**
+   * საუბრის დახურვა — მხოლოდ პერსონალს.
+   *
+   * დახურვისთანავე მშობელს შეფასების თხოვნა მიდის: ცოცხალ პასუხზე
+   * ხარისხის გაზომვა სხვაგვარად შეუძლებელია.
+   */
   async close(conversationId: string, userId: string) {
     await this.prisma.conversation.update({
       where: { id: conversationId },
@@ -244,7 +254,126 @@ export class ChatService {
       },
     });
 
+    await this.requestFeedback(conversationId, userId);
+
     return { message: 'საუბარი დაიხურა', id: conversationId };
+  }
+
+  /**
+   * შეფასების თხოვნა.
+   *
+   * ბმულს ერთჯერადი `token` აქვს — SMS-იდან გახსნისას მშობელს
+   * ხელახალი ავტორიზაცია არ სჭირდება, თორემ შეფასებამდე ვერ მივიდოდა.
+   */
+  private async requestFeedback(conversationId: string, operatorId: string): Promise<void> {
+    const parent = await this.prisma.conversationUser.findFirst({
+      where: { conversationId, user: { role: UserRole.PARENT } },
+      select: { user: { select: { id: true, firstName: true, phone: true } } },
+    });
+    if (!parent) return;
+
+    const feedback = await this.prisma.conversationFeedback.upsert({
+      where: { conversationId },
+      update: { operatorId },
+      create: {
+        conversationId,
+        parentId: parent.user.id,
+        operatorId,
+        token: randomBytes(16).toString('hex'),
+      },
+      select: { token: true, rating: true },
+    });
+
+    // უკვე შეფასებულს მეორედ არ ვთხოვთ
+    if (feedback.rating) return;
+
+    const link = `${this.config.get<string>('webUrl')}/feedback/${feedback.token}`;
+    const body = `გმადლობთ მოკითხვისთვის! გთხოვთ, შეაფასოთ საუბარი კონსულტანტთან: ${link}`;
+
+    await this.prisma.notification.create({
+      data: {
+        userId: parent.user.id,
+        channel: NotificationChannel.IN_APP,
+        status: NotificationStatus.SENT,
+        title: 'შეაფასეთ საუბარი',
+        body: 'თქვენი შეფასება დაგვეხმარება პასუხების ხარისხის გაუმჯობესებაში',
+        data: { feedbackToken: feedback.token } as Prisma.InputJsonValue,
+        sentAt: new Date(),
+      },
+    });
+
+    if (!parent.user.phone) return;
+
+    await this.sms
+      .send({
+        userId: parent.user.id,
+        phone: parent.user.phone,
+        body,
+        templateKey: 'chat_feedback',
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(`შეფასების SMS ვერ გაიგზავნა: ${String(error)}`);
+      });
+  }
+
+  /** შეფასების ფორმა ბმულით — ავტორიზაციის გარეშე. */
+  async feedbackByToken(token: string) {
+    const feedback = await this.prisma.conversationFeedback.findUnique({
+      where: { token },
+      select: {
+        token: true,
+        rating: true,
+        comment: true,
+        ratedAt: true,
+        operator: { select: { firstName: true } },
+      },
+    });
+    if (!feedback) throw new NotFoundException('შეფასების ბმული აღარ მოქმედებს');
+
+    return feedback;
+  }
+
+  /** შეფასების ჩაწერა — ერთხელ; შეცვლა შესაძლებელია იმავე ბმულით. */
+  async rate(token: string, dto: RateConversationDto) {
+    const feedback = await this.prisma.conversationFeedback.findUnique({
+      where: { token },
+      select: { id: true },
+    });
+    if (!feedback) throw new NotFoundException('შეფასების ბმული აღარ მოქმედებს');
+
+    await this.prisma.conversationFeedback.update({
+      where: { id: feedback.id },
+      data: {
+        rating: dto.rating,
+        comment: dto.comment?.trim() || null,
+        ratedAt: new Date(),
+      },
+    });
+
+    return { message: 'გმადლობთ შეფასებისთვის' };
+  }
+
+  /** ოპერატორების შეფასებები — ვის როგორ პასუხობენ. */
+  async feedbackSummary() {
+    const rated = await this.prisma.conversationFeedback.findMany({
+      where: { rating: { not: null } },
+      orderBy: { ratedAt: 'desc' },
+      take: 100,
+      select: {
+        rating: true,
+        comment: true,
+        ratedAt: true,
+        operator: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    const sum = rated.reduce((total, row) => total + (row.rating ?? 0), 0);
+
+    return {
+      count: rated.length,
+      average: rated.length ? Number((sum / rated.length).toFixed(2)) : null,
+      items: rated,
+    };
   }
 
   /** წაუკითხავი შეტყობინებები — მეორე მხარისგან და წაკითხვის შემდეგ. */

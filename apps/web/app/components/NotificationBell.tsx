@@ -30,6 +30,7 @@ function targetFor(item: NotificationItem, isStaff: boolean): string | null {
   if (item.data?.appointmentId) return isStaff ? '/admin/appointments' : '/booking';
   if (item.data?.vaccinationHistory) return '/vaccinations?mode=history';
   if (item.data?.vaccinations) return '/vaccinations';
+  if (item.data?.feedbackToken) return `/feedback/${item.data.feedbackToken}`;
   return null;
 }
 

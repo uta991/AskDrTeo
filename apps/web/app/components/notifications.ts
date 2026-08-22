@@ -11,6 +11,7 @@ export interface NotificationItem {
     appointmentId?: string;
     vaccinationHistory?: boolean;
     vaccinations?: boolean;
+    feedbackToken?: string;
   } | null;
   readAt: string | null;
   createdAt: string;

@@ -8,7 +8,8 @@ import {
 import { RequireFeature } from '@/common/decorators/require-feature.decorator';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { ChatService } from './chat.service';
-import { SendMessageDto, StartConversationDto } from './dto/chat.dto';
+import { Public } from '@/common/decorators/public.decorator';
+import { RateConversationDto, SendMessageDto, StartConversationDto } from './dto/chat.dto';
 
 /**
  * მშობლის ჩატი კონსულტანტთან.
@@ -54,6 +55,30 @@ export class ChatController {
  * `chat.view` / `chat.reply` ოპერატორსაც აქვს და ადმინსაც — მშობლის
  * შეკითხვაზე პასუხი ოპერატორის ძირითადი საქმეა.
  */
+/**
+ * შეფასების ბმული SMS-იდან.
+ *
+ * `@Public` — ბმული ერთჯერადი token-ით იცავს თავს. ავტორიზაციის
+ * მოთხოვნა შეფასებას მოკლავდა: მშობელი ტელეფონში შესული ხშირად არაა.
+ */
+@ApiTags('feedback')
+@Controller('feedback')
+export class FeedbackController {
+  constructor(private readonly chat: ChatService) {}
+
+  @Public()
+  @Get(':token')
+  show(@Param('token') token: string) {
+    return this.chat.feedbackByToken(token);
+  }
+
+  @Public()
+  @Post(':token')
+  rate(@Param('token') token: string, @Body() dto: RateConversationDto) {
+    return this.chat.rate(token, dto);
+  }
+}
+
 @ApiTags('admin/chat')
 @Controller('admin/chat')
 export class AdminChatController {
@@ -83,6 +108,13 @@ export class AdminChatController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.chat.send(id, dto, user.id, user.role ?? UserRole.OPERATOR);
+  }
+
+  @Get('feedback')
+  @RequirePermission('chat.view')
+  @ApiOperation({ summary: 'მშობლების შეფასებები' })
+  feedback() {
+    return this.chat.feedbackSummary();
   }
 
   @Patch('conversations/:id/close')
