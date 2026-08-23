@@ -144,3 +144,64 @@ export async function uploadVideo(video: PickedVideo, title: string): Promise<st
 
   return payload.videoId;
 }
+
+export interface PickedFile {
+  uri: string;
+  fileName: string;
+  mimeType: string;
+}
+
+/**
+ * ჩატის დანართის არჩევა — ფოტო ან ვიდეო.
+ *
+ * კადრირებას არ ვთხოვთ: ჩატში მშობელი გამონაყარს ან ყელს იღებს და
+ * კვადრატში ჩაჭრა სწორედ იმ ნაწილს მოაჭრიდა, რისთვისაც აგზავნის.
+ */
+export async function pickChatFile(): Promise<PickedFile | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) throw new PermissionDeniedError();
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images', 'videos'],
+    allowsEditing: false,
+    quality: 0.8,
+  });
+
+  if (result.canceled || !result.assets.length) return null;
+
+  const asset = result.assets[0];
+  const video = asset.type === 'video';
+  const extension = asset.uri.split('.').pop()?.toLowerCase() ?? (video ? 'mp4' : 'jpg');
+
+  return {
+    uri: asset.uri,
+    fileName: asset.fileName ?? `${video ? 'video' : 'photo'}.${extension}`,
+    mimeType:
+      asset.mimeType ??
+      (video ? `video/${extension}` : `image/${extension === 'jpg' ? 'jpeg' : extension}`),
+  };
+}
+
+/** დანართის ატვირთვა — აბრუნებს asset id-ს, რომელიც შეტყობინებას მიება. */
+export async function uploadChatFile(file: PickedFile): Promise<string> {
+  const token = await tokenStore.access();
+
+  const result = await FileSystem.uploadAsync(`${API_URL}/media/chat-attachment`, file.uri, {
+    httpMethod: 'POST',
+    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    fieldName: 'file',
+    mimeType: file.mimeType,
+    parameters: { filename: file.fileName },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  if (result.status < 200 || result.status >= 300) {
+    const payload = safeParse(result.body);
+    throw new Error(payload?.message ?? 'ფაილის ატვირთვა ვერ მოხერხდა');
+  }
+
+  const payload = safeParse(result.body);
+  if (!payload?.assetId) throw new Error('სერვერმა ფაილის id არ დააბრუნა');
+
+  return payload.assetId;
+}

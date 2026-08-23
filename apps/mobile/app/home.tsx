@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { BottomTabBar, type TabDescriptor } from '@/components/BottomTabBar';
 import { AdviceTab } from '@/screens/advice';
-import { BookingTab } from '@/screens/booking';
 import { HomeTab } from '@/screens/home';
 import { ProfileTab } from '@/screens/profile';
 import { AdminDashboardTab } from '@/screens/admin/dashboard';
@@ -50,7 +49,6 @@ export default function MainScreen() {
     return [
       { key: 'home', label: t('tabs', 'home'), icon: 'home' },
       { key: 'advice', label: t('tabs', 'advice'), icon: 'bulb' },
-      { key: 'booking', label: t('tabs', 'booking'), icon: 'calendar' },
       { key: 'development', label: t('tabs', 'development'), icon: 'growth' },
       { key: 'calculator', label: t('tabs', 'calculator'), icon: 'calculator' },
       {
@@ -116,9 +114,6 @@ export default function MainScreen() {
               </View>,
               <View key="advice" style={styles.page}>
                 <AdviceTab />
-              </View>,
-              <View key="booking" style={styles.page}>
-                <BookingTab />
               </View>,
               <View key="development" style={styles.page}>
                 <DevelopmentTab />

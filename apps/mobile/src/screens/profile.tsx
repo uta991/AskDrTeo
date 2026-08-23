@@ -109,6 +109,32 @@ export function ProfileTab() {
           />
         </AuthCard>
 
+        {/* სწრაფი გადასვლა — ყველა ფუნქცია ერთ ადგილას, მენიუს გაბერვის გარეშე */}
+        {!isStaff && (
+          <AuthCard style={styles.links}>
+            <Text style={styles.linksTitle}>სწრაფი გადასვლა</Text>
+
+            {[
+              { label: 'ჩატი კონსულტანტთან', path: '/chat' },
+              { label: 'AI ასისტენტი', path: '/assistant' },
+              { label: 'ზრდის დინამიკა', path: '/growth' },
+              { label: 'აცრების კალენდარი', path: '/vaccinations' },
+              { label: 'ვიდეო ბიბლიოთეკა', path: '/videos' },
+              { label: 'ვიზიტის ჯავშანი', path: '/booking' },
+              { label: 'შეტყობინებები', path: '/notifications' },
+            ].map((row) => (
+              <Pressable
+                key={row.path}
+                style={styles.linkRow}
+                onPress={() => router.push(row.path as '/chat')}
+              >
+                <Text style={styles.linkText}>{row.label}</Text>
+                <Icon name="chevron-right" size={16} color={colors.textMuted} />
+              </Pressable>
+            ))}
+          </AuthCard>
+        )}
+
         {/* პრომო კოდი პაკეტების ზემოთ — ის შეიძლება პაკეტს ცვლიდეს */}
         {!isStaff && <PromoRedeem />}
         {!isStaff && <PlanPicker currentPlanCode={snapshot?.planCode ?? null} />}
@@ -140,6 +166,17 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: spacing.xl },
+  links: { marginBottom: spacing.sm, gap: 2 },
+  linksTitle: { ...typography.bodyMedium, color: colors.textPrimary, marginBottom: spacing.xs },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  linkText: { ...typography.small, color: colors.textPrimary },
   title: { ...typography.h2, color: colors.textPrimary, marginBottom: spacing.lg },
   alert: {
     flexDirection: 'row',

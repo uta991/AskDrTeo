@@ -12,6 +12,7 @@ import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
 import { useActiveChild, useChildren } from '@/features/children/children.store';
 import { useEntitlements, useIsFreePlan } from '@/features/entitlements/entitlements.store';
+import { useNotifications } from '@/features/notifications/notifications.store';
 import { useNews } from '@/features/news/news.store';
 import { NewsVideo } from '@/components/NewsVideo';
 
@@ -32,13 +33,17 @@ export function HomeTab() {
   const canUseCalculator = useEntitlements((state) => state.can('dose_calculator')) || isStaff;
   const canUseAssistant = useEntitlements((state) => state.can('ai_assistant')) || isStaff;
 
+  const unread = useNotifications((state) => state.unread);
+  const loadNotifications = useNotifications((state) => state.load);
+
   useEffect(() => {
     if (!user) return;
     void loadEntitlements().catch(() => undefined);
     void loadNews().catch(() => undefined);
     // პერსონალს ბავშვის პროფილები არ აქვს — ზედმეტ მოთხოვნას არ ვაგზავნით
     if (!isStaff) void loadChildren().catch(() => undefined);
-  }, [user, isStaff, loadChildren, loadEntitlements, loadNews]);
+    void loadNotifications().catch(() => undefined);
+  }, [user, isStaff, loadChildren, loadEntitlements, loadNews, loadNotifications]);
 
   return (
     <SkyBackground showDoves={false}>
@@ -56,6 +61,16 @@ export function HomeTab() {
             <Text style={styles.freeBadgeText}>{t('home', 'freePlan')}</Text>
           </View>
         )}
+
+        {/* ზარი — წაუკითხავი წითელი წრით, გვერდის განახლების გარეშე ჩანს */}
+        <Pressable style={styles.bell} onPress={() => router.push('/notifications')}>
+          <Icon name="bulb" size={20} color={colors.primaryDeep} strokeWidth={2} />
+          {unread > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
+            </View>
+          )}
+        </Pressable>
 
         <View style={styles.header}>
           {isStaff ? (
@@ -158,16 +173,40 @@ export function HomeTab() {
                 onPress: () => router.push(canUseAssistant ? '/assistant' : '/plans'),
               },
               {
-                key: 'advice',
-                label: t('tabs', 'advice'),
+                key: 'chat',
+                label: 'ჩატი',
+                icon: 'user',
+                onPress: () => router.push('/chat'),
+              },
+              {
+                key: 'growth',
+                label: 'ზრდა',
+                icon: 'growth',
+                onPress: () => router.push('/growth'),
+              },
+              {
+                key: 'vaccinations',
+                label: 'აცრები',
+                icon: 'check',
+                onPress: () => router.push('/vaccinations'),
+              },
+              {
+                key: 'videos',
+                label: 'ვიდეოები',
                 icon: 'bulb',
-                onPress: () => goToTab('advice'),
+                onPress: () => router.push('/videos'),
               },
               {
                 key: 'booking',
                 label: t('tabs', 'booking'),
                 icon: 'calendar',
-                onPress: () => goToTab('booking'),
+                onPress: () => router.push('/booking'),
+              },
+              {
+                key: 'advice',
+                label: t('tabs', 'advice'),
+                icon: 'bulb',
+                onPress: () => goToTab('advice'),
               },
             ] satisfies Tile[]}
           />
@@ -218,6 +257,32 @@ export function HomeTab() {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: spacing.xl },
+  bell: {
+    alignSelf: 'flex-end',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 19,
+    height: 19,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.danger,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  bellBadgeText: { color: colors.surface, fontSize: 10, fontWeight: '700' },
   freeBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',

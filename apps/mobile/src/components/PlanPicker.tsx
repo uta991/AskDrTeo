@@ -28,6 +28,12 @@ export function PlanPicker({ currentPlanCode }: { currentPlanCode: string | null
       {purchasable.map((plan) => {
         const isCurrent = plan.code === currentPlanCode;
         const monthly = plan.prices.find((p) => p.interval === 'MONTH') ?? plan.prices[0];
+        const yearly = plan.prices.find((p) => p.interval === 'YEAR');
+
+        // წლიური პაკეტის აზრი დანაზოგშია: 20 ₾ თვეში წელიწადში 240-ია,
+        // ჩვენ კი 199-ს ვთხოვთ. ციფრის გარეშე მშობელი განსხვავებას ვერ ხედავს
+        const fullYear = monthly && yearly ? monthly.amountMinor * 12 : null;
+        const saved = fullYear && yearly ? fullYear - yearly.amountMinor : null;
 
         return (
           <AuthCard
@@ -64,6 +70,27 @@ export function PlanPicker({ currentPlanCode }: { currentPlanCode: string | null
                   {monthly.interval === 'YEAR' ? t('plans', 'perYear') : t('plans', 'perMonth')}
                 </Text>
               </Text>
+            )}
+
+            {!!yearly && !!saved && saved > 0 && (
+              <View style={styles.yearRow}>
+                <Text style={styles.yearText}>
+                  წელიწადში{' '}
+                  <Text style={styles.yearCrossed}>
+                    {formatPrice(fullYear!, yearly.currency)}
+                  </Text>{' '}
+                  <Text style={styles.yearNow}>
+                    {formatPrice(yearly.amountMinor, yearly.currency)}
+                  </Text>
+                </Text>
+
+                <View style={styles.saveSticker}>
+                  <Text style={styles.saveText}>
+                    დაზოგე {formatPrice(saved, yearly.currency)} · −
+                    {Math.round((saved / fullYear!) * 100)}%
+                  </Text>
+                </View>
+              </View>
             )}
 
             <View style={styles.features}>
@@ -126,6 +153,17 @@ const styles = StyleSheet.create({
   badgeText: { ...typography.small, color: colors.primaryDeep, fontWeight: '700' },
   price: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.sm },
   period: { ...typography.small, color: colors.textMuted, fontWeight: '400' },
+  yearRow: { gap: 6, alignItems: 'flex-start' },
+  yearText: { ...typography.small, fontSize: 12, color: colors.textSecondary },
+  yearCrossed: { textDecorationLine: 'line-through' },
+  yearNow: { color: colors.textPrimary, fontWeight: '700' },
+  saveSticker: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  saveText: { ...typography.small, fontSize: 11, fontWeight: '700', color: colors.textOnPrimary },
   features: { marginTop: spacing.sm, gap: 4 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   featureText: { ...typography.small, color: colors.textSecondary, flex: 1 },
