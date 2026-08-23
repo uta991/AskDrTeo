@@ -67,7 +67,7 @@ export function CalculatorTab() {
   if (!allowed) {
     return (
       <SkyBackground showDoves={false}>
-        <ScreenHeader title="დოზის კალკულატორი" />
+        <ScreenHeader title="დოზის კალკულატორი" tone="slate" icon="syrup" />
 
         <View style={styles.locked}>
           <View style={styles.lockIcon}>
@@ -88,7 +88,7 @@ export function CalculatorTab() {
 
   return (
     <SkyBackground showDoves={false}>
-      <ScreenHeader title="დოზის კალკულატორი" />
+      <ScreenHeader title="დოზის კალკულატორი" tone="slate" icon="syrup" />
 
       <ScrollView
         contentContainerStyle={[
@@ -314,10 +314,8 @@ const styles = StyleSheet.create({
   lockIcon: {
     width: 46,
     height: 46,
-    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
   },
   lockedTitle: { ...typography.h2, color: colors.textPrimary },
   lockedText: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },

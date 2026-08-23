@@ -150,10 +150,8 @@ const styles = StyleSheet.create({
   lockIcon: {
     width: 46,
     height: 46,
-    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
   },
   lockedTitle: { ...typography.h2, color: colors.textPrimary },
   lockedText: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },

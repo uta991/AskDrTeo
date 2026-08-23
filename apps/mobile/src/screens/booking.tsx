@@ -57,7 +57,7 @@ export default function BookingScreen() {
 
   return (
     <SkyBackground showDoves={false}>
-      <ScreenHeader title="ვიზიტი პედიატრთან" onBack={goBack} />
+      <ScreenHeader title="ვიზიტი პედიატრთან" onBack={goBack} tone="blue" />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AuthCard style={quota.remaining > 0 ? styles.quotaFree : styles.card}>
@@ -85,7 +85,7 @@ export default function BookingScreen() {
           )}
         </AuthCard>
 
-        {loading && !items.length && <ActivityIndicator color={colors.primary} />}
+        {loading && !items.length && <ActivityIndicator color={colors.skyBlue} />}
 
         {pending ? (
           <AuthCard style={styles.card}>
@@ -131,7 +131,7 @@ export default function BookingScreen() {
             {!!error && <Text style={styles.error}>{error}</Text>}
             {!!notice && <Text style={styles.notice}>{notice}</Text>}
 
-            <Button title="ვიზიტის მოთხოვნა" onPress={submit} />
+            <Button title="ვიზიტის მოთხოვნა" onPress={submit} tone="blue" />
           </AuthCard>
         )}
 
@@ -169,11 +169,11 @@ export default function BookingScreen() {
 const styles = StyleSheet.create({
   content: { padding: spacing.xl, gap: spacing.sm, paddingBottom: spacing.xl },
   card: { gap: spacing.sm },
-  quotaFree: { gap: spacing.xs, borderWidth: 1.5, borderColor: colors.success },
+  quotaFree: { gap: spacing.xs, borderWidth: 1.5, borderColor: colors.skyBlue },
 
   quotaTitle: { ...typography.bodyMedium, color: colors.textPrimary },
   quotaMeta: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
-  link: { ...typography.small, color: colors.primaryText, fontWeight: '600' },
+  link: { ...typography.small, color: colors.skyBlueDeep, fontWeight: '600' },
 
   formTitle: { ...typography.small, color: colors.textSecondary },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
@@ -197,11 +197,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: colors.surface,
   },
-  chipActive: { borderColor: colors.primary },
+  chipActive: { borderColor: colors.skyBlue, backgroundColor: colors.skyBlueSoft },
   hourText: { ...typography.small, fontSize: 12, color: colors.textPrimary },
 
   error: { ...typography.small, color: colors.danger },
-  notice: { ...typography.small, color: colors.primaryDeep },
+  notice: { ...typography.small, color: colors.skyBlueDeep },
 
   historyRow: {
     flexDirection: 'row',

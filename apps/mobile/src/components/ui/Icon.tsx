@@ -19,7 +19,22 @@ export type IconName =
   | 'check'
   | 'chevron-left'
   | 'chevron-right'
-  | 'chevron-down';
+  | 'chevron-down'
+  | 'syringe'
+  | 'play'
+  | 'sparkle'
+  | 'chat'
+  | 'thermometer'
+  | 'leaf'
+  | 'ruler'
+  | 'chart'
+  | 'bell'
+  | 'arrow-right'
+  | 'head'
+  | 'bowl'
+  | 'robot'
+  | 'pill'
+  | 'syrup';
 
 interface IconProps {
   name: IconName;
@@ -111,6 +126,13 @@ export function Icon({
           <Line x1="3" y1="10" x2="21" y2="10" {...common} />
           <Line x1="8" y1="3" x2="8" y2="7" {...common} />
           <Line x1="16" y1="3" x2="16" y2="7" {...common} />
+
+          {/* დღეები — ერთი მონიშნული, დანარჩენი ცარიელი */}
+          <Circle cx="8" cy="14" r="1.1" {...common} />
+          <Circle cx="12" cy="14" r="1.1" fill={color} stroke="none" />
+          <Circle cx="16" cy="14" r="1.1" {...common} />
+          <Circle cx="8" cy="17.6" r="1.1" {...common} />
+          <Circle cx="12" cy="17.6" r="1.1" {...common} />
         </>
       )}
       {name === 'crown' && (
@@ -134,6 +156,201 @@ export function Icon({
           <Line x1="23" y1="11" x2="17" y2="11" {...common} />
         </>
       )}
+      {/* თერმომეტრი — ჯანმრთელობის ბარათი */}
+      {name === 'thermometer' && (
+        <>
+          <Path
+            d="M14 14.8V5.5a2 2 0 1 0-4 0v9.3a4 4 0 1 0 4 0Z"
+            {...common}
+          />
+          <Circle cx="12" cy="17.8" r="1.7" fill={color} stroke="none" />
+          <Path d="M15.8 7.5H17.6" {...common} />
+          <Path d="M15.8 10.3H17.6" {...common} />
+        </>
+      )}
+
+      {/* ყლორტი — განვითარების ბარათი */}
+      {name === 'leaf' && (
+        <>
+          <Path d="M12 20.5V11" {...common} />
+          <Path
+            d="M12 11c0-3 2-5.4 5.4-5.9.4 3.4-1.6 6-5.4 5.9Z"
+            {...common}
+          />
+          <Path
+            d="M12 13.4c0-2.6-1.7-4.6-4.6-5-.4 2.9 1.3 5.1 4.6 5Z"
+            {...common}
+          />
+        </>
+      )}
+
+      {/* სახაზავი — ზრდის ბარათი */}
+      {name === 'ruler' && (
+        <>
+          <Path
+            d="M4.6 15.2 15.2 4.6a1.5 1.5 0 0 1 2.1 0l2.1 2.1a1.5 1.5 0 0 1 0 2.1L8.8 19.4a1.5 1.5 0 0 1-2.1 0l-2.1-2.1a1.5 1.5 0 0 1 0-2.1Z"
+            {...common}
+          />
+          <Path d="M8.2 11.6 9.9 13.3" {...common} />
+          <Path d="M10.9 8.9 12.6 10.6" {...common} />
+          <Path d="M13.6 6.2 15.3 7.9" {...common} />
+        </>
+      )}
+
+      {/* დიაგრამა — ზრდის დინამიკა */}
+      {name === 'chart' && (
+        <>
+          <Path d="M4 20h16" {...common} />
+          <Path d="M7 20v-5.5" {...common} strokeWidth={strokeWidth + 0.6} />
+          <Path d="M12 20V9.5" {...common} strokeWidth={strokeWidth + 0.6} />
+          <Path d="M17 20V5.5" {...common} strokeWidth={strokeWidth + 0.6} />
+        </>
+      )}
+
+      {/* პროფილი გვერდიდან — განვითარების ბარათი */}
+      {name === 'head' && (
+        <>
+          <Path
+            d="M15.8 20.5v-2.7c0-.7.4-1.2 1-1.5 1.6-.8 2.7-2.5 2.7-4.4 0-3.6-3.2-6.5-7-6.5-3.5 0-6.4 2.4-6.9 5.5-.2 1.3.2 2.5.9 3.4l1.2 1.5v4.7"
+            {...common}
+          />
+          <Circle cx="10.4" cy="11.6" r="1" fill={color} stroke="none" />
+          <Path d="M13.6 12.6c.6.8 1.5 1 2.4.6" {...common} />
+        </>
+      )}
+
+      {/* თეფში — კვების ბარათი */}
+      {name === 'bowl' && (
+        <>
+          <Path d="M3.6 11.5h16.8a8.4 8.4 0 0 1-8.4 7.6 8.4 8.4 0 0 1-8.4-7.6Z" {...common} />
+          <Path d="M8.6 8.2c-.5-1 .2-2 1.3-2.4" {...common} />
+          <Path d="M12 7.6c-.5-1 .2-2 1.3-2.4" {...common} />
+          <Path d="M15.4 8.2c-.5-1 .2-2 1.3-2.4" {...common} />
+        </>
+      )}
+
+      {/* რობოტი — AI ასისტენტი */}
+      {name === 'robot' && (
+        <>
+          <Rect x="4.2" y="7.6" width="15.6" height="11.4" rx="3.2" {...common} />
+          <Path d="M12 4.2v3.4" {...common} />
+          <Circle cx="12" cy="3.4" r="1.1" fill={color} stroke="none" />
+          <Circle cx="9.2" cy="12.6" r="1.15" fill={color} stroke="none" />
+          <Circle cx="14.8" cy="12.6" r="1.15" fill={color} stroke="none" />
+          <Path d="M9.6 15.8h4.8" {...common} />
+        </>
+      )}
+
+      {/* კაფსულა — დოზის კალკულატორი */}
+      {name === 'pill' && (
+        <>
+          <Path
+            d="M6.6 17.4 17.4 6.6a3.9 3.9 0 0 0-5.5-5.5L1.1 11.9a3.9 3.9 0 0 0 5.5 5.5Z"
+            transform="translate(3 3)"
+            {...common}
+          />
+          <Path d="M6.4 6.4 11.9 11.9" transform="translate(3 3)" {...common} />
+        </>
+      )}
+
+      {/* წამლის ბოთლი გამოყრილი აბებით — დოზის კალკულატორი */}
+      {name === 'syrup' && (
+        <>
+          <Rect x="4.6" y="2.4" width="6.6" height="2.6" rx="0.9" {...common} />
+          <Rect x="4" y="5" width="7.8" height="13.6" rx="2.3" {...common} />
+
+          {/* ეტიკეტი */}
+          <Path d="M5.4 9.6h5" {...common} />
+          <Path d="M5.4 12.2h5" {...common} />
+
+          {/* გამოყრილი აბები */}
+          <Circle cx="16.4" cy="14.6" r="2.6" {...common} />
+          <Path d="M14.6 12.8 18.2 16.4" {...common} />
+          <Circle cx="19.4" cy="19.6" r="2.2" {...common} />
+        </>
+      )}
+
+      {/* ზარი — შეტყობინებები */}
+      {name === 'bell' && (
+        <>
+          <Path
+            d="M12 3.2a5.6 5.6 0 0 0-5.6 5.6v3.4l-1.3 2.6a.9.9 0 0 0 .8 1.3h12.2a.9.9 0 0 0 .8-1.3l-1.3-2.6V8.8A5.6 5.6 0 0 0 12 3.2Z"
+            {...common}
+          />
+          <Path d="M10.2 19a1.9 1.9 0 0 0 3.6 0" {...common} />
+        </>
+      )}
+
+      {name === 'arrow-right' && (
+        <>
+          <Path d="M4.5 12h14" {...common} />
+          <Path d="M13.5 7 18.5 12 13.5 17" {...common} />
+        </>
+      )}
+
+      {/* შპრიცი — დიაგონალზე: დგუში ზემოთ მარჯვნივ, ნემსი ქვემოთ მარცხნივ */}
+      {name === 'syringe' && (
+        <>
+          <Path d="M17.3 3.2 L20.8 6.7" {...common} />
+          <Path d="M19.05 4.95 L16.6 7.4" {...common} />
+
+          <Path
+            d="M15.6 6.4 L17.6 8.4a1.2 1.2 0 0 1 0 1.7l-6.6 6.6a1.2 1.2 0 0 1-1.7 0L7.3 14.7a1.2 1.2 0 0 1 0-1.7l6.6-6.6a1.2 1.2 0 0 1 1.7 0Z"
+            {...common}
+          />
+
+          {/* დანაყოფები — სწორედ ესენი ხდის ნახატს შპრიცად */}
+          <Path d="M13.4 8.6 L15.2 10.4" {...common} />
+          <Path d="M11.6 10.4 L13.4 12.2" {...common} />
+          <Path d="M9.8 12.2 L11.6 14" {...common} />
+
+          <Path d="M8.6 15.4 L6.2 17.8" {...common} />
+
+          {/* წვეთი ნემსის წვერზე — ასე ჩანს, რომ ნემსია და არა ჯოხი */}
+          <Path
+            d="M4.9 18.5c.95 1.15 1.45 1.85 1.45 2.45a1.45 1.45 0 0 1-2.9 0c0-.6.5-1.3 1.45-2.45z"
+            {...common}
+            fill={color}
+          />
+        </>
+      )}
+
+      {/* საუბრის ბუშტი სამი წერტილით */}
+      {name === 'chat' && (
+        <>
+          <Path
+            d="M20.5 12.4c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.42L4 21l1.5-3.4C4.2 16.2 3.5 14.4 3.5 12.4c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2Z"
+            {...common}
+          />
+          <Circle cx="8.4" cy="12.3" r="1" fill={color} stroke="none" />
+          <Circle cx="12" cy="12.3" r="1" fill={color} stroke="none" />
+          <Circle cx="15.6" cy="12.3" r="1" fill={color} stroke="none" />
+        </>
+      )}
+
+      {/* AI — ოთხქიმიანი ნაპერწკალი, პატარა თანამგზავრით */}
+      {name === 'sparkle' && (
+        <>
+          <Path
+            d="M10 3.5c.9 3 1.6 3.7 4.6 4.6-3 .9-3.7 1.6-4.6 4.6-.9-3-1.6-3.7-4.6-4.6 3-.9 3.7-1.6 4.6-4.6Z"
+            {...common}
+          />
+          <Path
+            d="M17 13c.5 1.7.9 2.1 2.6 2.6-1.7.5-2.1.9-2.6 2.6-.5-1.7-.9-2.1-2.6-2.6 1.7-.5 2.1-.9 2.6-2.6Z"
+            {...common}
+          />
+          <Circle cx="7" cy="18" r="1.1" fill={color} stroke="none" />
+        </>
+      )}
+
+      {/* დაკვრის სამკუთხედი მრგვალ ჩარჩოში */}
+      {name === 'play' && (
+        <>
+          <Circle cx="12" cy="12" r="9" {...common} />
+          <Path d="M10.2 8.6 L16 12 L10.2 15.4 Z" {...common} fill={color} />
+        </>
+      )}
+
       {name === 'lock' && (
         <>
           <Rect x="3" y="11" width="18" height="11" rx="2" {...common} />

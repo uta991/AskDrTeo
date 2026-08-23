@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
 import { planColor } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
+import { FeatureIcon, type FeatureIconName } from '../components/FeatureIcon';
 import { UserMenu } from '../components/UserMenu';
 import { PromoRedeem } from './PromoRedeem';
 import { NewsFeed, type NewsPost } from './NewsFeed';
@@ -89,9 +90,45 @@ export default async function AccountPage() {
         <h1 className={styles.greeting}>გამარჯობა, {user.firstName}!</h1>
         <p className={styles.subGreeting}>
           {activeChild
-            ? `დღეს როგორ გრძნობს თავს ${activeChild.firstName}?`
+            ? `👶 ${activeChild.firstName} • ${activeChild.ageLabel}`
             : 'დაამატეთ თქვენი პატარას პროფილი'}
         </p>
+
+        {/* ── ფუნქციების ბადე — იგივე, რაც აპლიკაციაში ────── */}
+        <div className={styles.tiles}>
+          {(
+            [
+              { href: '/development', icon: 'head', color: '#2F6FED', label: 'განვითარება' },
+              { href: '/growth', icon: 'chart', color: '#2E9E5B', label: 'ზრდა' },
+              { href: '/vaccinations', icon: 'syringe', color: '#E5484D', label: 'ვაქცინაცია' },
+              { href: '/calculator', icon: 'syrup', color: '#0EA5A5', label: 'დოზის კალკულატორი' },
+              { href: '/assistant', icon: 'robot', color: '#7C5CFF', label: 'AI ასისტენტი' },
+              { href: '/chat', icon: 'chat', color: '#2F6FED', label: 'ჩატი' },
+              { href: '/videos', icon: 'play', color: '#E8A400', label: 'ვიდეოები' },
+              { href: '/booking', icon: 'calendar', color: '#2E9E5B', label: 'ვიზიტის ჯავშანი' },
+              { href: '/plans', icon: 'crown', color: '#E8A400', label: 'პაკეტები' },
+            ] as { href: string; icon: FeatureIconName; color: string; label: string }[]
+          ).map((tile) => (
+            <Link key={tile.href} href={tile.href} className={styles.tile}>
+              <FeatureIcon name={tile.icon} color={tile.color} size={30} />
+              <span className={styles.tileLabel}>{tile.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* ── შემდეგი ვიზიტი ─────────────────────────────── */}
+        <Link href="/booking" className={styles.nextVisit}>
+          <span className={styles.nextVisitIcon}>
+            <FeatureIcon name="calendar" color="#9C7C00" size={22} />
+          </span>
+
+          <span className={styles.nextVisitText}>
+            <strong>შემდეგი ვიზიტი</strong>
+            <span className={styles.nextVisitMeta}>დაჯავშნე პედიატრთან მისვლა</span>
+          </span>
+
+          <span className={styles.nextVisitArrow}>›</span>
+        </Link>
 
         <div className={styles.grid}>
           {/* ── ბავშვები ─────────────────────────────────── */}

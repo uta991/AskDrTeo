@@ -15,6 +15,8 @@ interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'outline' | 'ghost';
+  /** „blue" — მოცისფრო ტონი; ბრენდის ყვითელი ყველგან ერთფეროვანი გამოდიოდა */
+  tone?: 'brand' | 'blue' | 'slate';
   loading?: boolean;
   disabled?: boolean;
   /** მარჯვნივ ისარი — მთავარ CTA ღილაკებზე */
@@ -27,6 +29,7 @@ export function Button({
   title,
   onPress,
   variant = 'primary',
+  tone = 'brand',
   loading = false,
   disabled = false,
   showArrow = false,
@@ -71,7 +74,13 @@ export function Button({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={[colors.primary, colors.primaryDark]}
+          colors={
+            tone === 'blue'
+              ? [colors.skyBlue, colors.skyBlueDeep]
+              : tone === 'slate'
+                ? [colors.slate, colors.slateDeep]
+                : [colors.primary, colors.primaryDark]
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}

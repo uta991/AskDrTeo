@@ -9,9 +9,9 @@ import { Platform } from 'react-native';
 
 export const colors = {
   // ფონი — სუფთა თეთრი
-  skyTop: '#FFFFFF',
-  skyMid: '#FFFFFF',
-  skyBottom: '#FFFFFF',
+  skyTop: '#F5F5F6',
+  skyMid: '#F3F3F4',
+  skyBottom: '#F1F1F2',
   cloud: '#FFFFFF',
 
   // აქცენტი — მზე. საბაზისო ტონი ექიმის მიერაა არჩეული (#FFEC4F);
@@ -22,6 +22,22 @@ export const colors = {
   primaryDeep: '#9C7C00',
   primaryLight: '#FFF6A8',
   primarySoft: '#FFFDEB',
+  /** ხატულის ველი — ბრენდის მუქი ყვითელი */
+  ivory: '#E8D900',
+  /** კვადრატის შევსება — ღია ყვითელი */
+  tileFill: '#FFF7D1',
+  /** მოცისფრო ტონი — ვიზიტის ჯავშანი */
+  skyBlue: '#8ECAE6',
+  skyBlueDeep: '#6FB6D9',
+  skyBlueSoft: '#E7F4FA',
+  /** ღია ნაცრისფერი აქცენტი — დოზის კალკულატორი */
+  slate: '#B8BCC2',
+  slateDeep: '#9AA0A8',
+  slateSoft: '#F0F1F3',
+  /** ხატულის ნახატი — მკვეთრი ყვითელი */
+  iconGlyph: '#1A1A1A',
+  /** ნახატის კონტური — ღია ყვითელი ღია ფონზე თორემ იკარგება */
+  iconOutline: '#C9A200',
   /** ყვითელი წვრილი ტექსტისთვის — #FFEC4F თეთრზე ძალიან ღიაა */
   primaryText: '#E8A400',
 
@@ -30,6 +46,10 @@ export const colors = {
   textPrimary: '#1A1A1A',
   textSecondary: '#6B6B6B',
   textMuted: '#9E9E9E',
+  /** ბარათის სათაური — ბრენდის მუქი ყვითელი */
+  textOnCard: '#E8D900',
+  /** მეორეხარისხოვანი ტექსტი — თბილი ნაცრისფერი */
+  textSoft: '#8A857A',
   /** ყვითელ ღილაკზე ტექსტი შავია — ყვითელზე თეთრი არ იკითხება */
   textOnPrimary: '#1A1A1A',
 

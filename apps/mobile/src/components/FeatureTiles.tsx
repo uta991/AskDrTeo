@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { colors, radius, shadows, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 export interface Tile {
   key: string;
@@ -10,15 +10,16 @@ export interface Tile {
   onPress: () => void;
   /** წითელი ნიშანი — შეუვსებელი პროფილი, საგანგაშო შედეგი და მისთ. */
   badge?: boolean;
-  /** ფუნქცია პაკეტში არ შედის — ფილა ჩანს, მაგრამ საკეტით */
+  /** ფუნქცია პაკეტში არ შედის — ხატულა საკეტით ჩანს */
   locked?: boolean;
 }
 
 /**
  * მთავარი ეკრანის ფილები.
  *
- * ორსვეტიანი ბადე ჩამონათვალის ნაცვლად: ხატულა და მოკლე წარწერა
- * ერთი შეხედვით იკითხება, სქროლვა კი აღარ სჭირდება.
+ * აპლიკაციის ხატულის ლოგიკა: მომრგვალებული კვადრატი, შიგნით ნახატი,
+ * ქვემოთ წარწერა. თეთრი ბარათი განზრახ აღარ არის — ის ხატულის გარშემო
+ * მეორე ჩარჩოს ქმნიდა და ორმაგი ოთხკუთხედი გამოდიოდა.
  */
 export function FeatureTiles({ tiles }: { tiles: Tile[] }) {
   return (
@@ -30,16 +31,20 @@ export function FeatureTiles({ tiles }: { tiles: Tile[] }) {
           style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
         >
           <View style={[styles.iconWrap, tile.locked && styles.iconWrapLocked]}>
+            {/* რბილ ველზე ღრმა ყვითელი ნახატი — კონტრასტიც არის და ყვითელიც */}
             <Icon
               name={tile.locked ? 'lock' : tile.icon}
-              size={26}
-              color={tile.locked ? colors.textMuted : colors.textOnPrimary}
+              size={47}
+              color={tile.locked ? colors.textMuted : colors.iconGlyph}
               strokeWidth={1.9}
             />
+
             {tile.badge && <View style={styles.badge} />}
           </View>
 
-          <Text style={styles.label}>{tile.label}</Text>
+          <Text style={styles.label} numberOfLines={2}>
+            {tile.label}
+          </Text>
         </Pressable>
       ))}
     </View>
@@ -50,48 +55,45 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    rowGap: spacing.md,
     marginTop: spacing.md,
   },
   tile: {
-    // ორი სვეტი — დანარჩენს ღრეჩო იკავებს
-    width: '48.5%',
-    aspectRatio: 1.15,
+    // სამი სვეტი — ქართული წარწერა ორ სტრიქონში თავისუფლად ეტევა
+    width: '33.33%',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    borderRadius: radius.xl,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    ...shadows.card,
+    gap: spacing.xs,
   },
-  tilePressed: { borderColor: colors.primary },
+  tilePressed: { opacity: 0.7 },
+
+  /** მომრგვალებული კვადრატი — შიგნით ნახატი ბრენდის ყვითელში */
   iconWrap: {
-    width: 54,
-    height: 54,
-    borderRadius: radius.lg,
+    width: 76,
+    height: 76,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.ivory,
   },
   iconWrapLocked: { backgroundColor: colors.surfaceMuted },
+
   badge: {
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
     backgroundColor: colors.danger,
     borderWidth: 2,
     borderColor: colors.surface,
   },
   label: {
     ...typography.small,
-    color: colors.textPrimary,
+    fontSize: 12,
+    color: colors.textOnCard,
     fontWeight: '600',
     textAlign: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 2,
   },
 });

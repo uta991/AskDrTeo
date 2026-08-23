@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyBackground } from '@/components/SkyBackground';
 import { AuthCard } from '@/components/AuthCard';
+import { Logo } from '@/components/Logo';
 import { Icon } from '@/components/ui/Icon';
 import { FeatureTiles, type Tile } from '@/components/FeatureTiles';
 import { useTabs } from '@/features/tabs';
@@ -12,6 +13,7 @@ import { useT } from '@/i18n';
 import { useAuth } from '@/features/auth/auth.store';
 import { useActiveChild, useChildren } from '@/features/children/children.store';
 import { useEntitlements, useIsFreePlan } from '@/features/entitlements/entitlements.store';
+import { useGrowth } from '@/features/growth/growth.store';
 import { useNotifications } from '@/features/notifications/notifications.store';
 import { useNews } from '@/features/news/news.store';
 import { NewsVideo } from '@/components/NewsVideo';
@@ -33,6 +35,16 @@ export function HomeTab() {
   const canUseCalculator = useEntitlements((state) => state.can('dose_calculator')) || isStaff;
   const canUseAssistant = useEntitlements((state) => state.can('ai_assistant')) || isStaff;
 
+  // ბოლო აწონვა თავსართში — მშობელი ყველაზე ხშირად ამას ეძებს
+  const growthPoints = useGrowth((state) => state.points);
+  const loadGrowth = useGrowth((state) => state.load);
+
+  const latestWeight = [...growthPoints].reverse().find((point) => point.weightKg !== null)
+    ?.weightKg;
+
+  // ბავშვის პროფილის გარეშე ასაკობრივი კონტენტი ვერ შეირჩევა — პროფილს ნიშანი ადევს
+  const needsChildProfile = !isStaff && children.length === 0;
+
   const unread = useNotifications((state) => state.unread);
   const loadNotifications = useNotifications((state) => state.load);
 
@@ -45,6 +57,10 @@ export function HomeTab() {
     void loadNotifications().catch(() => undefined);
   }, [user, isStaff, loadChildren, loadEntitlements, loadNews, loadNotifications]);
 
+  useEffect(() => {
+    if (activeChild) void loadGrowth(activeChild.id).catch(() => undefined);
+  }, [activeChild, loadGrowth]);
+
   return (
     <SkyBackground showDoves={false}>
       <ScrollView
@@ -54,165 +70,157 @@ export function HomeTab() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* უფასო პაკეტის ნიშანი — მარცხენა ზედა კუთხეში, ყველაზე ხილულ ადგილას */}
-        {isFree && !isStaff && (
-          <View style={styles.freeBadge}>
-            <Icon name="crown" size={14} color={colors.primaryDeep} strokeWidth={2} />
-            <Text style={styles.freeBadgeText}>{t('home', 'freePlan')}</Text>
-          </View>
-        )}
+        {/* ── თავსართი: ლოგო და ზარი ───────────────────────── */}
+        <View style={styles.topBar}>
+          <Logo size={60} />
 
-        {/* ზარი — წაუკითხავი წითელი წრით, გვერდის განახლების გარეშე ჩანს */}
-        <Pressable style={styles.bell} onPress={() => router.push('/notifications')}>
-          <Icon name="bulb" size={20} color={colors.primaryDeep} strokeWidth={2} />
-          {unread > 0 && (
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
-            </View>
-          )}
-        </Pressable>
-
-        <View style={styles.header}>
-          {isStaff ? (
-            <>
-              <Text style={styles.greeting}>{t('home', 'adminPanel')}</Text>
-              <Text style={styles.subtitle}>
-                {t('roles', user.role as 'ADMIN') || user.role}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.greeting}>
-                {t('home', 'greeting', { name: user?.firstName ?? '' })}
-              </Text>
-              <Text style={styles.subtitle}>
-                {activeChild
-                  ? t('home', 'childQuestion', { child: activeChild.firstName })
-                  : t('home', 'noChild')}
-              </Text>
-            </>
-          )}
+          <Pressable style={styles.bell} onPress={() => router.push('/notifications')}>
+            <Icon name="bell" size={22} color={colors.textPrimary} strokeWidth={1.8} />
+            {unread > 0 && <View style={styles.bellDot} />}
+          </Pressable>
         </View>
 
-        {!isStaff && children.length > 0 && (
-          <View style={styles.childRow}>
-            {children.map((child) => (
-              <View
-                key={child.id}
-                style={[styles.childChip, child.id === activeChild?.id && styles.childChipActive]}
-              >
-                <Text style={styles.childName}>{child.firstName}</Text>
-                <Text style={styles.childAge}>{child.ageLabel}</Text>
-              </View>
+        {/* ── მისალმება ─────────────────────────────────────── */}
+        <Text style={styles.greeting}>
+          {isStaff
+            ? t('home', 'adminPanel')
+            : `გამარჯობა, ${user?.firstName ?? ''}!`}
+        </Text>
+        <Text style={styles.greetingMeta}>
+          {isStaff
+            ? t('roles', user.role as 'ADMIN') || user.role
+            : activeChild
+              ? `👶 ${activeChild.firstName} • ${activeChild.ageLabel}${latestWeight ? ` • ${latestWeight} კგ` : ''}`
+              : t('home', 'noChild')}
+        </Text>
+
+        {/* ── ფუნქციების ბადე ───────────────────────────────── */}
+        {!isStaff && (
+          <View style={styles.grid}>
+            {[
+              {
+                key: 'symptoms',
+                icon: 'thermometer' as const,
+                color: '#E5484D',
+                label: 'სიმპტომები',
+                onPress: () => router.push('/assistant'),
+              },
+              {
+                key: 'development',
+                icon: 'head' as const,
+                color: '#2F6FED',
+                label: 'განვითარება',
+                onPress: () => goToTab('development'),
+              },
+              {
+                key: 'growth',
+                icon: 'chart' as const,
+                color: '#2E9E5B',
+                label: 'ზრდა',
+                onPress: () => router.push('/growth'),
+              },
+              {
+                key: 'vaccination',
+                icon: 'syringe' as const,
+                color: '#E5484D',
+                label: 'ვაქცინაცია',
+                onPress: () => router.push('/vaccinations'),
+              },
+              {
+                key: 'calculator',
+                icon: 'syrup' as const,
+                color: '#0EA5A5',
+                label: 'კალკულატორი',
+                onPress: () => (canUseCalculator ? goToTab('calculator') : router.push('/plans')),
+              },
+              {
+                key: 'assistant',
+                icon: 'robot' as const,
+                color: '#7C5CFF',
+                label: 'AI ასისტენტი',
+                onPress: () => router.push(canUseAssistant ? '/assistant' : '/plans'),
+              },
+              {
+                key: 'chat',
+                icon: 'chat' as const,
+                color: '#2F6FED',
+                label: 'ჩატი',
+                onPress: () => router.push('/chat'),
+              },
+              {
+                key: 'videos',
+                icon: 'play' as const,
+                color: '#E8A400',
+                label: 'ვიდეოები',
+                onPress: () => router.push('/videos'),
+              },
+              {
+                key: 'booking',
+                icon: 'calendar' as const,
+                color: '#2E9E5B',
+                label: 'ჯავშანი',
+                onPress: () => router.push('/booking'),
+              },
+            ].map((item) => (
+              <Pressable key={item.key} style={styles.gridItem} onPress={item.onPress}>
+                <Icon name={item.icon} size={28} color={item.color} strokeWidth={1.9} />
+                <Text style={styles.gridLabel} numberOfLines={2}>
+                  {item.label}
+                </Text>
+              </Pressable>
             ))}
           </View>
         )}
 
-        {isFree && !isStaff && (
-          <Pressable style={styles.upgradeCard} onPress={() => router.push('/plans')}>
-            <View style={styles.upgradeIcon}>
-              <Icon name="crown" size={20} color={colors.primaryDeep} strokeWidth={2} />
+        {/* ── შემდეგი ვიზიტი ────────────────────────────────── */}
+        {!isStaff && (
+          <Pressable style={styles.nextVisit} onPress={() => router.push('/booking')}>
+            <View style={styles.nextVisitIcon}>
+              <Icon name="calendar" size={20} color={colors.primaryDeep} strokeWidth={1.9} />
             </View>
-            <Text style={styles.upgradeText}>{t('home', 'upgrade')}</Text>
+
+            <View style={styles.nextVisitText}>
+              <Text style={styles.nextVisitTitle}>შემდეგი ვიზიტი</Text>
+              <Text style={styles.nextVisitMeta}>დაჯავშნე პედიატრთან მისვლა</Text>
+            </View>
+
             <Icon name="chevron-right" size={18} color={colors.textMuted} />
           </Pressable>
         )}
 
-        {/* ასაკობრივი ეტაპი — რას უნდა მიაქციოს მშობელმა ყურადღება ახლა */}
-        {!isStaff && !!activeChild && (
-          <AuthCard style={styles.card}>
-            <View style={styles.stageHeader}>
-              <View style={styles.stageIcon}>
-                <Icon name="bulb" size={18} color={colors.primaryDeep} strokeWidth={2} />
-              </View>
-              <View style={styles.stageTitles}>
-                <Text style={styles.stageName}>{t('stages', activeChild.stage)}</Text>
-                <Text style={styles.stageRange}>
-                  {t('stages', `${activeChild.stage}_RANGE` as 'NEWBORN_RANGE')}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.needsTitle}>{t('stages', 'needsTitle')}</Text>
-            <Text style={styles.needsText}>
-              {t('stages', `${activeChild.stage}_NEEDS` as 'NEWBORN_NEEDS')}
-            </Text>
-
-            {activeChild.isPreterm && (
-              <Text style={styles.preterm}>
-                {t('stages', 'preterm', { months: activeChild.correctedAgeMonths })}
-              </Text>
-            )}
-          </AuthCard>
-        )}
-
-        {!isStaff && (
+        {/* ── პერსონალის ფილები ─────────────────────────────── */}
+        {isStaff && (
           <FeatureTiles
             tiles={[
               {
                 key: 'development',
                 label: t('tabs', 'development'),
-                icon: 'growth',
+                icon: 'leaf',
                 onPress: () => goToTab('development'),
               },
               {
                 key: 'calculator',
                 label: t('tabs', 'calculator'),
                 icon: 'calculator',
-                // ფასიან პაკეტშია — უფასოს პაკეტების გვერდი ხვდება
-                locked: !canUseCalculator,
-                onPress: () =>
-                  canUseCalculator ? goToTab('calculator') : router.push('/plans'),
-              },
-              {
-                key: 'assistant',
-                label: 'AI ასისტენტი',
-                icon: 'bulb',
-                // პრემიუმ პაკეტშია — დანარჩენებს პაკეტების გვერდი ხვდება
-                locked: !canUseAssistant,
-                onPress: () => router.push(canUseAssistant ? '/assistant' : '/plans'),
+                onPress: () => goToTab('calculator'),
               },
               {
                 key: 'chat',
                 label: 'ჩატი',
-                icon: 'user',
+                icon: 'chat',
                 onPress: () => router.push('/chat'),
               },
               {
-                key: 'growth',
-                label: 'ზრდა',
-                icon: 'growth',
-                onPress: () => router.push('/growth'),
-              },
-              {
-                key: 'vaccinations',
-                label: 'აცრები',
-                icon: 'check',
-                onPress: () => router.push('/vaccinations'),
-              },
-              {
-                key: 'videos',
-                label: 'ვიდეოები',
-                icon: 'bulb',
-                onPress: () => router.push('/videos'),
-              },
-              {
-                key: 'booking',
-                label: t('tabs', 'booking'),
-                icon: 'calendar',
-                onPress: () => router.push('/booking'),
-              },
-              {
-                key: 'advice',
-                label: t('tabs', 'advice'),
-                icon: 'bulb',
-                onPress: () => goToTab('advice'),
+                key: 'profile',
+                label: t('tabs', 'profile'),
+                icon: 'user',
+                onPress: () => goToTab('profile'),
               },
             ] satisfies Tile[]}
           />
         )}
 
-        {/* ბავშვის პროფილის გარეშე ასაკობრივი კონტენტი ვერ შეირჩევა */}
+        {/* ── ბავშვის პროფილის გარეშე ასაკობრივი კონტენტი ვერ შეირჩევა ── */}
         {!isStaff && !activeChild && (
           <Pressable style={styles.addChildCard} onPress={() => router.push('/child-form')}>
             <View style={styles.addChildIcon}>
@@ -224,6 +232,38 @@ export function HomeTab() {
             </View>
             <Icon name="chevron-right" size={18} color={colors.danger} />
           </Pressable>
+        )}
+
+        {/* ── პერსონალის ფილები ─────────────────────────────── */}
+        {isStaff && (
+          <FeatureTiles
+            tiles={[
+              {
+                key: 'development',
+                label: t('tabs', 'development'),
+                icon: 'leaf',
+                onPress: () => goToTab('development'),
+              },
+              {
+                key: 'calculator',
+                label: t('tabs', 'calculator'),
+                icon: 'calculator',
+                onPress: () => goToTab('calculator'),
+              },
+              {
+                key: 'chat',
+                label: 'ჩატი',
+                icon: 'chat',
+                onPress: () => router.push('/chat'),
+              },
+              {
+                key: 'profile',
+                label: t('tabs', 'profile'),
+                icon: 'user',
+                onPress: () => goToTab('profile'),
+              },
+            ] satisfies Tile[]}
+          />
         )}
 
         {/* ── სიახლეები ─────────────────────────────────────── */}
@@ -257,6 +297,151 @@ export function HomeTab() {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: spacing.xl },
+
+  // ── თავსართი ────────────────────────────────────────────
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  greeting: { ...typography.h1, color: colors.textPrimary },
+  greetingMeta: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginTop: 2,
+    marginBottom: spacing.lg,
+  },
+
+  // ── ფუნქციების ბადე ─────────────────────────────────────
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  gridItem: {
+    // სამი სვეტი — ღრეჩოს გამოკლებით
+    width: '31.5%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    paddingHorizontal: 6,
+    ...shadows.card,
+  },
+  gridLabel: {
+    ...typography.small,
+    fontSize: 11.5,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // ── შემდეგი ვიზიტი ──────────────────────────────────────
+  nextVisit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  nextVisitIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+  },
+  nextVisitText: { flex: 1, gap: 2 },
+  nextVisitTitle: { ...typography.bodyMedium, color: colors.textPrimary, fontWeight: '700' },
+  nextVisitMeta: { ...typography.small, fontSize: 12, color: colors.textSecondary },
+  topText: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  topTextCol: { flex: 1, minWidth: 0 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceMuted },
+  childName: { ...typography.bodyMedium, color: colors.textOnCard, fontWeight: '700' },
+  childMeta: { ...typography.small, fontSize: 12, color: colors.textSecondary },
+  bellDot: {
+    position: 'absolute',
+    top: 9,
+    right: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.surface,
+  },
+
+  // ── ბანერი ──────────────────────────────────────────────
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radius.xxl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.card,
+  },
+  heroText: { flex: 1, gap: 4 },
+  heroTitle: { ...typography.h2, color: colors.textOnPrimary, fontWeight: '800' },
+  heroSubtitle: { ...typography.small, color: colors.textOnPrimary },
+  heroCta: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    marginTop: spacing.md,
+  },
+  heroCtaText: { ...typography.small, color: colors.textPrimary, fontWeight: '700' },
+
+  // ── ოთხი ბარათი ─────────────────────────────────────────
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  card: {
+    width: '48%',
+    // ფიქსირებული სიმაღლე — თორემ გრძელი წარწერა ბარათს წელავს და
+    // მეზობელი ბარათი მასზე გადადის
+    minHeight: 186,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    gap: spacing.xs,
+    ...shadows.card,
+  },
+  cardIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: colors.ivory,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  cardTitle: { ...typography.bodyMedium, color: colors.textOnCard, fontWeight: '700' },
+  cardText: { ...typography.small, fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
+  cardArrow: {
+    alignSelf: 'flex-end',
+    marginTop: 'auto',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceMuted,
+  },
   bell: {
     alignSelf: 'flex-end',
     width: 42,
@@ -301,7 +486,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: { marginTop: spacing.lg, marginBottom: spacing.lg },
-  greeting: { ...typography.h2, color: colors.textPrimary },
   subtitle: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   childRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   childChip: {
@@ -316,7 +500,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   childChipActive: { borderColor: colors.primary },
-  childName: { ...typography.bodyMedium, color: colors.textPrimary },
   childAge: { ...typography.small, color: colors.textSecondary },
   upgradeCard: {
     flexDirection: 'row',
@@ -337,7 +520,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   upgradeText: { ...typography.bodyMedium, color: colors.textPrimary, flex: 1 },
-  card: { marginTop: spacing.xs },
   stageHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stageIcon: {
     width: 38,

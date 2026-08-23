@@ -204,3 +204,19 @@
   line-height: 1.6;
   white-space: pre-wrap;
 }
+
+@media (max-width: 560px) {
+  /* ტელეფონზე ერთი სვეტი — 230px-იანი უჯრა ორად იჭრებოდა და
+     სათაური ორ სტრიქონად ტყდებოდა */
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    padding: 16px;
+  }
+
+  .player {
+    padding: 12px;
+  }
+}

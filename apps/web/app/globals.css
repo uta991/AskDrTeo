@@ -127,3 +127,42 @@ a {
   box-shadow: var(--shadow-card);
   padding: 28px;
 }
+
+/* ── ტელეფონის ბრაუზერი ─────────────────────────────────────
+   mobile-friendly: გვერდი ჰორიზონტალურად არასდროს უნდა გაიწელოს,
+   შეხების ზონა კი თითისთვის საკმარისი უნდა იყოს. */
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  /* ღილაკი და ველი ვიწრო ეკრანზე მთელ სიგანეს იკავებს */
+  .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  /* ცხრილი გვერდს არ წელავს — თავად ცხრილი ისრიალებს */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 19px;
+  }
+}
