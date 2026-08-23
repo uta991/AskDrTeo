@@ -203,7 +203,8 @@ export class TwoFactorService {
       phone: target,
       userId: user.id,
       templateKey: 'login_code',
-      body: `AskDrTeo: შესვლის კოდია ${code}. არავის გაუზიაროთ.`,
+      // ბოლო ხაზი ავტომატური შევსებისთვისაა — iOS და Android ასე ცნობენ კოდს
+      body: `AskDrTeo: შესვლის კოდია ${code}. არავის გაუზიაროთ.\n\n@askdrteo.com #${code}`,
     });
   }
 }

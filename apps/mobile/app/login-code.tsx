@@ -80,6 +80,9 @@ export default function LoginCodeScreen() {
             onChangeText={setCode}
             keyboardType="number-pad"
             maxLength={6}
+            // SMS-იდან კოდი კლავიატურაზე შეთავაზებად ჩნდება — ხელით აკრეფა აღარ სჭირდება
+            textContentType="oneTimeCode"
+            autoComplete="sms-otp"
             autoFocus
           />
 

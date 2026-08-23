@@ -12,11 +12,27 @@ import { SmsService } from '../sms/sms.service';
 const RESEND_COOLDOWN_SECONDS = 60;
 
 const MESSAGES: Record<OtpPurpose, (code: string) => string> = {
-  PHONE_VERIFICATION: (c) => `თქვენი დადასტურების კოდია: ${c}`,
-  EMAIL_VERIFICATION: (c) => `თქვენი დადასტურების კოდია: ${c}`,
-  PASSWORD_RESET: (c) => `პაროლის აღდგენის კოდია: ${c}`,
-  LOGIN: (c) => `შესვლის კოდია: ${c}`,
+  PHONE_VERIFICATION: (c) => withAutofill(`თქვენი დადასტურების კოდია: ${c}`, c),
+  EMAIL_VERIFICATION: (c) => withAutofill(`თქვენი დადასტურების კოდია: ${c}`, c),
+  PASSWORD_RESET: (c) => withAutofill(`პაროლის აღდგენის კოდია: ${c}`, c),
+  LOGIN: (c) => withAutofill(`შესვლის კოდია: ${c}`, c),
 };
+
+/**
+ * ავტომატური შევსების ხაზი.
+ *
+ * iOS-ი და Android-ი SMS-იდან კოდს მაშინ ამოიცნობენ, როცა ბოლო ხაზი
+ * `@დომენი #კოდი` ფორმატშია. მშობელს კოდის ხელით აკრეფა აღარ სჭირდება —
+ * კლავიატურაზე შეთავაზება თავად ჩნდება.
+ *
+ * ხაზი აუცილებლად ბოლოა: მის შემდეგ ტექსტი ამოცნობას შლის.
+ */
+function withAutofill(text: string, code: string): string {
+  return `${text}\n\n@${AUTOFILL_DOMAIN} #${code}`;
+}
+
+/** დომენი, რომელსაც კოდი ეკუთვნის — ბრაუზერი ამით ცნობს. */
+const AUTOFILL_DOMAIN = 'askdrteo.com';
 
 @Injectable()
 export class OtpService {
