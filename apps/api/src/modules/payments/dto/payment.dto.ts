@@ -1,5 +1,12 @@
 import { BillingInterval } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class CreatePaymentDto {
   /** გამოწერის პაკეტი — ან ეს, ან `packCode` */
@@ -9,6 +16,16 @@ export class CreatePaymentDto {
   /** კონსულტაციის ლიმიტის პაკეტი — გამოწერას არ ცვლის */
   @IsOptional() @IsString() @MaxLength(50)
   packCode?: string;
+
+  /** ვიდეო ვიზიტის დღე — ერთჯერადი შეხვედრა ექიმთან */
+  @IsOptional() @IsDateString({}, { message: 'აირჩიეთ ვიზიტის დღე' })
+  visitDate?: string;
+
+  @IsOptional() @IsUUID()
+  childId?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  reason?: string;
 
   /** თვიური თუ წლიური ფასი — ერთჯერადი გადახდა გამოწერას არ ქმნის */
   @IsOptional()

@@ -19,6 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { GrowthModule } from './modules/growth/growth.module';
 import { GuidesModule } from './modules/guides/guides.module';
 import { VideosModule } from './modules/videos/videos.module';
+import { VideoVisitsModule } from './modules/video-visits/video-visits.module';
 import { VaccinationsModule } from './modules/vaccinations/vaccinations.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { EntitlementsModule } from './modules/entitlements/entitlements.module';
@@ -50,6 +51,7 @@ import { SmsModule } from './modules/sms/sms.module';
     GrowthModule,
     GuidesModule,
     VideosModule,
+    VideoVisitsModule,
     VaccinationsModule,
     AppointmentsModule,
     PermissionsModule,

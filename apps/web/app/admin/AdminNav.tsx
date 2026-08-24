@@ -29,6 +29,7 @@ export function AdminNav({
     | 'news'
     | 'chat'
     | 'appointments'
+    | 'videoVisits'
     | 'videos'
     | 'vaccines'
     | 'promo'
@@ -63,6 +64,13 @@ export function AdminNav({
           className={active === 'appointments' ? styles.tabActive : styles.tab}
         >
           ვიზიტები
+        </Link>
+
+        <Link
+          href="/admin/video-visits"
+          className={active === 'videoVisits' ? styles.tabActive : styles.tab}
+        >
+          ვიდეო ჯავშნები
         </Link>
 
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}

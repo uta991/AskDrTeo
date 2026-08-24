@@ -16,6 +16,11 @@ import { EntitlementsService } from '../entitlements/entitlements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PacksService } from '../packs/packs.service';
 import { findPack } from '../packs/packs.catalog';
+import { VideoVisitsService } from '../video-visits/video-visits.service';
+import {
+  VISIT_CURRENCY,
+  VISIT_PRICE_MINOR,
+} from '../video-visits/video-visits.config';
 import { SmsService } from '../sms/sms.service';
 import { VaccinationsService } from '../vaccinations/vaccinations.service';
 import { CreatePaymentDto } from './dto/payment.dto';
@@ -65,6 +70,7 @@ export class PaymentsService {
     private readonly entitlements: EntitlementsService,
     private readonly notifications: NotificationsService,
     private readonly packs: PacksService,
+    private readonly videoVisits: VideoVisitsService,
     private readonly vaccinations: VaccinationsService,
     private readonly sms: SmsService,
     private readonly audit: AuditService,
@@ -81,6 +87,7 @@ export class PaymentsService {
     dto: CreatePaymentDto,
     userId: string,
   ): Promise<{ orderId: string; payId: string; url: string }> {
+    if (dto.visitDate) return this.startVideoVisit(dto, userId);
     if (dto.packCode) return this.startPack(dto.packCode, userId);
     if (!dto.planCode) throw new BadRequestException('მიუთითეთ პაკეტი');
 
@@ -148,6 +155,39 @@ export class PaymentsService {
     });
 
     return this.sendToBank(payment.id, offer.amountMinor, offer.currency, offer.name);
+  }
+
+  /**
+   * ვიდეო ვიზიტის ყიდვა — ერთჯერადი.
+   *
+   * დღეზე ადგილს ჯერ ვამოწმებთ და მერე ვგზავნით ბანკში: გადახდის
+   * შემდეგ „ადგილი აღარ არის" ყველაზე ცუდი პასუხია.
+   */
+  private async startVideoVisit(
+    dto: CreatePaymentDto,
+    userId: string,
+  ): Promise<{ orderId: string; payId: string; url: string }> {
+    const date = new Date(dto.visitDate!);
+    await this.videoVisits.assertDayFree(date);
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        userId,
+        provider: PaymentProvider.TBC,
+        status: PaymentStatus.PENDING,
+        currency: VISIT_CURRENCY,
+        amountMinor: VISIT_PRICE_MINOR,
+        metadata: {
+          kind: 'video_visit',
+          visitDate: dto.visitDate!,
+          childId: dto.childId ?? '',
+          reason: dto.reason ?? '',
+          planName: 'ვიდეო ვიზიტი ექიმთან',
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return this.sendToBank(payment.id, VISIT_PRICE_MINOR, VISIT_CURRENCY, 'Video visit');
   }
 
   /** ბანკში შეკვეთის შექმნა — გამოწერასაც და ლიმიტსაც ერთი გზა აქვს. */
@@ -374,6 +414,20 @@ export class PaymentsService {
         return { kind: 'pack' as const, packCode: String(meta.packCode), userId: payment.userId! };
       }
 
+      if (meta.kind === 'video_visit') {
+        await tx.payment.update({
+          where: { id: paymentId },
+          data: { metadata: { ...meta, transactionId } as Prisma.InputJsonValue },
+        });
+        return {
+          kind: 'video_visit' as const,
+          userId: payment.userId!,
+          visitDate: String(meta.visitDate),
+          childId: String(meta.childId ?? '') || null,
+          reason: String(meta.reason ?? '') || null,
+        };
+      }
+
       const planId = meta.planId as string;
       const planPriceId = (meta.planPriceId as string) ?? null;
       const interval = (meta.interval as BillingInterval) ?? BillingInterval.MONTH;
@@ -442,6 +496,18 @@ export class PaymentsService {
         include: { subscription: true },
       });
       return existing?.subscription?.currentPeriodEnd ?? null;
+    }
+
+    if (result.kind === 'video_visit') {
+      const visit = await this.videoVisits.grant({
+        parentId: result.userId,
+        date: new Date(result.visitDate),
+        childId: result.childId,
+        reason: result.reason,
+        paymentId,
+      });
+
+      return visit.requestedDate;
     }
 
     if (result.kind === 'pack') {

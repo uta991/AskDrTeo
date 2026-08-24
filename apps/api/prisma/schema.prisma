@@ -101,6 +101,8 @@ model User {
   aiConversations    AiConversation[]
   appointments       Appointment[]
   consultationPacks  ConsultationPack[]
+  videoVisits        VideoVisit[]                   @relation("VideoVisitParent")
+  videoVisitsAsStaff VideoVisit[]                   @relation("VideoVisitStaff")
   chatFeedback       ConversationFeedback[]
   feedbackAsOperator ConversationFeedback[]         @relation("FeedbackOperator")
   feedbackShares     ConversationFeedbackOperator[]
@@ -287,10 +289,11 @@ model Child {
   fatherLastName  String?
   fatherBirthDate DateTime?
 
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  videoVisits VideoVisit[]
 
   @@index([parentId])
   @@map("children")
@@ -956,6 +959,7 @@ model Conversation {
   participants ConversationUser[]
   messages     Message[]
   feedback     ConversationFeedback?
+  videoVisit   VideoVisit?
 
   @@index([status, lastMessageAt])
   @@index([assignedOperatorId, status])
@@ -1594,6 +1598,73 @@ model Appointment {
   @@index([parentId, createdAt])
   @@index([status, createdAt])
   @@map("appointments")
+}
+
+/**
+ * ვიდეო ვიზიტი — ჩატისგან სრულიად ცალკე სერვისი.
+ * ჩატი მიმოწერაა და პაკეტში შედის; ვიდეო ვიზიტი კი ერთჯერადი,
+ * ცალკე ანაზღაურებადი შეხვედრაა ექიმთან. ამიტომ საკუთარი ცხრილი
+ * აქვს და `Appointment`-ს არ იზიარებს — მათი ვადები, ლიმიტები და
+ * მონაწილეები სხვადასხვაა.
+ * მშობელი დღეს ირჩევს, ზუსტ საათს კი ექიმი ნიშნავს.
+ */
+enum VideoVisitStatus {
+  /// გადახდილია, დღე არჩეულია, საათი ჯერ არა
+  REQUESTED
+  /// ექიმმა დანიშნა ზუსტი დრო
+  SCHEDULED
+  /// ორივე მხარე ჩაერთო
+  LIVE
+  DONE
+  CANCELED
+  /// დანიშნულ დროს არავინ გამოჩნდა
+  NO_SHOW
+}
+
+model VideoVisit {
+  id       String @id @default(uuid())
+  parentId String
+  parent   User   @relation("VideoVisitParent", fields: [parentId], references: [id], onDelete: Cascade)
+
+  childId String?
+  child   Child?  @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  /// მშობლის არჩეული დღე — დღის დასაწყისი
+  requestedDate DateTime
+  /// ექიმის დანიშნული ზუსტი დრო
+  scheduledAt   DateTime?
+
+  status VideoVisitStatus @default(REQUESTED)
+  reason String?
+
+  /// ვიდეო ოთახის სახელი — ორივე მხარე ერთსა და იმავეში შედის
+  roomName String @unique
+
+  /// ვიზიტს ატარებს — მხოლოდ Super Admin
+  staffId String?
+  staff   User?   @relation("VideoVisitStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  parentJoinedAt DateTime?
+  staffJoinedAt  DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+  staffNote      String?
+
+  /// საუბრის ჩატი — ტექსტი და ფოტოები ვიდეოს პარალელურად
+  conversationId String?       @unique
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  /// რომელი გადახდით შეიძინა
+  paymentId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([requestedDate, status])
+  @@index([parentId, createdAt])
+  @@index([scheduledAt])
+  @@map("video_visits")
 }
 
 // ═══════════════════════════════════════════════════════════════

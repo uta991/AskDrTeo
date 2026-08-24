@@ -18,6 +18,13 @@ export const PERMISSIONS = [
   { key: 'chat.reply', group: 'chat', name: 'ჩატში პასუხი' },
   { key: 'chat.assign', group: 'chat', name: 'ჩატის მიბმა ოპერატორზე' },
 
+  // ── ვიდეო ვიზიტი ───────────────────────────────────────────────
+  // ჩანიშვნა ადმინსაც შეუძლია; თავად შეხვედრას მხოლოდ Super Admin
+  // ატარებს, ამიტომ „ატარებს" უფლება აქ განზრახ არ არის — ის როლზეა
+  // მიბმული და პანელიდან ვერავის გადაეცემა.
+  { key: 'video_visit.view', group: 'video_visit', name: 'ვიდეო ჯავშნების ნახვა' },
+  { key: 'video_visit.schedule', group: 'video_visit', name: 'ვიდეო ვიზიტის დანიშვნა' },
+
   // ── მედია ──────────────────────────────────────────────────────
   { key: 'media.view_private', group: 'media', name: 'კერძო ფაილების ნახვა' },
   { key: 'media.delete', group: 'media', name: 'ფაილის წაშლა' },
@@ -78,6 +85,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<
     'chat.view',
     'chat.reply',
     'chat.assign',
+    'video_visit.view',
+    'video_visit.schedule',
     'media.view_private',
     'media.delete',
     'notification.send',
