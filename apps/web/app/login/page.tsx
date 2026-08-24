@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { SunLogo } from '../components/Brand';
 import { LoginForm } from './LoginForm';
+import { SocialAuth } from '../components/SocialAuth';
 import styles from './login.module.css';
 
 export const metadata = { title: 'შესვლა — AskDrTeo' };
@@ -27,6 +28,11 @@ export default async function LoginPage() {
         </div>
 
         <LoginForm />
+
+        <SocialAuth
+          googleClientId={process.env.GOOGLE_WEB_CLIENT_ID}
+          appleClientId={process.env.APPLE_SERVICES_ID}
+        />
 
         <p className={styles.note}>
           არ გაქვთ ანგარიში?{' '}

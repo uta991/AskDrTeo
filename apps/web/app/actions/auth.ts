@@ -7,6 +7,51 @@ import { API_URL, clearSession, getSessionUser, saveSession } from '@/lib/sessio
 /** ნდობის მოწყობილობის cookie — 30 დღე, httpOnly. */
 const DEVICE_COOKIE = 'adt_device';
 
+/**
+ * Google-ითა და Apple-ით შესვლა.
+ *
+ * ტოკენს ბრაუზერი იღებს პროვაიდერისგან და აქ გვიგზავნის; შემოწმება
+ * სერვერზეა — კლიენტს მხოლოდ ხელმოწერილი ტოკენის გადმოცემა შეუძლია.
+ * ერთი ნაკადია რეგისტრაციისთვისაც და შესვლისთვისაც: თუ ანგარიში
+ * არ არსებობს, სერვერი მას თავად ქმნის.
+ */
+export async function socialLogin(
+  provider: 'google' | 'apple',
+  token: string,
+  firstName?: string,
+  lastName?: string,
+): Promise<{ error?: string }> {
+  if (!token) return { error: 'ტოკენი ვერ მივიღეთ' };
+
+  let payload: {
+    tokens?: { accessToken: string; refreshToken: string };
+    message?: string;
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/auth/${provider}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        provider === 'google'
+          ? { idToken: token }
+          : { identityToken: token, firstName, lastName },
+      ),
+      cache: 'no-store',
+    });
+
+    payload = await res.json();
+    if (!res.ok) return { error: payload.message ?? 'შესვლა ვერ მოხერხდა' };
+  } catch {
+    return { error: 'სერვერთან კავშირი ვერ დამყარდა' };
+  }
+
+  if (!payload.tokens) return { error: 'სერვერმა ტოკენი არ დააბრუნა' };
+
+  await saveSession(payload.tokens.accessToken, payload.tokens.refreshToken);
+  return {};
+}
+
 export interface LoginState {
   error?: string;
   /** მეორე საფეხური — სერვერმა კოდი გააგზავნა და ტოკენს ელოდება */
