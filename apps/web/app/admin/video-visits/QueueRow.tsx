@@ -31,7 +31,16 @@ function age(birthDate: string): string {
  * ექიმი აქ ხედავს, ვინ არის ჩაწერილი და რა აწუხებთ — ჩართვამდე
  * პროფილს ხსნის და ტექსტს კითხულობს.
  */
-export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct: boolean }) {
+export function QueueRow({
+  visit,
+  canConduct,
+  waiting,
+}: {
+  visit: QueueVisit;
+  canConduct: boolean;
+  /** ცოცხალი მდგომარეობა — გვერდის გადატვირთვის გარეშე ახლდება */
+  waiting: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [time, setTime] = useState(
     visit.scheduledAt ? timeTbilisi(visit.scheduledAt) : '10:00',
@@ -67,7 +76,7 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
   };
 
   return (
-    <article className={`${styles.row} ${visit.parentWaiting ? styles.rowWaiting : ''}`}>
+    <article className={`${styles.row} ${waiting ? styles.rowWaiting : ''}`}>
       <div className={styles.rowMain}>
         <div className={styles.rowHead}>
           <strong className={styles.rowTime}>
@@ -77,7 +86,12 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
             {visit.parent.firstName} {visit.parent.lastName}
           </span>
           <span className={styles.rowStatus}>{STATUS_LABELS[visit.status]}</span>
-          {visit.parentWaiting && <span className={styles.waiting}>მშობელი ოთახშია</span>}
+          {waiting && (
+            <span className={styles.waiting}>
+              <span className={styles.waitingDot} />
+              მშობელი ჩართულია და ელოდება
+            </span>
+          )}
         </div>
 
         <button type="button" className={styles.toggle} onClick={() => setOpen(!open)}>

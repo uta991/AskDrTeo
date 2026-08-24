@@ -49,6 +49,12 @@ export class VideoVisitsController {
     return this.visits.joinAsParent(id, userId);
   }
 
+  @Get(':id/presence')
+  @ApiOperation({ summary: 'ვინ არის ოთახში ახლა' })
+  presence(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.visits.presence(id, user.id, user.role);
+  }
+
   /**
    * ვიზიტის ჩატი.
    *
@@ -103,6 +109,12 @@ export class AdminVideoVisitsController {
   @ApiOperation({ summary: 'ჩართვა — ექიმის მხრიდან' })
   join(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.visits.joinAsStaff(id, user.id, user.role);
+  }
+
+  @Get(':id/presence')
+  @RequirePermission('video_visit.view')
+  presence(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.visits.presence(id, user.id, user.role);
   }
 
   @Get(':id/messages')

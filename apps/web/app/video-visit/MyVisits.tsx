@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
-import { joinVisit, type MyVisit, type VisitStatus } from './actions';
+import { useEffect, useState, useTransition } from 'react';
+import { joinVisit, visitPresence, type MyVisit, type VisitStatus } from './actions';
 import { formatTbilisi } from '@/lib/time';
 import styles from './visit.module.css';
 
@@ -15,10 +15,37 @@ const STATUS_LABELS: Record<VisitStatus, string> = {
   NO_SHOW: 'არ შედგა',
 };
 
+/** ექიმის ჩართვა მშობელმა ჩართვამდე უნდა დაინახოს. */
+const POLL_MS = 8000;
+
 export function MyVisits({ visits }: { visits: MyVisit[] }) {
+  const [doctorIn, setDoctorIn] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
   const router = useRouter();
+
+  // მხოლოდ ის ვიზიტები, სადაც ჩართვა უკვე შესაძლებელია
+  const joinable = visits.filter((visit) => visit.canJoin).map((visit) => visit.id);
+  const key = joinable.join(',');
+
+  useEffect(() => {
+    if (!key) return;
+
+    const tick = async () => {
+      const results = await Promise.all(
+        key.split(',').map(async (id) => {
+          const presence = await visitPresence(id, false).catch(() => null);
+          return [id, !!presence?.staffPresent] as const;
+        }),
+      );
+
+      setDoctorIn(Object.fromEntries(results));
+    };
+
+    void tick();
+    const timer = setInterval(() => void tick(), POLL_MS);
+    return () => clearInterval(timer);
+  }, [key]);
 
   const join = (id: string) => {
     setError(null);
@@ -53,6 +80,13 @@ export function MyVisits({ visits }: { visits: MyVisit[] }) {
               {STATUS_LABELS[visit.status]}
               {visit.child ? ` · ${visit.child.firstName}` : ''}
             </span>
+
+            {doctorIn[visit.id] && (
+              <span className={styles.doctorIn}>
+                <span className={styles.doctorDot} />
+                ექიმი კავშირზეა
+              </span>
+            )}
             {!!visit.staffNote && <span className={styles.visitNote}>{visit.staffNote}</span>}
           </div>
 

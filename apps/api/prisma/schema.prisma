@@ -1646,6 +1646,12 @@ model VideoVisit {
 
   parentJoinedAt DateTime?
   staffJoinedAt  DateTime?
+  /// ბოლო ნიშანი, რომ მხარე ჯერ კიდევ ოთახშია.
+  ///
+  /// მარტო „შემოვიდა" არ კმარა: ფანჯრის დახურვას სერვერი ვერ ხედავს
+  /// და მეორე მხარე სამუდამოდ ფიქრობდა, რომ პარტნიორი ელოდება.
+  parentSeenAt DateTime?
+  staffSeenAt  DateTime?
   startedAt      DateTime?
   endedAt        DateTime?
   staffNote      String?

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { AdminNav } from '../AdminNav';
 import { getQueue } from './actions';
-import { QueueRow } from './QueueRow';
+import { QueueList } from './QueueList';
 import styles from './queue.module.css';
 import adminStyles from '../admin.module.css';
 
@@ -72,11 +72,7 @@ export default async function AdminVideoVisitsPage({
         {!queue?.visits.length ? (
           <p className={styles.empty}>ამ დღეს ვიდეო ჯავშანი არ არის.</p>
         ) : (
-          <div className={styles.list}>
-            {queue.visits.map((visit) => (
-              <QueueRow key={visit.id} visit={visit} canConduct={canConduct} />
-            ))}
-          </div>
+          <QueueList visits={queue.visits} canConduct={canConduct} date={day} />
         )}
       </div>
     </main>

@@ -23,6 +23,14 @@ import {
 } from './video-visits.config';
 import { ScheduleVideoVisitDto } from './dto/video-visit.dto';
 
+/**
+ * რამდენი წამი ჩაითვლება მხარე „ოთახში მყოფად" ბოლო ნიშნიდან.
+ *
+ * ფანჯრის დახურვას სერვერი ვერ ხედავს — ამიტომ ყოფნა ვადიანია და
+ * ყოველ გამოკითხვაზე ახლდება. 20 წამი სამ გამოტოვებულ ნიშანს იტანს.
+ */
+const PRESENCE_TTL_MS = 20_000;
+
 /** დღეები, რომლებზეც ჯავშანი შეიძლება ჯერ კიდევ შედგეს. */
 const LIVE_STATUSES: VideoVisitStatus[] = [
   VideoVisitStatus.REQUESTED,
@@ -196,7 +204,7 @@ export class VideoVisitsService {
         staffNote: visit.staffNote,
         parent: visit.parent,
         child: visit.child,
-        parentWaiting: !!visit.parentJoinedAt && !visit.endedAt,
+        parentWaiting: fresh(visit.parentSeenAt, new Date()),
         parentJoinedAt: visit.parentJoinedAt,
         staffJoinedAt: visit.staffJoinedAt,
       })),
@@ -295,7 +303,10 @@ export class VideoVisitsService {
 
     const visit = await this.prisma.videoVisit.update({
       where: { id },
-      data: side === 'parent' ? { parentJoinedAt: now } : { staffJoinedAt: now },
+      data:
+        side === 'parent'
+          ? { parentJoinedAt: now, parentSeenAt: now }
+          : { staffJoinedAt: now, staffSeenAt: now },
     });
 
     const bothIn = !!visit.parentJoinedAt && !!visit.staffJoinedAt;
@@ -361,6 +372,48 @@ export class VideoVisitsService {
     );
 
     return conversationId;
+  }
+
+  /**
+   * ვინ არის ოთახში ახლა.
+   *
+   * გამომძახებელი თავის ნიშანს ტოვებს და მეორე მხარის მდგომარეობას
+   * იღებს — ასე ორივე ხედავს, პარტნიორი შემოვიდა თუ არა.
+   */
+  async presence(visitId: string, userId: string, role: UserRole) {
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id: visitId, deletedAt: null },
+      select: {
+        parentId: true,
+        status: true,
+        parentSeenAt: true,
+        staffSeenAt: true,
+        staff: { select: { firstName: true, lastName: true } },
+        parent: { select: { firstName: true } },
+      },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    const isParent = role === UserRole.PARENT;
+    if (isParent && visit.parentId !== userId) {
+      throw new ForbiddenException('ეს ვიზიტი თქვენი არ არის');
+    }
+
+    const now = new Date();
+
+    const updated = await this.prisma.videoVisit.update({
+      where: { id: visitId },
+      data: isParent ? { parentSeenAt: now } : { staffSeenAt: now },
+      select: { parentSeenAt: true, staffSeenAt: true, status: true },
+    });
+
+    return {
+      parentPresent: fresh(updated.parentSeenAt, now),
+      staffPresent: fresh(updated.staffSeenAt, now),
+      parentName: visit.parent.firstName,
+      staffName: visit.staff ? `${visit.staff.firstName} ${visit.staff.lastName}` : null,
+      status: updated.status,
+    };
   }
 
   /** ვიზიტის ჩატი — მონაწილეობის შემოწმებით. */
@@ -454,4 +507,9 @@ export class VideoVisitsService {
       })
       .catch(() => undefined);
   }
+}
+
+/** ნიშანი ჯერ ცოცხალია თუ დაძველდა. */
+function fresh(seenAt: Date | null, now: Date): boolean {
+  return !!seenAt && now.getTime() - seenAt.getTime() < PRESENCE_TTL_MS;
 }

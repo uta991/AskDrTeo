@@ -183,3 +183,29 @@
   color: #c4574d;
   font-size: 13px;
 }
+
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.waitingDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waitingDot {
+    animation: none;
+  }
+}

@@ -6,6 +6,8 @@ import {
   sendVisitMessage,
   uploadVisitPhoto,
   visitMessages,
+  visitPresence,
+  type Presence,
   type VisitMessage,
 } from './actions';
 import { timeTbilisi } from '@/lib/time';
@@ -13,6 +15,9 @@ import styles from './visit.module.css';
 
 /** ჩატი წამში ერთხელ არ განახლდება — სამი წამი საკმარისია და სერვერს იშურებს. */
 const POLL_MS = 3000;
+
+/** ყოფნის ნიშანი უფრო ხშირად — მეორე მხარის შემოსვლა მაშინვე უნდა ჩანდეს. */
+const PRESENCE_MS = 5000;
 
 /**
  * ვიდეო ოთახი.
@@ -38,6 +43,7 @@ export function VisitRoom({
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [presence, setPresence] = useState<Presence | null>(null);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -52,6 +58,18 @@ export function VisitRoom({
     const timer = setInterval(() => void load(), POLL_MS);
     return () => clearInterval(timer);
   }, [load]);
+
+  // ყოფნის ნიშანი — ერთდროულად „აქ ვარ" და „მეორე მხარე შემოვიდა?"
+  useEffect(() => {
+    const ping = async () => {
+      const result = await visitPresence(visitId, admin).catch(() => null);
+      if (result) setPresence(result);
+    };
+
+    void ping();
+    const timer = setInterval(() => void ping(), PRESENCE_MS);
+    return () => clearInterval(timer);
+  }, [visitId, admin]);
 
   // ახალი შეტყობინება ყოველთვის ხედში უნდა იყოს
   useEffect(() => {
@@ -89,6 +107,16 @@ export function VisitRoom({
     await send('', [uploaded.id]);
   };
 
+  const otherPresent = admin ? !!presence?.parentPresent : !!presence?.staffPresent;
+
+  const otherLabel = admin
+    ? otherPresent
+      ? `${presence?.parentName ?? 'მშობელი'} ჩართულია`
+      : 'მშობელი ჯერ არ შემოსულა'
+    : otherPresent
+      ? `${presence?.staffName ?? 'ექიმი'} ჩართულია`
+      : 'ელოდება ექიმის ჩართვას';
+
   return (
     <div className={styles.room}>
       <div className={styles.roomHead}>
@@ -96,6 +124,14 @@ export function VisitRoom({
           ← დასრულება
         </Link>
         <strong>{title}</strong>
+
+        {/* მეორე მხარე ოთახშია თუ ჯერ არა — ეს მთავარი კითხვაა ზარის დასაწყისში */}
+        <span
+          className={`${styles.presence} ${otherPresent ? styles.presenceOn : ''}`}
+        >
+          <span className={styles.dot} />
+          {otherLabel}
+        </span>
       </div>
 
       <div className={styles.roomBody}>

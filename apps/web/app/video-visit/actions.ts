@@ -146,3 +146,22 @@ export async function uploadVisitPhoto(
     return { error: error instanceof Error ? error.message : 'ატვირთვა ვერ მოხერხდა' };
   }
 }
+
+export interface Presence {
+  parentPresent: boolean;
+  staffPresent: boolean;
+  parentName: string;
+  staffName: string | null;
+  status: VisitStatus;
+}
+
+/**
+ * ვინ არის ოთახში ახლა.
+ *
+ * გამომძახებელი თავის ნიშანსაც ტოვებს — ანუ ერთი მოთხოვნა ერთდროულად
+ * ამბობს „აქ ვარ" და კითხულობს „მეორე მხარე შემოვიდა?".
+ */
+export async function visitPresence(id: string, admin: boolean): Promise<Presence | null> {
+  const base = admin ? '/admin/video-visits' : '/video-visits';
+  return apiFetch<Presence>(`${base}/${id}/presence`);
+}

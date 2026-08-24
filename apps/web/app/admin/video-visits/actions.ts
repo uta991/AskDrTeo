@@ -73,3 +73,11 @@ export async function finishVisit(id: string): Promise<{ error?: string }> {
     return { error: error instanceof Error ? error.message : 'ვერ დასრულდა' };
   }
 }
+
+/** რიგის ცოცხალი მდგომარეობა — ვინ შემოვიდა ოთახში. */
+export async function queuePresence(date?: string): Promise<Record<string, boolean>> {
+  const queue = await getQueue(date);
+  if (!queue) return {};
+
+  return Object.fromEntries(queue.visits.map((visit) => [visit.id, visit.parentWaiting]));
+}
