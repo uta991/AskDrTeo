@@ -131,7 +131,7 @@ export default function GrowthScreen() {
   if (!allowed) {
     return (
       <SkyBackground showDoves={false}>
-        <ScreenHeader title="ზრდის დინამიკა" onBack={goBack} />
+        <ScreenHeader title="ზრდის დღიური" onBack={goBack} />
 
         <View style={styles.locked}>
           <View style={styles.lockIcon}>
@@ -152,7 +152,7 @@ export default function GrowthScreen() {
   return (
     <SkyBackground showDoves={false}>
       <ScreenHeader
-        title="ზრდის დინამიკა"
+        title="ზრდის დღიური"
         subtitle={activeChild ? `${activeChild.firstName} · ${activeChild.ageLabel}` : undefined}
         onBack={goBack}
       />

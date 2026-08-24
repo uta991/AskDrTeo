@@ -117,7 +117,7 @@ export function ProfileTab() {
             {[
               { label: 'ჩატი კონსულტანტთან', path: '/chat' },
               { label: 'AI ასისტენტი', path: '/assistant' },
-              { label: 'ზრდის დინამიკა', path: '/growth' },
+              { label: 'ზრდის დღიური', path: '/growth' },
               { label: 'აცრების კალენდარი', path: '/vaccinations' },
               { label: 'ვიდეო ბიბლიოთეკა', path: '/videos' },
               { label: 'ვიზიტის ჯავშანი', path: '/booking' },

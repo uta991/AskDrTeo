@@ -8,7 +8,7 @@ import { GrowthBoard } from './GrowthBoard';
 import type { GrowthPoint } from './actions';
 import styles from './growth.module.css';
 
-export const metadata = { title: 'ზრდის დინამიკა — AskDrTeo' };
+export const metadata = { title: 'ზრდის დღიური — AskDrTeo' };
 
 export default async function GrowthPage({
   searchParams,
@@ -30,7 +30,7 @@ export default async function GrowthPage({
         <div className={styles.card}>
           <div className={styles.head}>
             <SunLogo size={44} />
-            <h1 className={styles.title}>ზრდის დინამიკა</h1>
+            <h1 className={styles.title}>ზრდის დღიური</h1>
             <p className={styles.subtitle}>
               წონისა და სიმაღლის მრუდი სტანდარტულ და პრემიუმ პაკეტშია.
             </p>
@@ -63,7 +63,7 @@ export default async function GrowthPage({
       <div className={styles.card}>
         <div className={styles.head}>
           <SunLogo size={44} />
-          <h1 className={styles.title}>ზრდის დინამიკა</h1>
+          <h1 className={styles.title}>ზრდის დღიური</h1>
           <p className={styles.subtitle}>
             პროცენტილს არ ვთვლით — ეს პედიატრის შეფასებაა. აქ ბავშვის საკუთარი
             მრუდია, რომ ტენდენცია დაინახოთ.

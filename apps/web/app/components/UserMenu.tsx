@@ -147,7 +147,7 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
           </Link>
 
           <Link href="/growth" className={styles.item} role="menuitem">
-            ზრდის დინამიკა
+            ზრდის დღიური
           </Link>
 
           <Link href="/vaccinations" className={styles.item} role="menuitem">

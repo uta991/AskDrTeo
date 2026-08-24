@@ -19,7 +19,7 @@ interface GrowthState {
   remove: (childId: string, entryId: string) => Promise<void>;
 }
 
-/** ზრდის დინამიკა — გაზომვები და მათი ისტორია. */
+/** ზრდის დღიური — გაზომვები და მათი ისტორია. */
 export const useGrowth = create<GrowthState>((set, get) => ({
   points: [],
   loading: false,

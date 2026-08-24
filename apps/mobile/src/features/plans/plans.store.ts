@@ -57,5 +57,8 @@ export const usePlans = create<PlansState>((set, get) => ({
 /** თეთრებიდან ტექსტად: 1990 → „19.90 ₾" */
 export function formatPrice(amountMinor: number, currency: string): string {
   const symbol = currency === 'GEL' ? '₾' : currency;
-  return `${(amountMinor / 100).toFixed(2)} ${symbol}`;
+  const amount = amountMinor / 100;
+
+  // მრგვალი თანხა თეთრების გარეშე (199 ₾), არამრგვალი ორი ნიშნით (19.98 ₾)
+  return `${amountMinor % 100 === 0 ? amount.toFixed(0) : amount.toFixed(2)} ${symbol}`;
 }

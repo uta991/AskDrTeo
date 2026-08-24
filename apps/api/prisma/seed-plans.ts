@@ -23,7 +23,7 @@ const FEATURES = [
   { key: 'chat_with_operator', name: 'ჩატი კონსულტანტთან', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'chat_priority', name: 'პრიორიტეტული პასუხი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'max_children', name: 'ბავშვის პროფილები', type: FeatureType.LIMIT, unit: 'children', defaultValue: '1' },
-  { key: 'growth_tracking', name: 'ზრდის დინამიკა', type: FeatureType.BOOLEAN, defaultValue: 'false' },
+  { key: 'growth_tracking', name: 'ზრდის დღიური', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'vaccination_calendar', name: 'აცრების კალენდარი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
   // რეკლამა აპლიკაციაში საერთოდ არ არის — დაპირება ცარიელი იქნებოდა
   { key: 'ad_free', name: 'რეკლამის გარეშე', type: FeatureType.BOOLEAN, defaultValue: 'false', isActive: false },
@@ -80,7 +80,7 @@ const PLANS = [
     sortOrder: 2,
     colorHex: '#e8a400',
     prices: [
-      { currency: 'GEL', amountMinor: 2000, interval: BillingInterval.MONTH },
+      { currency: 'GEL', amountMinor: 1998, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 19900, interval: BillingInterval.YEAR },
     ],
     features: {
@@ -105,7 +105,7 @@ const PLANS = [
     sortOrder: 3,
     colorHex: '#007201',
     prices: [
-      { currency: 'GEL', amountMinor: 4000, interval: BillingInterval.MONTH },
+      { currency: 'GEL', amountMinor: 3999, interval: BillingInterval.MONTH },
       { currency: 'GEL', amountMinor: 39900, interval: BillingInterval.YEAR },
     ],
     features: {

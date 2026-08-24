@@ -102,7 +102,7 @@ export default async function ProfilePage({
                 <Link href="/account">ჩემი კაბინეტი</Link>
                 <Link href="/account/child">ბავშვის დამატება</Link>
                 <Link href="/development">განვითარების მონიტორინგი</Link>
-                <Link href="/growth">ზრდის დინამიკა</Link>
+                <Link href="/growth">ზრდის დღიური</Link>
                 <Link href="/vaccinations">აცრების კალენდარი</Link>
                 <Link href="/videos">ვიდეო ბიბლიოთეკა</Link>
                 <Link href="/calculator">დოზის კალკულატორი</Link>

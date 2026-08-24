@@ -9,7 +9,7 @@ import { GrowthService } from './growth.service';
 import { CreateGrowthEntryDto } from './dto/growth.dto';
 
 /**
- * ზრდის დინამიკა — წონა, სიმაღლე, თავის გარშემოწერილობა.
+ * ზრდის დღიური — წონა, სიმაღლე, თავის გარშემოწერილობა.
  *
  * ფასიან პაკეტშია (`growth_tracking`).
  */

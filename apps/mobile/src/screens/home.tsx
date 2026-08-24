@@ -116,7 +116,7 @@ export function HomeTab() {
                 key: 'growth',
                 icon: 'chart' as const,
                 color: '#2E9E5B',
-                label: 'ზრდა',
+                label: 'ზრდის დღიური',
                 onPress: () => router.push('/growth'),
               },
               {

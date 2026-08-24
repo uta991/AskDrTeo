@@ -32,9 +32,15 @@ interface Plan {
   features: PlanFeature[];
 }
 
-/** თეთრები ლარად — ფულთან მცურავი წერტილი არასდროს. */
+/**
+ * თეთრები ლარად.
+ *
+ * მრგვალი თანხა თეთრების გარეშე იწერება (199 ₾), არამრგვალი კი
+ * ორი ნიშნით (19.98 ₾) — თორემ დამრგვალება ფასს ცვლიდა.
+ */
 function gel(minor: number): string {
-  return `${(minor / 100).toFixed(0)} ₾`;
+  const amount = minor / 100;
+  return `${minor % 100 === 0 ? amount.toFixed(0) : amount.toFixed(2)} ₾`;
 }
 
 interface PriceView {
