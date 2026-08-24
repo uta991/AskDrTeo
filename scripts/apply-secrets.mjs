@@ -31,7 +31,11 @@ function parse(text) {
     if (index < 1) continue;
 
     const key = trimmed.slice(0, index).trim();
-    const value = trimmed.slice(index + 1).trim();
+    let value = trimmed.slice(index + 1).trim();
+
+    // „KEY=KEY=მნიშვნელობა" — ხელით ჩასმისას სახელი ხშირად ორჯერ ხვდება
+    if (value.startsWith(`${key}=`)) value = value.slice(key.length + 1);
+
     if (value) entries.set(key, value);
   }
 
