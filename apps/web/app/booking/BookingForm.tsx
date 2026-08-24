@@ -10,6 +10,7 @@ import {
   type Quota,
 } from './actions';
 import type { ChildSummary } from '@/lib/children';
+import { formatTbilisi } from '@/lib/time';
 import styles from './booking.module.css';
 
 const STATUS_LABELS: Record<Appointment['status'], string> = {
@@ -115,7 +116,7 @@ export function BookingForm({
               <div className={styles.historyMain}>
                 <span className={styles.historyDate}>
                   {item.scheduledAt
-                    ? item.scheduledAt.replace('T', ' ').slice(0, 16)
+                    ? formatTbilisi(item.scheduledAt)
                     : 'დროს ექიმი დანიშნავს'}
                 </span>
                 {!!item.child && <span className={styles.historyChild}>{item.child.firstName}</span>}

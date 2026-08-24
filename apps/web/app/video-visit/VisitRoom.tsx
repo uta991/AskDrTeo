@@ -8,6 +8,7 @@ import {
   visitMessages,
   type VisitMessage,
 } from './actions';
+import { timeTbilisi } from '@/lib/time';
 import styles from './visit.module.css';
 
 /** ჩატი წამში ერთხელ არ განახლდება — სამი წამი საკმარისია და სერვერს იშურებს. */
@@ -148,7 +149,7 @@ export function VisitRoom({
                   )}
 
                   <span className={styles.bubbleTime}>
-                    {message.createdAt.slice(11, 16)}
+                    {timeTbilisi(message.createdAt)}
                   </span>
                 </div>
               );

@@ -13,7 +13,8 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "videos:reconcile": "tsx --env-file=.env prisma/reconcile-videos.ts"
+    "videos:reconcile": "tsx --env-file=.env prisma/reconcile-videos.ts",
+    "visit:test": "npx tsx --env-file=.env prisma/test-visit.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

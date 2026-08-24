@@ -12,6 +12,7 @@ import {
   UserRole,
 } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { formatTbilisi } from '@/common/utils/tbilisi-time';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 import { SmsService } from '../sms/sms.service';
 import { CreateAppointmentDto, DecideAppointmentDto } from './dto/appointment.dto';
@@ -238,7 +239,7 @@ export class AppointmentsService {
     if (!title) return;
 
     const confirmed = status === AppointmentStatus.CONFIRMED && !!when;
-    const readable = when ? formatVisitTime(when) : 'დრო ჯერ არ არის დანიშნული';
+    const readable = when ? formatTbilisi(when) : 'დრო ჯერ არ არის დანიშნული';
 
     const body = confirmed
       ? `${readable}. გთხოვთ, იყოთ მზად ${BE_READY_MINUTES} წუთით ადრე.`
@@ -277,14 +278,6 @@ export class AppointmentsService {
   }
 }
 
-/** „25.08.2026, 14:30" — ერთნაირად SMS-შიც და შეტყობინებაშიც. */
-function formatVisitTime(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return (
-    `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, `
-    + `${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
-}
 
 /** მიმდინარე კალენდარული თვის დასაწყისი. */
 function startOfMonth(): Date {

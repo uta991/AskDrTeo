@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { finishVisit, joinAsStaff, scheduleVisit, type QueueVisit } from './actions';
+import { TBILISI_OFFSET, dayTbilisi, timeTbilisi } from '@/lib/time';
 import styles from './queue.module.css';
 
 const STATUS_LABELS: Record<QueueVisit['status'], string> = {
@@ -32,7 +33,9 @@ function age(birthDate: string): string {
  */
 export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct: boolean }) {
   const [open, setOpen] = useState(false);
-  const [time, setTime] = useState(visit.scheduledAt?.slice(11, 16) ?? '10:00');
+  const [time, setTime] = useState(
+    visit.scheduledAt ? timeTbilisi(visit.scheduledAt) : '10:00',
+  );
   const [note, setNote] = useState(visit.staffNote ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
@@ -42,7 +45,13 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
     setError(null);
 
     startTransition(async () => {
-      const result = await scheduleVisit(visit.id, `${date}T${time}:00`, note);
+      // საათი ექიმმა ქართული დროით მიუთითა — ოფსეტი აქვე ვამატებთ,
+      // თორემ სერვერი მას UTC-ად წაიკითხავდა
+      const result = await scheduleVisit(
+        visit.id,
+        `${date}T${time}:00${TBILISI_OFFSET}`,
+        note,
+      );
       if (result.error) setError(result.error);
     });
   };
@@ -62,7 +71,7 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
       <div className={styles.rowMain}>
         <div className={styles.rowHead}>
           <strong className={styles.rowTime}>
-            {visit.scheduledAt ? visit.scheduledAt.slice(11, 16) : '—:—'}
+            {visit.scheduledAt ? timeTbilisi(visit.scheduledAt) : '—:—'}
           </strong>
           <span className={styles.rowName}>
             {visit.parent.firstName} {visit.parent.lastName}
@@ -109,7 +118,7 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
                   type="button"
                   className="btn btn-primary"
                   disabled={busy}
-                  onClick={() => save(visit.scheduledAt?.slice(0, 10) ?? todayFor(visit))}
+                  onClick={() => save(todayFor(visit))}
                 >
                   {busy ? 'იგზავნება…' : 'დანიშვნა და SMS'}
                 </button>
@@ -153,7 +162,7 @@ export function QueueRow({ visit, canConduct }: { visit: QueueVisit; canConduct:
   );
 }
 
-/** დღე რიგიდან — ჯავშანი ყოველთვის კონკრეტულ დღეზეა. */
+/** ჯავშნის დღე — ყოველთვის თბილისური კალენდრით. */
 function todayFor(visit: QueueVisit): string {
-  return visit.scheduledAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+  return visit.scheduledAt ? dayTbilisi(visit.scheduledAt) : dayTbilisi(new Date().toISOString());
 }

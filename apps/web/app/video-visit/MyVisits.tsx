@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { joinVisit, type MyVisit, type VisitStatus } from './actions';
+import { formatTbilisi } from '@/lib/time';
 import styles from './visit.module.css';
 
 const STATUS_LABELS: Record<VisitStatus, string> = {
@@ -13,10 +14,6 @@ const STATUS_LABELS: Record<VisitStatus, string> = {
   CANCELED: 'გაუქმდა',
   NO_SHOW: 'არ შედგა',
 };
-
-function readable(value: string): string {
-  return value.replace('T', ' ').slice(0, 16);
-}
 
 export function MyVisits({ visits }: { visits: MyVisit[] }) {
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +47,7 @@ export function MyVisits({ visits }: { visits: MyVisit[] }) {
         <div key={visit.id} className={styles.visitRow}>
           <div className={styles.visitMain}>
             <strong className={styles.visitDate}>
-              {visit.scheduledAt ? readable(visit.scheduledAt) : visit.date}
+              {visit.scheduledAt ? formatTbilisi(visit.scheduledAt) : visit.date}
             </strong>
             <span className={styles.visitMeta}>
               {STATUS_LABELS[visit.status]}

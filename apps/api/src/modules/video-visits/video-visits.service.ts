@@ -7,6 +7,12 @@ import {
 } from '@nestjs/common';
 import { UserRole, VideoVisitStatus } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import {
+  addDays,
+  formatTbilisi,
+  tbilisiDayKey,
+  tbilisiStartOfDay,
+} from '@/common/utils/tbilisi-time';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SmsService } from '../sms/sms.service';
 import {
@@ -41,7 +47,7 @@ export class VideoVisitsService {
    * თორემ გადახდის შემდეგ „ადგილი აღარ არის" ყველაზე ცუდი პასუხია.
    */
   async availability() {
-    const from = startOfDay(new Date());
+    const from = tbilisiStartOfDay(new Date());
     const to = addDays(from, BOOKING_HORIZON_DAYS);
 
     const rows = await this.prisma.videoVisit.groupBy({
@@ -54,14 +60,14 @@ export class VideoVisitsService {
       _count: { _all: true },
     });
 
-    const taken = new Map(rows.map((row) => [dayKey(row.requestedDate), row._count._all]));
+    const taken = new Map(rows.map((row) => [tbilisiDayKey(row.requestedDate), row._count._all]));
 
     return Array.from({ length: BOOKING_HORIZON_DAYS }, (_, index) => {
       const date = addDays(from, index);
-      const used = taken.get(dayKey(date)) ?? 0;
+      const used = taken.get(tbilisiDayKey(date)) ?? 0;
 
       return {
-        date: dayKey(date),
+        date: tbilisiDayKey(date),
         capacity: DAILY_CAPACITY,
         used,
         free: Math.max(0, DAILY_CAPACITY - used),
@@ -71,12 +77,12 @@ export class VideoVisitsService {
 
   /** დღეზე ადგილის შემოწმება — გადახდის დაწყებამდეც და ჩარიცხვამდეც. */
   async assertDayFree(date: Date): Promise<void> {
-    const day = startOfDay(date);
+    const day = tbilisiStartOfDay(date);
 
-    if (day.getTime() < startOfDay(new Date()).getTime()) {
+    if (day.getTime() < tbilisiStartOfDay(new Date()).getTime()) {
       throw new BadRequestException('არჩეული დღე უკვე გასულია');
     }
-    if (day.getTime() > addDays(startOfDay(new Date()), BOOKING_HORIZON_DAYS).getTime()) {
+    if (day.getTime() > addDays(tbilisiStartOfDay(new Date()), BOOKING_HORIZON_DAYS).getTime()) {
       throw new BadRequestException('ამ დღეზე ჯავშანი ჯერ არ იხსნება');
     }
 
@@ -101,7 +107,7 @@ export class VideoVisitsService {
     reason?: string | null;
     paymentId?: string;
   }) {
-    const day = startOfDay(input.date);
+    const day = tbilisiStartOfDay(input.date);
     await this.assertDayFree(day);
 
     const visit = await this.prisma.videoVisit.create({
@@ -119,7 +125,7 @@ export class VideoVisitsService {
       .push({
         userId: input.parentId,
         title: 'ვიდეო ვიზიტი დაჯავშნილია',
-        body: `${dayKey(day)} — ექიმი ზუსტ საათს დანიშნავს და შეგატყობინებთ.`,
+        body: `${tbilisiDayKey(day)} — ექიმი ზუსტ საათს დანიშნავს და შეგატყობინებთ.`,
         data: { videoVisitId: visit.id },
       })
       .catch(() => undefined);
@@ -160,7 +166,7 @@ export class VideoVisitsService {
    * პროფილს, კითხულობს მიზეზს და ერთვება.
    */
   async queue(dateInput?: string) {
-    const day = startOfDay(dateInput ? new Date(dateInput) : new Date());
+    const day = tbilisiStartOfDay(dateInput ? new Date(dateInput) : new Date());
 
     const visits = await this.prisma.videoVisit.findMany({
       where: {
@@ -180,7 +186,7 @@ export class VideoVisitsService {
     });
 
     return {
-      date: dayKey(day),
+      date: tbilisiDayKey(day),
       capacity: DAILY_CAPACITY,
       visits: visits.map((visit) => ({
         id: visit.id,
@@ -214,7 +220,7 @@ export class VideoVisitsService {
     }
 
     // საათი იმ დღეს უნდა იყოს, რომელიც მშობელმა აირჩია
-    if (dayKey(scheduledAt) !== dayKey(visit.requestedDate)) {
+    if (tbilisiDayKey(scheduledAt) !== tbilisiDayKey(visit.requestedDate)) {
       throw new BadRequestException('დრო მშობლის არჩეულ დღეს უნდა ემთხვეოდეს');
     }
 
@@ -390,7 +396,7 @@ export class VideoVisitsService {
 
     return {
       id: visit.id,
-      date: dayKey(visit.requestedDate),
+      date: tbilisiDayKey(visit.requestedDate),
       scheduledAt: visit.scheduledAt,
       status: visit.status,
       reason: visit.reason,
@@ -412,7 +418,7 @@ export class VideoVisitsService {
           .push({
             userId: user.id,
             title: 'ახალი ვიდეო ჯავშანი',
-            body: `${dayKey(day)} — საათი დასანიშნია`,
+            body: `${tbilisiDayKey(day)} — საათი დასანიშნია`,
             data: { videoVisitId: visitId },
           })
           .catch(() => undefined),
@@ -421,7 +427,7 @@ export class VideoVisitsService {
   }
 
   private async tellParent(parentId: string, when: Date): Promise<void> {
-    const readable = formatVisitTime(when);
+    const readable = formatTbilisi(when);
 
     await this.notifications
       .push({
@@ -448,28 +454,4 @@ export class VideoVisitsService {
       })
       .catch(() => undefined);
   }
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-/** „2026-08-25" — დღის იდენტიფიკატორი დროის ზონის გარეშე. */
-function dayKey(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function formatVisitTime(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return (
-    `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, `
-    + `${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
 }
