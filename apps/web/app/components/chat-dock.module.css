@@ -1,0 +1,66 @@
+.dock {
+  position: fixed;
+  right: 18px;
+  bottom: 20px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border);
+}
+
+.button:hover {
+  border-color: var(--primary);
+}
+
+.iconWrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.photo {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ტელეფონზე წარწერა ადგილს იკავებს — მხოლოდ წრეები რჩება */
+@media (max-width: 560px) {
+  .dock {
+    right: 12px;
+    bottom: 14px;
+  }
+
+  .button {
+    padding: 5px;
+  }
+
+  .label {
+    display: none;
+  }
+}

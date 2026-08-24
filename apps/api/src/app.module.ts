@@ -17,6 +17,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { GrowthModule } from './modules/growth/growth.module';
+import { GuidesModule } from './modules/guides/guides.module';
 import { VideosModule } from './modules/videos/videos.module';
 import { VaccinationsModule } from './modules/vaccinations/vaccinations.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
@@ -46,6 +47,7 @@ import { SmsModule } from './modules/sms/sms.module';
     ChatModule,
     NotificationsModule,
     GrowthModule,
+    GuidesModule,
     VideosModule,
     VaccinationsModule,
     AppointmentsModule,

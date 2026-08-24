@@ -34,11 +34,11 @@ enum UserStatus {
 }
 
 model User {
-  id           String     @id @default(uuid())
+  id           String  @id @default(uuid())
   firstName    String
   lastName     String
-  email        String?    @unique
-  phone        String?    @unique // E.164 ფორმატი: +9955XXXXXXXX
+  email        String? @unique
+  phone        String? @unique // E.164 ფორმატი: +9955XXXXXXXX
   passwordHash String? // null = მხოლოდ სოციალური ავტორიზაცია
 
   /// ორეტაპიანი შესვლა. პერსონალს ყოველთვის ჩართული აქვს, მშობელს —
@@ -55,13 +55,13 @@ model User {
 
   /// ზედიზედ არასწორი პაროლები. ბაზაშია და არა მეხსიერებაში —
   /// სერვერის რესტარტი თავდამსხმელს არ უნდა შველოდეს.
-  failedLoginAttempts Int       @default(0)
+  failedLoginAttempts Int        @default(0)
   lastFailedLoginAt   DateTime?
   lockedUntil         DateTime?
   /// ბოლო გაფრთხილება მფლობელს — რომ SMS-ითაც არ დაიბომბოს
   lastLockAlertAt     DateTime?
-  role         UserRole   @default(PARENT)
-  status       UserStatus @default(PENDING_VERIFICATION)
+  role                UserRole   @default(PARENT)
+  status              UserStatus @default(PENDING_VERIFICATION)
 
   emailVerifiedAt DateTime?
   phoneVerifiedAt DateTime?
@@ -78,33 +78,33 @@ model User {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  identities      AuthIdentity[]
-  sessions        Session[]
-  otpCodes        OtpCode[]
-  children        Child[]
-  subscriptions   Subscription[]
-  payments        Payment[]
-  watchProgress   WatchProgress[]
-  videoViews      VideoView[]
-  favorites       VideoFavorite[]
-  devices         Device[]
-  notifications   Notification[]
-  smsMessages     SmsMessage[]
-  auditLogs       AuditLog[]         @relation("AuditActor")
-  newsPosts       NewsPost[]         @relation("NewsAuthor")
-  promoCodes      PromoCode[]        @relation("PromoAuthor")
-  promoRedemptions PromoRedemption[]
-  mediaAssets      MediaAsset[]
-  conversations   ConversationUser[]
-  loginChallenges LoginChallenge[]
-  trustedDevices  TrustedDevice[]
-  aiConversations AiConversation[]
-  appointments    Appointment[]
-  chatFeedback    ConversationFeedback[]
-  feedbackAsOperator ConversationFeedback[] @relation("FeedbackOperator")
-  feedbackShares  ConversationFeedbackOperator[]
-  messages        Message[]
-  operatorProfile OperatorProfile?
+  identities         AuthIdentity[]
+  sessions           Session[]
+  otpCodes           OtpCode[]
+  children           Child[]
+  subscriptions      Subscription[]
+  payments           Payment[]
+  watchProgress      WatchProgress[]
+  videoViews         VideoView[]
+  favorites          VideoFavorite[]
+  devices            Device[]
+  notifications      Notification[]
+  smsMessages        SmsMessage[]
+  auditLogs          AuditLog[]                     @relation("AuditActor")
+  newsPosts          NewsPost[]                     @relation("NewsAuthor")
+  promoCodes         PromoCode[]                    @relation("PromoAuthor")
+  promoRedemptions   PromoRedemption[]
+  mediaAssets        MediaAsset[]
+  conversations      ConversationUser[]
+  loginChallenges    LoginChallenge[]
+  trustedDevices     TrustedDevice[]
+  aiConversations    AiConversation[]
+  appointments       Appointment[]
+  chatFeedback       ConversationFeedback[]
+  feedbackAsOperator ConversationFeedback[]         @relation("FeedbackOperator")
+  feedbackShares     ConversationFeedbackOperator[]
+  messages           Message[]
+  operatorProfile    OperatorProfile?
 
   @@index([role, status])
   @@index([createdAt])
@@ -195,10 +195,8 @@ model OtpCode {
 
 /**
  * უფლებების კატალოგი.
- *
  * კოდი როლს არ ამოწმებს — მხოლოდ უფლების key-ს:
- *   permissions.assert(userId, 'video.create')
- *
+ * permissions.assert(userId, 'video.create')
  * ასე Super Admin-ს პანელიდან შეუძლია ოპერატორს chat.reply დაუტოვოს
  * და subscription.manage ჩამოართვას, კოდის შეხების გარეშე.
  */
@@ -222,7 +220,6 @@ model Permission {
 
 /**
  * როლი ↔ უფლება.
- *
  * SUPER_ADMIN აქ განზრახ არ მონაწილეობს: მას ყველა უფლება
  * ავტომატურად აქვს. თუ ბაზაზე იქნებოდა დამოკიდებული, ახალი უფლების
  * დამატებისას seed-ში მისი მიბმის დავიწყება Super Admin-ს საკუთარ
@@ -264,16 +261,17 @@ model Child {
   /// ფოტო კერძოა — ბმული ყოველ ჯერზე ხელმოწერით გამოაქვს.
   /// გაუთვალისწინებელი საჯარო URL bearer-ბმულია: ვინც მიიღებს,
   /// ავტორიზაციის გარეშე ნახავს. ბავშვის ფოტოზე ეს დაუშვებელია.
-  avatarAssetId String?
-  avatarAsset   MediaAsset? @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
-  assessments   MilestoneAssessment[]
+  avatarAssetId   String?
+  avatarAsset     MediaAsset?           @relation("ChildAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  assessments     MilestoneAssessment[]
   aiConversations AiConversation[]
-  growthEntries GrowthEntry[]
+  growthEntries   GrowthEntry[]
 
   /// როდის შეავსო მშობელმა აცრების ისტორია — შევსებამდე ვთხოვთ შევსებას
   vaccinationHistoryAt DateTime?
-  vaccinations  ChildVaccination[]
-  appointments  Appointment[]
+  vaccinations         ChildVaccination[]
+  travelChecklist      TravelChecklist?
+  appointments         Appointment[]
 
   /// ორსულობის კვირა დაბადებისას — ნაადრევად დაბადებულის საჭიროებები განსხვავდება
   gestationalWeek Int?
@@ -480,9 +478,9 @@ model PromoCode {
 
   /// გამოყენების ლიმიტი — null ნიშნავს ულიმიტოს
   maxRedemptions Int?
-  redeemedCount  Int  @default(0)
+  redeemedCount  Int     @default(0)
   /// ერთ მომხმარებელს ერთხელ
-  oncePerUser Boolean @default(true)
+  oncePerUser    Boolean @default(true)
 
   isActive    Boolean @default(true)
   createdById String?
@@ -539,8 +537,8 @@ model Payment {
 
   // ანგარიშის მუდმივად წაშლისას გადახდა უნდა გადარჩეს — ეს ბუღალტრული
   // ჩანაწერია. ამიტომ კავშირი წყდება, თავად ჩანაწერი კი რჩება.
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   subscriptionId String?
   subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
   provider       PaymentProvider @default(MANUAL)
@@ -612,14 +610,13 @@ enum MediaStatus {
 /**
  * ფაილის მეტამონაცემები. თავად ფაილი ბაზაში არასდროს ინახება —
  * მხოლოდ მისამართი პროვაიდერთან.
- *
  * ერთი მოდელი ყველა ტიპისთვის: ავატარი, ჩატის დანართი, ადმინის ვიდეო.
  * ასე ატვირთვის, წაშლისა და ლიმიტების ლოგიკა ერთ ადგილასაა.
  */
 model MediaAsset {
-  id      String      @id @default(uuid())
-  ownerId String?
-  owner   User?       @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  id         String          @id @default(uuid())
+  ownerId    String?
+  owner      User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   type       MediaType
   source     MediaSource     @default(OTHER)
   status     MediaStatus     @default(READY)
@@ -637,17 +634,17 @@ model MediaAsset {
   /// კერძო ფაილს ბმული ყოველ ჯერზე ხელმოწერით გამოაქვს.
   publicUrl  String?
 
-  mimeType String
+  mimeType  String
   sizeBytes Int?
-  width    Int?
-  height   Int?
+  width     Int?
+  height    Int?
   /// წამებში — ვიდეოსა და აუდიოსთვის
-  duration Int?
+  duration  Int?
 
   /// პროვაიდერისგან ბოლო მოვლენის დრო — debugging-ისთვის
   lastProviderEventAt DateTime?
   /// ჩავარდნის მიზეზი, თუ status = FAILED
-  failureReason String?
+  failureReason       String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -662,11 +659,11 @@ model MediaAsset {
   purgeNextRetryAt DateTime?
   purgeLastError   String?
 
-  events          MediaProviderEvent[]
-  videos          Video[]           @relation("VideoAsset")
-  childAvatars    Child[]           @relation("ChildAvatar")
-  thumbnailFor    Video[]           @relation("VideoThumbnail")
-  attachments     MessageAttachment[]
+  events       MediaProviderEvent[]
+  videos       Video[]              @relation("VideoAsset")
+  childAvatars Child[]              @relation("ChildAvatar")
+  thumbnailFor Video[]              @relation("VideoThumbnail")
+  attachments  MessageAttachment[]
 
   @@index([ownerId, source])
   @@index([status, deletedAt])
@@ -677,11 +674,10 @@ model MediaAsset {
 
 /**
  * პროვაიდერის მოვლენების ჟურნალი.
- *
  * ორი დანიშნულება აქვს:
- *  1. idempotency — ერთი და იგივე მოვლენა რამდენჯერაც მოვა, ერთხელ
- *     დამუშავდება. `@@unique` სწორედ ამას იცავს.
- *  2. debugging — ჩანს, რა და როდის მოვიდა პროვაიდერისგან.
+ * 1. idempotency — ერთი და იგივე მოვლენა რამდენჯერაც მოვა, ერთხელ
+ * დამუშავდება. `@@unique` სწორედ ამას იცავს.
+ * 2. debugging — ჩანს, რა და როდის მოვიდა პროვაიდერისგან.
  */
 model MediaProviderEvent {
   id       String          @id @default(uuid())
@@ -864,10 +860,10 @@ enum NewsStatus {
 }
 
 model NewsPost {
-  id      String     @id @default(uuid())
-  title   String
-  body    String
-  status  NewsStatus @default(DRAFT)
+  id       String     @id @default(uuid())
+  title    String
+  body     String
+  status   NewsStatus @default(DRAFT)
   coverUrl String?
 
   /// სურვილისამებრ მიბმული ვიდეო
@@ -875,9 +871,9 @@ model NewsPost {
   video   Video?  @relation(fields: [videoId], references: [id], onDelete: SetNull)
 
   /// true — გამოქვეყნებისას მშობლებს push/in-app შეტყობინება გაეგზავნათ
-  notify Boolean @default(true)
+  notify        Boolean @default(true)
   /// რამდენ მომხმარებელს გაეგზავნა — ადმინს შედეგი უნდა ხედავდეს
-  notifiedCount Int @default(0)
+  notifiedCount Int     @default(0)
 
   authorId String?
   author   User?   @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -894,9 +890,9 @@ model NewsPost {
   visibleFrom  DateTime?
   visibleUntil DateTime?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([status, publishedAt])
   @@index([status, visibleFrom, visibleUntil])
@@ -922,10 +918,10 @@ model Conversation {
 
   /// ბოლოს გამოცხადებული ადგილი რიგში — გამეორებას კეტავს
   queueNoticePosition Int?
-  lastMessageAt      DateTime?
-  closedAt           DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  lastMessageAt       DateTime?
+  closedAt            DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   participants ConversationUser[]
   messages     Message[]
@@ -982,7 +978,6 @@ model Message {
 
 /**
  * შეტყობინების დანართები.
- *
  * ცალკე ცხრილია იმიტომ, რომ ერთ შეტყობინებაში შეიძლება იყოს ტექსტი,
  * რამდენიმე ფოტო, ვიდეო და დოკუმენტი ერთდროულად. ერთი `attachmentUrl`
  * ველი ამას ვერ დაიტევდა და მოგვიანებით ბაზის გადაკეთებას მოითხოვდა.
@@ -1161,15 +1156,13 @@ enum MedicationDosingType {
 
 /**
  * დოზის კალკულატორის ცნობარი.
- *
  * კოდში არ იწერება: ექიმს უნდა შეეძლოს წამლის დამატება და დოზის
  * შესწორება პროგრამისტის გარეშე.
- *
  * `ageBands` და `concentrations` JSON-ია განზრახ — ორივე მხოლოდ
  * წამალთან ერთად იკითხება, ცალკე არასდროს იძებნება და ერთიანად
  * რედაქტირდება; ცალკე ცხრილი მხოლოდ ფორმას ართულებდა.
- *   ageBands:       [{ untilMonths, mg, label }]
- *   concentrations: [{ label, mg, ml }]
+ * ageBands:       [{ untilMonths, mg, label }]
+ * concentrations: [{ label, mg, ml }]
  */
 model Medication {
   id   String @id @default(uuid())
@@ -1241,22 +1234,20 @@ enum MilestoneAnswer {
 
 /**
  * განვითარების მონიტორინგის კითხვა.
- *
  * ეს არ არის დიაგნოსტიკური ტესტი და არც ვალიდირებული სკრინინგის
  * ასლი — AAP-ის ტერმინოლოგიით ეს `developmental surveillance`-ია,
  * რომელიც ყოველ გეგმიურ ვიზიტზეა რეკომენდებული. ფორმალური სკრინინგი
  * (9, 18, 30 თვე) და ASD-ის სკრინინგი (18, 24 თვე) ექიმის საქმეა.
- *
  * `ageMonths` — რომელ ასაკზე ფასდება ეს უნარი. კითხვა მოქმედია ამ
  * ასაკიდან: 6 თვის კითხვა 8 თვის ბავშვსაც უნდა ჰქონდეს შესრულებული,
  * ამიტომ შეფასებისას წინა თვეებიც მოწმდება.
  */
 model MilestoneQuestion {
-  id        String          @id @default(uuid())
+  id         String          @id @default(uuid())
   /// ადამიანისთვის წასაკითხი კოდი — მაგ. GM_06_01
-  code      String          @unique
-  ageMonths Int
-  domain    MilestoneDomain
+  code       String          @unique
+  ageMonths  Int
+  domain     MilestoneDomain
   questionKa String
 
   /// true — ამ ასაკში შეუსრულებლობა ექიმთან მიმართვის ნიშანია
@@ -1276,7 +1267,6 @@ model MilestoneQuestion {
 
 /**
  * ერთი შევსებული კითხვარი.
- *
  * `ageMonths` შენახვისას ფიქსირდება: ბავშვი იზრდება და ერთი წლის
  * შემდეგ შედეგი უაზრო იქნებოდა, თუ არ ვიცით, რა ასაკში შეივსო.
  */
@@ -1287,7 +1277,7 @@ model MilestoneAssessment {
   ageMonths Int
 
   /// დომენების ჯამური სურათი — [{ domain, achieved, total, status }]
-  summary   Json
+  summary    Json
   /// true — ერთი მაინც წითელი ალამი შეუსრულებელია
   hasRedFlag Boolean @default(false)
 
@@ -1314,11 +1304,9 @@ model MilestoneAnswerEntry {
 
 /**
  * შესვლის მეორე საფეხური.
- *
  * სწორი პაროლის შემდეგ ტოკენი მაშინვე აღარ გაიცემა — იქმნება ეს
  * ჩანაწერი და ნომერზე მიდის კოდი. ტოკენს მხოლოდ კოდის დადასტურება
  * იძლევა.
- *
  * კოდი ღიად არსად ინახება: ბაზაშია მხოლოდ argon2-ის hash, ისევე
  * როგორც პაროლი. ბაზის მოპარვაც კი კოდს არ ამხელს.
  */
@@ -1329,18 +1317,18 @@ model LoginChallenge {
 
   codeHash String
   /// კლიენტს ეს id უბრუნდება — userId გარეთ არ გადის
-  attempts Int  @default(0)
+  attempts Int    @default(0)
   /// რამდენჯერ გაიგზავნა ხელახლა — spam-ის საწინააღმდეგოდ
-  resends  Int  @default(0)
+  resends  Int    @default(0)
 
   ipAddress String?
   userAgent String?
   deviceId  String?
 
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  lastSentAt  DateTime  @default(now())
-  createdAt   DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+  lastSentAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([userId, consumedAt])
   @@map("login_challenges")
@@ -1348,7 +1336,6 @@ model LoginChallenge {
 
 /**
  * ნდობის მოწყობილობა — „დაიმახსოვრე ეს მოწყობილობა".
- *
  * ტოკენი 32 შემთხვევითი ბაიტია და ბაზაში sha256-ითაა. argon2 აქ
  * ზედმეტია: ტოკენი გრძელია და გამოცნობა ისედაც შეუძლებელია, hash კი
  * მხოლოდ ბაზის გაჟონვისგან იცავს.
@@ -1358,15 +1345,15 @@ model TrustedDevice {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tokenHash String @unique
+  tokenHash String  @unique
   label     String?
   ipAddress String?
   userAgent String?
 
-  lastUsedAt DateTime @default(now())
+  lastUsedAt DateTime  @default(now())
   expiresAt  DateTime
   revokedAt  DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([userId, revokedAt])
   @@map("trusted_devices")
@@ -1383,7 +1370,6 @@ enum AiRole {
 
 /**
  * მშობლის საუბარი ასისტენტთან.
- *
  * ოპერატორის ჩატისგან განზრახ ცალკეა: აქ მეორე მხარე ადამიანი არ არის,
  * პასუხზე პასუხისმგებლობა კი სხვაგვარად ნაწილდება.
  */
@@ -1432,7 +1418,6 @@ model AiMessage {
 
 /**
  * ერთი გაზომვა.
- *
  * პროცენტილს განზრახ არ ვთვლით: ეს პედიატრის შეფასებაა და მშობელს
  * ციფრი დასკვნად მოეჩვენებოდა. აქ მხოლოდ ბავშვის საკუთარი მრუდია.
  */
@@ -1463,19 +1448,18 @@ model GrowthEntry {
 
 /**
  * ეროვნული კალენდრის ერთი აცრა.
- *
  * ცნობარი ბაზაშია და არა კოდში: კალენდარი იცვლება და ცვლილება
  * ადმინის პანელიდან უნდა შედიოდეს, აპლიკაციის განახლების გარეშე.
  */
 model Vaccine {
-  id   String @id @default(uuid())
-  code String @unique
-  name String
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
   /// რისგან იცავს — მშობლისთვის ერთი წინადადებით
   description String?
 
   /// რომელ ასაკში კეთდება, თვეებში დაბადებიდან
-  ageMonths Int
+  ageMonths  Int
   /// მრავალდოზიანი აცრის მერამდენე დოზაა
   doseNumber Int @default(1)
 
@@ -1492,7 +1476,28 @@ model Vaccine {
   @@map("vaccines")
 }
 
-/** კონკრეტული ბავშვის აცრა — გაკეთებულია თუ არა და როდის. */
+/**
+ * მოგზაურობის ჩეკლისტი — რა მოინიშნა ერთი ბავშვისთვის.
+ * მონიშვნები მასივშია და არა ცალკე ცხრილში: სია მოკლეა და
+ * ყოველთვის მთლიანად იკითხება, ერთ ჩანაწერს კი ცალკე ცხრილის
+ * ათეული სტრიქონი არ სჭირდება.
+ */
+model TravelChecklist {
+  id      String   @id @default(uuid())
+  childId String   @unique
+  child   Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  /// მონიშნული პუნქტების key-ები
+  checked String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("travel_checklists")
+}
+
+/**
+ * კონკრეტული ბავშვის აცრა — გაკეთებულია თუ არა და როდის.
+ */
 model ChildVaccination {
   id        String  @id @default(uuid())
   childId   String
@@ -1528,7 +1533,6 @@ enum AppointmentStatus {
 
 /**
  * ვიზიტის მოთხოვნა პედიატრთან.
- *
  * `usedFreeVisit` აღრიცხავს პაკეტის თვიურ უფასო ვიზიტს — თორემ
  * კვოტა მხოლოდ დაპირება იქნებოდა და არა წესი.
  */
@@ -1544,7 +1548,7 @@ model Appointment {
   preferredAt DateTime
   reason      String?
 
-  status AppointmentStatus @default(REQUESTED)
+  status      AppointmentStatus @default(REQUESTED)
   /// დადასტურებული დრო — შეიძლება სასურველს არ ემთხვეოდეს
   scheduledAt DateTime?
   staffNote   String?
@@ -1567,7 +1571,6 @@ model Appointment {
 
 /**
  * მშობლის შეფასება დასრულებულ საუბარზე.
- *
  * `token` იმისთვისაა, რომ SMS-ის ბმული ავტორიზაციის გარეშეც
  * გაიხსნას — მშობელი ტელეფონში შესული ხშირად არ არის, ხელახალი
  * შესვლის მოთხოვნა კი შეფასებას მოკლავდა.
@@ -1602,7 +1605,6 @@ model ConversationFeedback {
 
 /**
  * შეფასების ავტორები.
- *
  * ცალკე ცხრილია, რადგან ერთ საუბარს რამდენიმე ოპერატორი პასუხობს:
  * ერთი იწყებს, მეორე ცვლაში აგრძელებს. ერთი `operatorId` ქულას
  * მხოლოდ ბოლოს მიაწერდა და შედარება უაზრო გახდებოდა.

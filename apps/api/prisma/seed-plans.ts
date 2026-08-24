@@ -25,6 +25,9 @@ const FEATURES = [
   { key: 'max_children', name: 'ბავშვის პროფილები', type: FeatureType.LIMIT, unit: 'children', defaultValue: '1' },
   { key: 'growth_tracking', name: 'ზრდის დღიური', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   { key: 'vaccination_calendar', name: 'აცრების კალენდარი', type: FeatureType.BOOLEAN, defaultValue: 'true' },
+  // ახალშობილი, კვება, ძილი და მოგზაურობა — ერთი ფუნქციის ქვეშ, რომ
+  // პაკეტის ბარათი ოთხ ერთნაირ სტრიქონად არ გადაიქცეს
+  { key: 'parent_guides', name: 'გზამკვლევები: ახალშობილი, კვება, ძილი, მოგზაურობა', type: FeatureType.BOOLEAN, defaultValue: 'false' },
   // რეკლამა აპლიკაციაში საერთოდ არ არის — დაპირება ცარიელი იქნებოდა
   { key: 'ad_free', name: 'რეკლამის გარეშე', type: FeatureType.BOOLEAN, defaultValue: 'false', isActive: false },
   { key: 'dose_calculator', name: 'დოზის კალკულატორი', type: FeatureType.BOOLEAN, defaultValue: 'false' },
@@ -120,6 +123,7 @@ const PLANS = [
       vaccination_calendar: true,
       dose_calculator: true,
       ai_assistant: true,
+      parent_guides: true,
       // თვეში ერთი უფასო ვიზიტი პედიატრ თეონა ტაბატაძესთან
       monthly_free_visit: '1',
     },

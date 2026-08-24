@@ -99,6 +99,20 @@ export function HomeTab() {
           <View style={styles.grid}>
             {[
               {
+                key: 'emergency',
+                icon: 'sos' as const,
+                color: '#E5484D',
+                label: 'SOS',
+                onPress: () => router.push('/emergency'),
+              },
+              {
+                key: 'newborn',
+                icon: 'baby' as const,
+                color: '#E86A9B',
+                label: 'ახალშობილი',
+                onPress: () => router.push('/newborn'),
+              },
+              {
                 key: 'symptoms',
                 icon: 'thermometer' as const,
                 color: '#E5484D',
@@ -160,6 +174,27 @@ export function HomeTab() {
                 color: '#2E9E5B',
                 label: 'ჯავშანი',
                 onPress: () => router.push('/booking'),
+              },
+              {
+                key: 'nutrition',
+                icon: 'nutrition' as const,
+                color: '#57A63A',
+                label: 'კვება',
+                onPress: () => router.push('/nutrition'),
+              },
+              {
+                key: 'sleep',
+                icon: 'sleep' as const,
+                color: '#5B67CA',
+                label: 'ძილი',
+                onPress: () => router.push('/sleep'),
+              },
+              {
+                key: 'travel',
+                icon: 'traveler' as const,
+                color: '#00A3C4',
+                label: 'პატარა მოგზაური',
+                onPress: () => router.push('/travel'),
               },
             ].map((item) => (
               <Pressable key={item.key} style={styles.gridItem} onPress={item.onPress}>

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import { getSessionUser } from '@/lib/session';
+import { ChatDock } from './components/ChatDock';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -19,10 +21,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // საუბრის ღილაკები მხოლოდ მშობელს — პერსონალი პანელიდან პასუხობს
+  const user = await getSessionUser();
+
   return (
     <html lang="ka">
-      <body>{children}</body>
+      <body>
+        {children}
+        {user?.role === 'PARENT' && <ChatDock />}
+      </body>
     </html>
   );
 }
