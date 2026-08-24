@@ -121,13 +121,6 @@
   margin: 16px 0;
 }
 
-.features li::before {
-  content: '✓';
-  color: var(--primary-deep);
-  font-weight: 700;
-  margin-right: 8px;
-}
-
 .link {
   color: var(--primary-deep);
   font-size: 14px;
