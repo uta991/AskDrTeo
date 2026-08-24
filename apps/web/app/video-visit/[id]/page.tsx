@@ -1,15 +1,16 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
-import { joinVisit } from '../actions';
+import { enterVisit } from '../actions';
 import { VisitRoom } from '../VisitRoom';
 
-export const metadata = { title: 'ვიდეო ვიზიტი — AskDrTeo' };
+export const metadata = { title: 'ვიზიტი პედიატრთან — AskDrTeo' };
 
 /**
  * ოთახი მშობლისთვის.
  *
  * ჩართვა თავად გვერდის გახსნისას ხდება — ცალკე „შესვლის" ღილაკი
- * ზედმეტი ნაბიჯი იქნებოდა: მშობელი აქ სწორედ ჩასართავად შემოდის.
+ * ზედმეტი ნაბიჯი იქნებოდა. თუ ვერ მოხერხდა, მიზეზი სიაში გადააქვს:
+ * ჩუმად დაბრუნება მშობელს ისე ტოვებდა, თითქოს ღილაკი გაფუჭებულია.
  */
 export default async function VisitRoomPage({
   params,
@@ -20,9 +21,11 @@ export default async function VisitRoomPage({
   if (!user) redirect('/login');
 
   const { id } = await params;
-  const joined = await joinVisit(id);
+  const joined = await enterVisit(id);
 
-  if (!joined.data) redirect('/video-visit');
+  if (!joined.data) {
+    redirect(`/video-visit?error=${encodeURIComponent(joined.error ?? 'ჩართვა ვერ მოხერხდა')}`);
+  }
 
   return (
     <VisitRoom
@@ -30,7 +33,7 @@ export default async function VisitRoomPage({
       roomUrl={joined.data.roomUrl}
       admin={false}
       meId={user.id}
-      title="ვიდეო ვიზიტი ექიმთან"
+      title="ვიზიტი პედიატრთან"
     />
   );
 }

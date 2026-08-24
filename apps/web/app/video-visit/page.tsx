@@ -10,7 +10,12 @@ import styles from './visit.module.css';
 
 export const metadata = { title: 'ვიზიტი პედიატრთან — AskDrTeo' };
 
-export default async function VideoVisitPage() {
+export default async function VideoVisitPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const user = await getSessionUser();
   if (!user) redirect('/login');
   if (user.role !== 'PARENT') redirect('/admin/video-visits');
@@ -36,7 +41,7 @@ export default async function VideoVisitPage() {
         </p>
       </header>
 
-      <MyVisits visits={visits ?? []} />
+      <MyVisits visits={visits ?? []} notice={error} />
 
       {offer ? (
         <VisitBooking

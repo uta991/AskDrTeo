@@ -17,7 +17,11 @@ export default async function StaffVisitRoomPage({
   const { id } = await params;
   const joined = await joinAsStaff(id);
 
-  if (!joined.data) redirect('/admin/video-visits');
+  if (!joined.data) {
+    redirect(
+      `/admin/video-visits?error=${encodeURIComponent(joined.error ?? 'ჩართვა ვერ მოხერხდა')}`,
+    );
+  }
 
   return (
     <VisitRoom

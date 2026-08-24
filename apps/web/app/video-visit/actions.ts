@@ -89,11 +89,16 @@ export async function bookFreeVisit(
   }
 }
 
-/** ოთახში შესვლა — მეორე მხარეს სტატუსი მაშინვე უჩანს. */
-export async function joinVisit(id: string): Promise<{ data?: JoinResult; error?: string }> {
+/**
+ * ოთახში შესვლა — მეორე მხარეს სტატუსი მაშინვე უჩანს.
+ *
+ * `revalidatePath` აქ განზრახ არ არის: ამ ფუნქციას ოთახის გვერდი
+ * რენდერის დროს იძახებს, რენდერში კი ქეშის განახლება შეცდომას იწვევს —
+ * მშობელი უკან ბრუნდებოდა და ეგონა, ღილაკი არაფერს აკეთებს.
+ */
+export async function enterVisit(id: string): Promise<{ data?: JoinResult; error?: string }> {
   try {
     const data = await apiMutate<JoinResult>(`/video-visits/${id}/join`, 'POST');
-    revalidatePath('/video-visit');
     return { data };
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'ჩართვა ვერ მოხერხდა' };

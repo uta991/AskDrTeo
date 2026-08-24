@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { joinVisit, visitPresence, type MyVisit, type VisitStatus } from './actions';
+import { visitPresence, type MyVisit, type VisitStatus } from './actions';
 import { formatTbilisi } from '@/lib/time';
 import styles from './visit.module.css';
 
@@ -18,9 +18,9 @@ const STATUS_LABELS: Record<VisitStatus, string> = {
 /** ექიმის ჩართვა მშობელმა ჩართვამდე უნდა დაინახოს. */
 const POLL_MS = 8000;
 
-export function MyVisits({ visits }: { visits: MyVisit[] }) {
+export function MyVisits({ visits, notice }: { visits: MyVisit[]; notice?: string }) {
   const [doctorIn, setDoctorIn] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(notice ?? null);
   const [busy, startTransition] = useTransition();
   const router = useRouter();
 
@@ -47,19 +47,11 @@ export function MyVisits({ visits }: { visits: MyVisit[] }) {
     return () => clearInterval(timer);
   }, [key]);
 
+  // ჩართვას თავად ოთახის გვერდი აკეთებს — აქ მხოლოდ გადავდივართ,
+  // რომ ერთი და იგივე მოქმედება ორჯერ არ შესრულდეს
   const join = (id: string) => {
     setError(null);
-
-    startTransition(async () => {
-      const result = await joinVisit(id);
-
-      if (result.data) {
-        router.push(`/video-visit/${id}`);
-        return;
-      }
-
-      setError(result.error ?? 'ჩართვა ვერ მოხერხდა');
-    });
+    startTransition(() => router.push(`/video-visit/${id}`));
   };
 
   if (!visits.length) return null;
