@@ -38,9 +38,9 @@
     "extra": {
       "apiUrl": "https://api.askdrteo.com/api/v1",
       "googleClientIds": {
-        "ios": "",
+        "ios": "856661530961-1pnn07575f43ierd3ceo4ldvp1kkcvlb.apps.googleusercontent.com",
         "android": "",
-        "web": ""
+        "web": "856661530961-mdaus6nmbsntp6l472lujndb0o48epc9.apps.googleusercontent.com"
       }
     },
     "icon": "./assets/images/icon.png"
