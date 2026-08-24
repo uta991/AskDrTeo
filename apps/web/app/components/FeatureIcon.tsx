@@ -13,7 +13,9 @@ export type FeatureIconName =
   | 'nutrition'
   | 'sleep'
   | 'baby'
-  | 'sos';
+  | 'sos'
+  | 'consultation'
+  | 'arrow-right';
 
 /**
  * ფუნქციების ხატულები.
@@ -215,6 +217,25 @@ export function FeatureIcon({
           {/* ძილის ნიშანი */}
           <path d="M13.6 3h3.6l-3.6 4h3.6" {...common} />
           <path d="M18.8 8.2h2.6l-2.6 2.9h2.6" {...common} />
+        </>
+      )}
+      {name === 'consultation' && (
+        <>
+          {/* ყურსასმენები */}
+          <path d="M2.8 3.4h1.8M8.2 3.4H10" {...common} />
+          <path d="M3.7 3.4v3.2a2.8 2.8 0 0 0 5.6 0V3.4" {...common} />
+          {/* მილი და თავსაკრავი */}
+          <path d="M6.5 9.4v2.8a3.4 3.4 0 0 0 3.4 3.4" {...common} />
+          <circle cx="12.4" cy="15.6" r="2.5" {...common} />
+          {/* სიგნალის ტალღები — კავშირი ცოცხალია */}
+          <path d="M16.4 12.6a4.6 4.6 0 0 1 0 6" {...common} />
+          <path d="M19.4 10.4a8.4 8.4 0 0 1 0 10.4" {...common} />
+        </>
+      )}
+      {name === 'arrow-right' && (
+        <>
+          <path d="M4 12h14.4" {...common} />
+          <path d="M13 6.4 18.8 12 13 17.6" {...common} />
         </>
       )}
     </svg>

@@ -39,7 +39,8 @@ export type IconName =
   | 'nutrition'
   | 'sleep'
   | 'baby'
-  | 'sos';
+  | 'sos'
+  | 'consultation';
 
 interface IconProps {
   name: IconName;
@@ -461,6 +462,19 @@ export function Icon({
           {/* ძილის ნიშანი */}
           <Path d="M13.6 3h3.6l-3.6 4h3.6" {...common} />
           <Path d="M18.8 8.2h2.6l-2.6 2.9h2.6" {...common} />
+        </>
+      )}
+      {name === 'consultation' && (
+        <>
+          {/* ყურსასმენები */}
+          <Path d="M2.8 3.4h1.8M8.2 3.4H10" {...common} />
+          <Path d="M3.7 3.4v3.2a2.8 2.8 0 0 0 5.6 0V3.4" {...common} />
+          {/* მილი და თავსაკრავი */}
+          <Path d="M6.5 9.4v2.8a3.4 3.4 0 0 0 3.4 3.4" {...common} />
+          <Circle cx="12.4" cy="15.6" r="2.5" {...common} />
+          {/* სიგნალის ტალღები — კავშირი ცოცხალია */}
+          <Path d="M16.4 12.6a4.6 4.6 0 0 1 0 6" {...common} />
+          <Path d="M19.4 10.4a8.4 8.4 0 0 1 0 10.4" {...common} />
         </>
       )}
     </Svg>

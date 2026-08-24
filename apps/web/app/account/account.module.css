@@ -334,18 +334,31 @@
   color: var(--text-primary);
   background: var(--surface);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  /* კიდე მკვეთრი ხაზით კი არ სრულდება, არამედ ჩრდილით ითქვიფება
+     ფონში: თხელი ღია კანტი + ორი ფენა — ახლო და რბილი, შორი და ფართო */
+  border: 1px solid #efefef;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 10px 28px rgba(0, 0, 0, 0.08),
+    0 24px 48px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
+  transition: border-color 0.15s ease;
+}
+
+/* კურსორის მიახლოებაზე კანტი სტეტოსკოპის ფერში ინთება —
+   იგივე ქცევა, რაც ზემოთ კუბიკებს აქვთ */
+.nextVisit:hover {
+  border-color: #6fb6d9;
 }
 
 .nextVisitIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: #fffdeb;
+  width: 38px;
+  height: 38px;
+  /* ფონის გარეშე — მხოლოდ სტეტოსკოპი; კვადრატი მხოლოდ
+     განლაგებისთვის რჩება, რომ ტექსტი ადგილიდან არ დაიძრას */
   flex-shrink: 0;
 }
 
@@ -361,9 +374,48 @@
   color: var(--text-secondary);
 }
 
-.nextVisitArrow {
-  font-size: 22px;
-  color: var(--text-secondary);
+/* მარჯვენა მხარეს მოქმედების გამოძახილი — კალენდარი, წარწერა და
+   ისარი. ჰაერი განზრახ დიდია: ორი ტექსტი ერთმანეთს რომ ეკვროდა,
+   ზოლი ერთ გრძელ წინადადებად იკითხებოდა და ღილაკი აღარ ჩანდა. */
+.nextVisitCta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 20px;
+  padding-left: 20px;
+  border-left: 1px solid #ededed;
+  color: #6fb6d9;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nextVisitCtaLabel {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+/* ისარი დაჭერაზე ოდნავ წინ იწევს — ჩანს, რომ ველი დასაწვევია */
+.nextVisit:hover .nextVisitCta {
+  transform: translateX(3px);
+}
+
+.nextVisitCta {
+  transition: transform 0.15s ease;
+}
+
+/* ვიწრო ეკრანზე ჯავშანი ტექსტის ქვეშ ეშვება და არ იკარგება */
+@media (max-width: 620px) {
+  .nextVisit {
+    flex-wrap: wrap;
+  }
+
+  .nextVisitText {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .nextVisitCta {
+    margin-left: 52px;
+  }
 }
 
 /* ტელეფონზე ორი სვეტი — 150px-იანი უჯრა ვიწრო ეკრანზე ერთ სვეტად რჩებოდა */

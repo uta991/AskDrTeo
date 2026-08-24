@@ -211,15 +211,19 @@ export function HomeTab() {
         {!isStaff && (
           <Pressable style={styles.nextVisit} onPress={() => router.push('/booking')}>
             <View style={styles.nextVisitIcon}>
-              <Icon name="calendar" size={20} color={colors.primaryDeep} strokeWidth={1.9} />
+              <Icon name="consultation" size={20} color={colors.primaryDeep} strokeWidth={1.9} />
             </View>
 
             <View style={styles.nextVisitText}>
-              <Text style={styles.nextVisitTitle}>შემდეგი ვიზიტი</Text>
-              <Text style={styles.nextVisitMeta}>დაჯავშნე პედიატრთან მისვლა</Text>
+              <Text style={styles.nextVisitTitle}>პედიატრთან ონლაინ კონსულტაცია</Text>
+              <Text style={styles.nextVisitMeta}>მიიღე ექიმის პერსონალური შეფასება სახლიდან გაუსვლელად</Text>
             </View>
 
-            <Icon name="chevron-right" size={18} color={colors.textMuted} />
+            <View style={styles.nextVisitCta}>
+              <Icon name="calendar" size={26} color="#6FB6D9" strokeWidth={1.9} />
+              <Text style={styles.nextVisitCtaText}>დაჯავშნე ვიზიტი</Text>
+              <Icon name="arrow-right" size={16} color="#6FB6D9" strokeWidth={1.9} />
+            </View>
           </Pressable>
         )}
 
@@ -394,6 +398,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
   },
+  nextVisitCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: spacing.sm,
+    paddingLeft: spacing.sm,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
+  nextVisitCtaText: { ...typography.small, fontSize: 13.5, fontWeight: '600', color: '#6FB6D9' },
   nextVisitText: { flex: 1, gap: 2 },
   nextVisitTitle: { ...typography.bodyMedium, color: colors.textPrimary, fontWeight: '700' },
   nextVisitMeta: { ...typography.small, fontSize: 12, color: colors.textSecondary },

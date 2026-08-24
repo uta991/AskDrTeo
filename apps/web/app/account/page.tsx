@@ -104,15 +104,19 @@ export default async function AccountPage() {
         {/* ── შემდეგი ვიზიტი ─────────────────────────────── */}
         <Link href="/booking" className={styles.nextVisit}>
           <span className={styles.nextVisitIcon}>
-            <FeatureIcon name="calendar" color="#9C7C00" size={22} />
+            <FeatureIcon name="consultation" color="#6FB6D9" size={35} />
           </span>
 
           <span className={styles.nextVisitText}>
-            <strong>შემდეგი ვიზიტი</strong>
-            <span className={styles.nextVisitMeta}>დაჯავშნე პედიატრთან მისვლა</span>
+            <strong>პედიატრთან ონლაინ კონსულტაცია</strong>
+            <span className={styles.nextVisitMeta}>მიიღე ექიმის პერსონალური შეფასება სახლიდან გაუსვლელად</span>
           </span>
 
-          <span className={styles.nextVisitArrow}>›</span>
+          <span className={styles.nextVisitCta}>
+            <FeatureIcon name="calendar" color="#6FB6D9" size={35} />
+            <span className={styles.nextVisitCtaLabel}>დაჯავშნე ვიზიტი</span>
+            <FeatureIcon name="arrow-right" color="#6FB6D9" size={20} />
+          </span>
         </Link>
 
 
