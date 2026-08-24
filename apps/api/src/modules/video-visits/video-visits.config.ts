@@ -39,7 +39,26 @@ export const BOOKING_HORIZON_DAYS = 30;
  */
 export function roomUrl(roomName: string, displayName: string): string {
   const base = process.env.VIDEO_ROOM_BASE ?? 'https://meet.jit.si';
-  const params = new URLSearchParams({ 'userInfo.displayName': displayName });
 
-  return `${base}/${roomName}#${params.toString()}`;
+  const options = [
+    // ტელეფონის ბრაუზერი ნაგულისხმევად აპლიკაციის ჩამოტვირთვას სთავაზობს
+    // და ვიზიტი იქვე ჩერდება. ვიზიტი ბრაუზერშივე უნდა ტარდებოდეს.
+    'config.disableDeepLinking=true',
+    'interfaceConfig.MOBILE_APP_PROMO=false',
+
+    // წინასწარი ეკრანი ზედმეტი ნაბიჯია — მშობელმა ჩართვას უკვე დააჭირა.
+    // ორივე სახელს ვწერთ: ახალ ვერსიებში პარამეტრი გადაერქვა.
+    'config.prejoinPageEnabled=false',
+    'config.prejoinConfig.enabled=false',
+
+    // ჩართვისას მიკროფონი და კამერა ღიაა — ეს სამედიცინო შეხვედრაა
+    'config.startWithAudioMuted=false',
+    'config.startWithVideoMuted=false',
+
+    // hash-პარამეტრებს Jitsi JS მნიშვნელობებად კითხულობს, ამიტომ
+    // ტექსტს ბრჭყალები სჭირდება
+    `userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`,
+  ];
+
+  return `${base}/${roomName}#${options.join('&')}`;
 }
