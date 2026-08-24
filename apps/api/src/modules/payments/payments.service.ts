@@ -14,6 +14,8 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PacksService } from '../packs/packs.service';
+import { findPack } from '../packs/packs.catalog';
 import { SmsService } from '../sms/sms.service';
 import { VaccinationsService } from '../vaccinations/vaccinations.service';
 import { CreatePaymentDto } from './dto/payment.dto';
@@ -62,6 +64,7 @@ export class PaymentsService {
     private readonly tbc: TbcClient,
     private readonly entitlements: EntitlementsService,
     private readonly notifications: NotificationsService,
+    private readonly packs: PacksService,
     private readonly vaccinations: VaccinationsService,
     private readonly sms: SmsService,
     private readonly audit: AuditService,
@@ -78,6 +81,9 @@ export class PaymentsService {
     dto: CreatePaymentDto,
     userId: string,
   ): Promise<{ orderId: string; payId: string; url: string }> {
+    if (dto.packCode) return this.startPack(dto.packCode, userId);
+    if (!dto.planCode) throw new BadRequestException('მიუთითეთ პაკეტი');
+
     const interval = (dto.interval ?? 'MONTH') as BillingInterval;
 
     const plan = await this.prisma.plan.findFirst({
@@ -110,13 +116,54 @@ export class PaymentsService {
       },
     });
 
+    return this.sendToBank(payment.id, price.amountMinor, price.currency, plan.name);
+  }
+
+  /**
+   * კონსულტაციის ლიმიტის ყიდვა.
+   *
+   * გამოწერისგან იმით განსხვავდება, რომ არსებულ პაკეტს არ ეხება —
+   * წარმატებული გადახდა მხოლოდ ლიმიტს ჩარიცხავს.
+   */
+  private async startPack(
+    packCode: string,
+    userId: string,
+  ): Promise<{ orderId: string; payId: string; url: string }> {
+    const offer = findPack(packCode);
+    if (!offer) throw new NotFoundException('პაკეტი ვერ მოიძებნა');
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        userId,
+        provider: PaymentProvider.TBC,
+        status: PaymentStatus.PENDING,
+        currency: offer.currency,
+        amountMinor: offer.amountMinor,
+        metadata: {
+          kind: 'pack',
+          packCode: offer.code,
+          planName: `კონსულტაცია — ${offer.name}`,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return this.sendToBank(payment.id, offer.amountMinor, offer.currency, offer.name);
+  }
+
+  /** ბანკში შეკვეთის შექმნა — გამოწერასაც და ლიმიტსაც ერთი გზა აქვს. */
+  private async sendToBank(
+    paymentId: string,
+    amountMinor: number,
+    currency: string,
+    description: string,
+  ): Promise<{ orderId: string; payId: string; url: string }> {
     try {
       const created = await this.tbc.createPayment({
-        amountMinor: price.amountMinor,
-        currency: price.currency,
-        merchantPaymentId: payment.id,
-        description: plan.name,
-        returnUrl: this.returnUrlFor(payment.id),
+        amountMinor,
+        currency,
+        merchantPaymentId: paymentId,
+        description,
+        returnUrl: this.returnUrlFor(paymentId),
         callbackUrl: this.callbackUrl,
       });
 
@@ -125,15 +172,15 @@ export class PaymentsService {
       }
 
       await this.prisma.payment.update({
-        where: { id: payment.id },
+        where: { id: paymentId },
         data: { providerPaymentId: created.payId },
       });
 
-      return { orderId: payment.id, payId: created.payId, url: created.checkoutUrl };
+      return { orderId: paymentId, payId: created.payId, url: created.checkoutUrl };
     } catch (error) {
       // დაწყებამდე ჩავარდნილი გადახდა რიგში არ უნდა დარჩეს
       await this.prisma.payment.update({
-        where: { id: payment.id },
+        where: { id: paymentId },
         data: {
           status: PaymentStatus.FAILED,
           failureReason: error instanceof Error ? error.message : 'უცნობი შეცდომა',
@@ -318,6 +365,15 @@ export class PaymentsService {
       const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
       const meta = (payment.metadata ?? {}) as Record<string, string | number>;
 
+      // ლიმიტის პაკეტი გამოწერას არ ეხება — მას ტრანზაქციის შემდეგ ვრიცხავთ
+      if (meta.kind === 'pack') {
+        await tx.payment.update({
+          where: { id: paymentId },
+          data: { metadata: { ...meta, transactionId } as Prisma.InputJsonValue },
+        });
+        return { kind: 'pack' as const, packCode: String(meta.packCode), userId: payment.userId! };
+      }
+
       const planId = meta.planId as string;
       const planPriceId = (meta.planPriceId as string) ?? null;
       const interval = (meta.interval as BillingInterval) ?? BillingInterval.MONTH;
@@ -369,7 +425,15 @@ export class PaymentsService {
         },
       });
 
-      return { subscription, userId: payment.userId!, amountMinor: payment.amountMinor };
+      return {
+        kind: 'subscription' as const,
+        userId: payment.userId!,
+        amountMinor: payment.amountMinor,
+        subscriptionId: subscription.id,
+        planCode: subscription.plan.code,
+        planName: subscription.plan.name,
+        end: subscription.currentPeriodEnd!,
+      };
     });
 
     if (!result) {
@@ -380,8 +444,23 @@ export class PaymentsService {
       return existing?.subscription?.currentPeriodEnd ?? null;
     }
 
-    const { subscription, userId } = result;
-    const end = subscription.currentPeriodEnd!;
+    if (result.kind === 'pack') {
+      const granted = await this.packs.grant(result.userId, result.packCode, paymentId);
+
+      await this.notifications
+        .push({
+          userId: result.userId,
+          title: 'კონსულტაციის ლიმიტი ჩაირიცხა',
+          body:
+            `${granted.chatLimit} საუბარი ხელმისაწვდომია `
+            + `${formatDate(granted.expiresAt)}-მდე.`,
+        })
+        .catch(() => undefined);
+
+      return granted.expiresAt;
+    }
+
+    const { userId, amountMinor, subscriptionId, planCode, planName, end } = result;
 
     this.entitlements.invalidate(userId);
 
@@ -389,14 +468,14 @@ export class PaymentsService {
       actorId: userId,
       action: AuditAction.GRANT,
       entityType: 'Subscription',
-      entityId: subscription.id,
-      after: { plan: subscription.plan.code, validUntil: end },
+      entityId: subscriptionId,
+      after: { plan: planCode, validUntil: end },
       description:
-        `"${subscription.plan.code}" გააქტიურდა ბარათით — ` +
-        `${(result.amountMinor / 100).toFixed(2)} ₾, ტრანზაქცია ${transactionId ?? '—'}`,
+        `"${planCode}" გააქტიურდა ბარათით — ` +
+        `${(amountMinor / 100).toFixed(2)} ₾, ტრანზაქცია ${transactionId ?? '—'}`,
     });
 
-    await this.tellParent(userId, subscription.plan.name, end);
+    await this.tellParent(userId, planName, end);
 
     // ახალ პაკეტში აცრების კალენდარიც შედის — ისტორიის შევსება ვთხოვოთ
     await this.vaccinations.promptHistory(userId).catch(() => undefined);

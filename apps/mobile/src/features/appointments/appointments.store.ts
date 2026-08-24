@@ -3,7 +3,7 @@ import { api } from '@/api/client';
 
 export interface Appointment {
   id: string;
-  preferredAt: string;
+  preferredAt: string | null;
   scheduledAt: string | null;
   status: 'REQUESTED' | 'CONFIRMED' | 'DECLINED' | 'CANCELED' | 'DONE';
   reason: string | null;
@@ -25,7 +25,7 @@ interface AppointmentsState {
   error: string | null;
   notice: string | null;
   load: () => Promise<void>;
-  request: (input: { preferredAt: string; childId?: string; reason?: string }) => Promise<void>;
+  request: (input: { childId?: string; reason?: string }) => Promise<void>;
   cancel: (id: string) => Promise<void>;
 }
 

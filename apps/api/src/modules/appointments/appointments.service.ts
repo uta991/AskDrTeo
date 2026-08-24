@@ -13,9 +13,13 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { SmsService } from '../sms/sms.service';
 import { CreateAppointmentDto, DecideAppointmentDto } from './dto/appointment.dto';
 
 const FREE_VISIT_FEATURE = 'monthly_free_visit';
+
+/** რამდენი წუთით ადრე ვთხოვთ მშობელს მზადყოფნას. */
+const BE_READY_MINUTES = 10;
 
 /** გაუქმებული ჯავშანი კვოტას არ ხარჯავს — მხოლოდ ესენი ითვლება. */
 const COUNTS_TOWARD_QUOTA: AppointmentStatus[] = [
@@ -29,6 +33,7 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly entitlements: EntitlementsService,
+    private readonly sms: SmsService,
   ) {}
 
   /**
@@ -55,7 +60,7 @@ export class AppointmentsService {
   async listForParent(userId: string) {
     return this.prisma.appointment.findMany({
       where: { parentId: userId, deletedAt: null },
-      orderBy: { preferredAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 50,
       select: {
         id: true,
@@ -70,12 +75,14 @@ export class AppointmentsService {
     });
   }
 
+  /**
+   * ვიზიტის მოთხოვნა.
+   *
+   * მშობელი დროს არ ირჩევს — მხოლოდ ითხოვს. კონკრეტულ საათს ექიმი
+   * ნიშნავს, რადგან მისი კალენდარი მშობელს არ უჩანს და არჩეული დრო
+   * ისედაც თითქმის ყოველთვის იცვლებოდა.
+   */
   async create(dto: CreateAppointmentDto, userId: string) {
-    const preferredAt = new Date(dto.preferredAt);
-    if (preferredAt.getTime() < Date.now()) {
-      throw new BadRequestException('სასურველი დრო წარსულშია');
-    }
-
     if (dto.childId) {
       const child = await this.prisma.child.findFirst({
         where: { id: dto.childId, deletedAt: null },
@@ -99,13 +106,12 @@ export class AppointmentsService {
       data: {
         parentId: userId,
         childId: dto.childId,
-        preferredAt,
         reason: dto.reason?.trim() || null,
         usedFreeVisit: quota.remaining > 0,
       },
     });
 
-    await this.notifyStaff(appointment.id, preferredAt, appointment.usedFreeVisit);
+    await this.notifyStaff(appointment.id, appointment.usedFreeVisit);
 
     return appointment;
   }
@@ -132,7 +138,7 @@ export class AppointmentsService {
   async listAll(status?: AppointmentStatus) {
     return this.prisma.appointment.findMany({
       where: { deletedAt: null, status: status ?? undefined },
-      orderBy: [{ status: 'asc' }, { preferredAt: 'asc' }],
+      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
       take: 100,
       select: {
         id: true,
@@ -159,25 +165,36 @@ export class AppointmentsService {
 
     const appointment = await this.prisma.appointment.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, parentId: true, preferredAt: true },
+      select: { id: true, parentId: true, scheduledAt: true },
     });
     if (!appointment) throw new NotFoundException('ჯავშანი ვერ მოიძებნა');
+
+    const scheduledAt = dto.scheduledAt ? new Date(dto.scheduledAt) : appointment.scheduledAt;
+
+    // დადასტურება დროის გარეშე მშობელს არაფერს ეუბნება — ის სწორედ
+    // საათს ელოდება, ამიტომ აქ დრო სავალდებულოა
+    if (status === AppointmentStatus.CONFIRMED) {
+      if (!scheduledAt) throw new BadRequestException('მიუთითეთ ვიზიტის დრო');
+      if (scheduledAt.getTime() < Date.now()) {
+        throw new BadRequestException('ვიზიტის დრო წარსულშია');
+      }
+    }
 
     const updated = await this.prisma.appointment.update({
       where: { id },
       data: {
         status,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        scheduledAt: scheduledAt ?? undefined,
         staffNote: dto.staffNote?.trim() || undefined,
       },
     });
 
-    await this.notifyParent(appointment.parentId, updated.status, updated.scheduledAt ?? updated.preferredAt);
+    await this.notifyParent(appointment.parentId, updated.status, updated.scheduledAt);
 
     return updated;
   }
 
-  private async notifyStaff(appointmentId: string, preferredAt: Date, free: boolean): Promise<void> {
+  private async notifyStaff(appointmentId: string, free: boolean): Promise<void> {
     const staff = await this.prisma.user.findMany({
       where: {
         role: { in: [UserRole.OPERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN] },
@@ -192,20 +209,26 @@ export class AppointmentsService {
         channel: NotificationChannel.IN_APP,
         status: NotificationStatus.SENT,
         title: 'ვიზიტის ახალი მოთხოვნა',
-        body: `${preferredAt.toLocaleString('ka-GE')}${free ? ' — პაკეტის უფასო ვიზიტი' : ''}`,
+        body: `მშობელი ელოდება დროის დანიშვნას${free ? ' — პაკეტის უფასო ვიზიტი' : ''}`,
         data: { appointmentId } as Prisma.InputJsonValue,
         sentAt: new Date(),
       })),
     });
   }
 
+  /**
+   * მშობლის გაფრთხილება გადაწყვეტილებაზე.
+   *
+   * დანიშნულ დროზე SMS-იც მიდის: შეტყობინება მხოლოდ მაშინ ჩანს, როცა
+   * აპლიკაცია გახსნილია, ვიზიტს კი ადამიანი წინასწარ უნდა დაელოდოს.
+   */
   private async notifyParent(
     parentId: string,
     status: AppointmentStatus,
-    when: Date,
+    when: Date | null,
   ): Promise<void> {
     const titles: Partial<Record<AppointmentStatus, string>> = {
-      CONFIRMED: 'ვიზიტი დადასტურდა',
+      CONFIRMED: 'ონლაინ ვიზიტი დაინიშნა',
       DECLINED: 'ვიზიტი ვერ დადასტურდა',
       DONE: 'ვიზიტი შედგა',
       CANCELED: 'ვიზიტი გაუქმდა',
@@ -214,17 +237,53 @@ export class AppointmentsService {
     const title = titles[status];
     if (!title) return;
 
+    const confirmed = status === AppointmentStatus.CONFIRMED && !!when;
+    const readable = when ? formatVisitTime(when) : 'დრო ჯერ არ არის დანიშნული';
+
+    const body = confirmed
+      ? `${readable}. გთხოვთ, იყოთ მზად ${BE_READY_MINUTES} წუთით ადრე.`
+      : readable;
+
     await this.prisma.notification.create({
       data: {
         userId: parentId,
         channel: NotificationChannel.IN_APP,
         status: NotificationStatus.SENT,
         title,
-        body: when.toLocaleString('ka-GE'),
+        body,
         sentAt: new Date(),
       },
     });
+
+    if (!confirmed) return;
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { phone: true },
+    });
+    if (!parent?.phone) return;
+
+    // SMS-ის ჩავარდნა შეტყობინებას არ უნდა აუქმებდეს
+    await this.sms
+      .send({
+        userId: parentId,
+        phone: parent.phone,
+        templateKey: 'appointment_confirmed',
+        body:
+          `AskDrTeo: თქვენ გაქვთ ჩანიშნული ონლაინ ვიზიტი ${readable}. `
+          + `გთხოვთ, იყოთ მზად ${BE_READY_MINUTES} წუთით ადრე.`,
+      })
+      .catch(() => undefined);
   }
+}
+
+/** „25.08.2026, 14:30" — ერთნაირად SMS-შიც და შეტყობინებაშიც. */
+function formatVisitTime(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return (
+    `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, `
+    + `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
 }
 
 /** მიმდინარე კალენდარული თვის დასაწყისი. */

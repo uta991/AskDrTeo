@@ -1,9 +1,6 @@
 import { IsDateString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateAppointmentDto {
-  @IsDateString({}, { message: 'მიუთითეთ სასურველი დრო' })
-  preferredAt!: string;
-
   @IsOptional() @IsUUID()
   childId?: string;
 

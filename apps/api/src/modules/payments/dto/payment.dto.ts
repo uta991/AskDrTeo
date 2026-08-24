@@ -2,8 +2,13 @@ import { BillingInterval } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreatePaymentDto {
-  @IsString() @MaxLength(50)
-  planCode!: string;
+  /** გამოწერის პაკეტი — ან ეს, ან `packCode` */
+  @IsOptional() @IsString() @MaxLength(50)
+  planCode?: string;
+
+  /** კონსულტაციის ლიმიტის პაკეტი — გამოწერას არ ცვლის */
+  @IsOptional() @IsString() @MaxLength(50)
+  packCode?: string;
 
   /** თვიური თუ წლიური ფასი — ერთჯერადი გადახდა გამოწერას არ ქმნის */
   @IsOptional()

@@ -18,26 +18,9 @@ const STATUS_LABELS: Record<Appointment['status'], string> = {
   DONE: 'შედგა',
 };
 
-/** უახლოესი დღეები — მშობელი კალენდარს კი არ ხსნის, დღეს ირჩევს. */
-function nextDays(count: number): Date[] {
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() + index + 1);
-    date.setHours(10, 0, 0, 0);
-    return date;
-  });
-}
-
-const HOURS = [10, 11, 12, 14, 15, 16, 17];
-
-const WEEKDAYS = ['კვ', 'ორშ', 'სამ', 'ოთხ', 'ხუთ', 'პარ', 'შაბ'];
-
 export default function BookingScreen() {
   const activeChild = useActiveChild();
   const { items, quota, loading, error, notice, load, request, cancel } = useAppointments();
-
-  const [day, setDay] = useState<Date>(nextDays(1)[0]);
-  const [hour, setHour] = useState(10);
 
   useEffect(() => {
     void load().catch(() => undefined);
@@ -46,13 +29,8 @@ export default function BookingScreen() {
   const pending = items.some((item) => item.status === 'REQUESTED');
 
   const submit = () => {
-    const when = new Date(day);
-    when.setHours(hour, 0, 0, 0);
-
-    void request({
-      preferredAt: when.toISOString(),
-      childId: activeChild?.id,
-    });
+    // დროს მშობელი აღარ ირჩევს — საათს ექიმი ნიშნავს
+    void request({ childId: activeChild?.id });
   };
 
   return (
@@ -95,38 +73,10 @@ export default function BookingScreen() {
           </AuthCard>
         ) : (
           <AuthCard style={styles.card}>
-            <Text style={styles.formTitle}>სასურველი დღე</Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-              {nextDays(10).map((date) => {
-                const selected = date.toDateString() === day.toDateString();
-
-                return (
-                  <Pressable
-                    key={date.toISOString()}
-                    onPress={() => setDay(date)}
-                    style={[styles.dayChip, selected && styles.chipActive]}
-                  >
-                    <Text style={styles.dayWeek}>{WEEKDAYS[date.getDay()]}</Text>
-                    <Text style={styles.dayNumber}>{date.getDate()}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <Text style={styles.formTitle}>დრო</Text>
-
-            <View style={styles.chips}>
-              {HOURS.map((value) => (
-                <Pressable
-                  key={value}
-                  onPress={() => setHour(value)}
-                  style={[styles.hourChip, value === hour && styles.chipActive]}
-                >
-                  <Text style={styles.hourText}>{value}:00</Text>
-                </Pressable>
-              ))}
-            </View>
+            <Text style={styles.quotaMeta}>
+              მოთხოვნის გაგზავნის შემდეგ ექიმი შეარჩევს ვიზიტის დროს და
+              შეტყობინებითა და SMS-ით შეგატყობინებთ.
+            </Text>
 
             {!!error && <Text style={styles.error}>{error}</Text>}
             {!!notice && <Text style={styles.notice}>{notice}</Text>}
@@ -143,7 +93,9 @@ export default function BookingScreen() {
               <View key={item.id} style={styles.historyRow}>
                 <View style={styles.historyMain}>
                   <Text style={styles.historyDate}>
-                    {(item.scheduledAt ?? item.preferredAt).replace('T', ' ').slice(0, 16)}
+                    {item.scheduledAt
+                      ? item.scheduledAt.replace('T', ' ').slice(0, 16)
+                      : 'დროს ექიმი დანიშნავს'}
                   </Text>
                   <Text style={styles.historyMeta}>
                     {STATUS_LABELS[item.status]}

@@ -100,6 +100,7 @@ model User {
   trustedDevices     TrustedDevice[]
   aiConversations    AiConversation[]
   appointments       Appointment[]
+  consultationPacks  ConsultationPack[]
   chatFeedback       ConversationFeedback[]
   feedbackAsOperator ConversationFeedback[]         @relation("FeedbackOperator")
   feedbackShares     ConversationFeedbackOperator[]
@@ -445,6 +446,35 @@ model Subscription {
   @@index([userId, status])
   @@index([currentPeriodEnd])
   @@map("subscriptions")
+}
+
+/**
+ * კონსულტაციის პაკეტი — ცალკე ნაყიდი ლიმიტი.
+ * გამოწერას არ ცვლის და არ აუქმებს: ეს დამატებაა და არა ახალი პაკეტი.
+ * მშობელი მას მაშინ ყიდულობს, როცა თვის უფასო ვიზიტი ამოწურა და
+ * ექიმთან საუბრის გაგრძელება უნდა.
+ */
+model ConsultationPack {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// კატალოგის კოდი: "day5", "week40", "month100"
+  code      String
+  /// რამდენი საუბარი შედის
+  chatLimit Int
+  /// რამდენი გამოიყენა
+  used      Int    @default(0)
+
+  expiresAt DateTime
+  /// რომელი გადახდით შეიძინა
+  paymentId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, expiresAt])
+  @@map("consultation_packs")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1544,8 +1574,9 @@ model Appointment {
   childId String?
   child   Child?  @relation(fields: [childId], references: [id], onDelete: SetNull)
 
-  /// მშობლის სასურველი დრო
-  preferredAt DateTime
+  /// მშობლის სასურველი დრო — არჩევითი: მშობელი უბრალოდ ითხოვს ვიზიტს,
+  /// დროს ექიმი ნიშნავს
+  preferredAt DateTime?
   reason      String?
 
   status      AppointmentStatus @default(REQUESTED)
@@ -1561,7 +1592,7 @@ model Appointment {
   deletedAt DateTime?
 
   @@index([parentId, createdAt])
-  @@index([status, preferredAt])
+  @@index([status, createdAt])
   @@map("appointments")
 }
 

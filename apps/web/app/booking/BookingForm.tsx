@@ -20,12 +20,6 @@ const STATUS_LABELS: Record<Appointment['status'], string> = {
   DONE: 'შედგა',
 };
 
-function tomorrow(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
-}
-
 function Submit() {
   const { pending } = useFormStatus();
 
@@ -81,37 +75,24 @@ export function BookingForm({
         </p>
       ) : (
         <form action={formAction} className={styles.form}>
-          <div className={styles.formRow}>
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>თარიღი</span>
-              <input
-                type="date"
-                name="date"
-                min={tomorrow()}
-                defaultValue={tomorrow()}
-                className={styles.input}
-                required
-              />
-            </label>
+          {/* დროს მშობელი აღარ ირჩევს — საათს ექიმი ნიშნავს */}
+          <p className={styles.formNote}>
+            მოთხოვნის გაგზავნის შემდეგ ექიმი შეარჩევს ვიზიტის დროს და
+            შეტყობინებითა და SMS-ით შეგატყობინებთ.
+          </p>
 
+          {childProfiles.length > 0 && (
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>დრო</span>
-              <input type="time" name="time" defaultValue="10:00" className={styles.input} required />
+              <span className={styles.fieldLabel}>ბავშვი</span>
+              <select name="childId" className={styles.input}>
+                {childProfiles.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.firstName} · {child.ageLabel}
+                  </option>
+                ))}
+              </select>
             </label>
-
-            {childProfiles.length > 0 && (
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>ბავშვი</span>
-                <select name="childId" className={styles.input}>
-                  {childProfiles.map((child) => (
-                    <option key={child.id} value={child.id}>
-                      {child.firstName} · {child.ageLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
+          )}
 
           <label className={styles.field}>
             <span className={styles.fieldLabel}>რა გაწუხებთ (არასავალდებულო)</span>
@@ -133,7 +114,9 @@ export function BookingForm({
             <div key={item.id} className={styles.historyRow}>
               <div className={styles.historyMain}>
                 <span className={styles.historyDate}>
-                  {(item.scheduledAt ?? item.preferredAt).replace('T', ' ').slice(0, 16)}
+                  {item.scheduledAt
+                    ? item.scheduledAt.replace('T', ' ').slice(0, 16)
+                    : 'დროს ექიმი დანიშნავს'}
                 </span>
                 {!!item.child && <span className={styles.historyChild}>{item.child.firstName}</span>}
                 {item.usedFreeVisit && <span className={styles.freeTag}>უფასო</span>}
