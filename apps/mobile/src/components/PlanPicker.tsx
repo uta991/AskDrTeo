@@ -96,7 +96,12 @@ export function PlanPicker({ currentPlanCode }: { currentPlanCode: string | null
             <View style={styles.features}>
               {plan.features.slice(0, 5).map((feature) => (
                 <View key={feature.key} style={styles.featureRow}>
-                  <Icon name="check" size={13} color={colors.success} strokeWidth={2.6} />
+                  <Icon
+                    name="check"
+                    size={13}
+                    color={plan.colorHex ?? colors.primaryText}
+                    strokeWidth={2.6}
+                  />
                   <Text style={styles.featureText}>
                     {feature.name}
                     {feature.value && feature.value !== 'all' ? ` · ${feature.value}` : ''}

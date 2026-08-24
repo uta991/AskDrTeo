@@ -388,3 +388,15 @@
     display: none;
   }
 }
+
+/* პაკეტის ფუნქცია ნიშნით — ნიშანი პაკეტის ფერშია */
+.feature {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.check {
+  font-weight: 700;
+  line-height: 1.4;
+}

@@ -9,6 +9,8 @@ export interface Entitlement {
   name: string;
   type: FeatureType;
   enabled: boolean;
+  /** ვიტრინაში ჩანს თუ არა — ატვირთვის ლიმიტები ტექნიკურია */
+  isPublic: boolean;
   /** LIMIT-ისთვის: რიცხვი ან "unlimited". სხვა ტიპებზე null. */
   value: string | null;
   unit: string | null;
@@ -142,6 +144,7 @@ export class EntitlementsService {
         name: feature.name,
         type: feature.type,
         enabled,
+        isPublic: feature.isPublic,
         value,
         unit: feature.unit,
       };

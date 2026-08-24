@@ -25,7 +25,10 @@ interface Entitlements {
   planCode: string | null;
   planName: string | null;
   periodEnd: string | null;
-  features: Record<string, { name: string; enabled: boolean; value: string | null }>;
+  features: Record<
+    string,
+    { name: string; enabled: boolean; value: string | null; isPublic?: boolean }
+  >;
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -61,7 +64,12 @@ export default async function AccountPage() {
     ? (PLAN_LABELS[entitlements.planCode] ?? entitlements.planName)
     : '—';
 
-  const activeFeatures = Object.values(entitlements?.features ?? {}).filter((f) => f.enabled);
+  // ატვირთვის ლიმიტები ტექნიკური ზღვრებია — მშობელს ვიტრინაში არ სჭირდება
+  const activeFeatures = Object.values(entitlements?.features ?? {}).filter(
+    (feature) => feature.enabled && feature.isPublic !== false,
+  );
+
+  const accent = planColor(entitlements?.planCode);
 
   // პირველი ბავშვი — იგივე ლოგიკა, რაც აპლიკაციის მთავარ ეკრანზე
   const activeChild = children?.[0] ?? null;
@@ -177,14 +185,18 @@ export default async function AccountPage() {
 
             <ul className={styles.features}>
               {activeFeatures.slice(0, 8).map((feature) => (
-                <li key={feature.name}>
+                <li key={feature.name} className={styles.feature}>
+                  {/* ჭეშმარიტების ნიშანი პაკეტის ფერშია — ერთი შეხედვით ჩანს, რომელ პაკეტზეა */}
+                  <span className={styles.check} style={{ color: accent }}>
+                    ✓
+                  </span>
                   {feature.name}
                   {feature.value && feature.value !== 'all' ? ` · ${feature.value}` : ''}
                 </li>
               ))}
             </ul>
 
-            <Link href="/plans" className={styles.link}>
+            <Link href="/plans" className={styles.link} style={{ color: accent }}>
               ყველა პაკეტის ნახვა
             </Link>
           </section>
