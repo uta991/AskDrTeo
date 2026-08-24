@@ -8,7 +8,7 @@ import { MyVisits } from './MyVisits';
 import { VisitBooking } from './VisitBooking';
 import styles from './visit.module.css';
 
-export const metadata = { title: 'ვიდეო ვიზიტი — AskDrTeo' };
+export const metadata = { title: 'ვიზიტი პედიატრთან — AskDrTeo' };
 
 export default async function VideoVisitPage() {
   const user = await getSessionUser();
@@ -29,9 +29,9 @@ export default async function VideoVisitPage() {
 
       <header className={styles.head}>
         <SunLogo size={44} />
-        <h1 className={styles.title}>ვიდეო ვიზიტი ექიმთან</h1>
+        <h1 className={styles.title}>ვიზიტი პედიატრთან</h1>
         <p className={styles.subtitle}>
-          ერთჯერადი ონლაინ შეხვედრა — ვიდეო, ხმა და ჩატი ერთ ოთახში.
+          ონლაინ შეხვედრა ექიმთან — ვიდეო, ხმა და ჩატი ერთ ოთახში.
           დღეში მხოლოდ {offer?.dailyCapacity ?? 5} ვიზიტი ტარდება.
         </p>
       </header>
@@ -42,6 +42,7 @@ export default async function VideoVisitPage() {
         <VisitBooking
           days={offer.days}
           price={offer.price}
+          freeCredits={offer.freeCredits}
           childProfiles={children ?? []}
         />
       ) : (

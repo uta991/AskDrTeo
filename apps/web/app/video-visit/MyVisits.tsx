@@ -66,7 +66,7 @@ export function MyVisits({ visits }: { visits: MyVisit[] }) {
 
   return (
     <section className={styles.card}>
-      <h2 className={styles.cardTitle}>ჩემი ვიდეო ვიზიტები</h2>
+      <h2 className={styles.cardTitle}>ჩემი ვიზიტები</h2>
 
       {!!error && <p className={styles.error}>{error}</p>}
 

@@ -51,7 +51,9 @@ function Submit() {
  */
 export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<'DISCOUNT' | 'FREE_PLAN'>('DISCOUNT');
+  const [type, setType] = useState<'DISCOUNT' | 'FREE_PLAN' | 'FREE_VIDEO_VISIT'>(
+    'DISCOUNT',
+  );
   const [code, setCode] = useState('');
   const [word, setWord] = useState('');
   const [state, formAction] = useActionState<ActionState, FormData>(createPromo, {});
@@ -119,9 +121,20 @@ export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
           />
           უფასო პაკეტი
         </label>
+
+        <label className={type === 'FREE_VIDEO_VISIT' ? styles.typeActive : styles.typeOption}>
+          <input
+            type="radio"
+            name="type"
+            value="FREE_VIDEO_VISIT"
+            checked={type === 'FREE_VIDEO_VISIT'}
+            onChange={() => setType('FREE_VIDEO_VISIT')}
+          />
+          უფასო ვიზიტი
+        </label>
       </div>
 
-      {type === 'DISCOUNT' ? (
+      {type === 'DISCOUNT' && (
         <input
           name="discountPercent"
           type="number"
@@ -131,7 +144,33 @@ export function CreatePromoForm({ plans }: { plans: PlanOption[] }) {
           className={styles.input}
           required
         />
-      ) : (
+      )}
+
+      {/* ვიზიტი მაშინვე არ იქმნება — მშობელი ჯერ დღეს ირჩევს, ამიტომ
+          კოდი უფლებას რიცხავს და ჯავშნისას ის გადახდას ცვლის */}
+      {type === 'FREE_VIDEO_VISIT' && (
+        <div className={styles.formRow}>
+          <label className={styles.miniField}>
+            <span className={styles.miniLabel}>რამდენი უფასო ვიზიტი მიიღოს</span>
+            <input
+              name="visitCount"
+              type="number"
+              min={1}
+              max={10}
+              defaultValue={1}
+              className={styles.input}
+              required
+            />
+          </label>
+
+          <label className={styles.miniField}>
+            <span className={styles.miniLabel}>ვადა დღეებში (ცარიელი = უვადო)</span>
+            <input name="freeDays" type="number" min={1} className={styles.input} />
+          </label>
+        </div>
+      )}
+
+      {type === 'FREE_PLAN' && (
         <div className={styles.formRow}>
           <select name="planCode" className={styles.input} required defaultValue="">
             <option value="" disabled>

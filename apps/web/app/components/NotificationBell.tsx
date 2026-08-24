@@ -27,7 +27,8 @@ function timeAgo(iso: string): string {
 /** სად გადავიდეს დაჭერისას — შეტყობინება კონტექსტს ატარებს. */
 function targetFor(item: NotificationItem, isStaff: boolean): string | null {
   if (item.data?.conversationId) return isStaff ? '/admin/chat' : '/chat';
-  if (item.data?.appointmentId) return isStaff ? '/admin/appointments' : '/booking';
+  if (item.data?.appointmentId) return isStaff ? '/admin/appointments' : '/video-visit';
+  if (item.data?.videoVisitId) return isStaff ? '/admin/video-visits' : '/video-visit';
   if (item.data?.vaccinationHistory) return '/vaccinations?mode=history';
   if (item.data?.vaccinations) return '/vaccinations';
   if (item.data?.feedbackToken) return `/feedback/${item.data.feedbackToken}`;

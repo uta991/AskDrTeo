@@ -14,6 +14,7 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { VaccinationsService } from '../vaccinations/vaccinations.service';
 import { AuditService } from '../audit/audit.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { VideoVisitsService } from '../video-visits/video-visits.service';
 import { CreatePromoDto, UpdatePromoDto } from './dto/promo.dto';
 
 export interface RedeemResult {
@@ -24,6 +25,8 @@ export interface RedeemResult {
   validUntil?: Date;
   /** DISCOUNT-ისთვის — პროცენტი, რომელიც გადახდისას გამოიყენება */
   discountPercent?: number;
+  /** FREE_VIDEO_VISIT-ისთვის — რამდენი უფასო ვიზიტი ჩაირიცხა */
+  visitCredits?: number;
 }
 
 @Injectable()
@@ -33,6 +36,7 @@ export class PromoService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly entitlements: EntitlementsService,
+    private readonly videoVisits: VideoVisitsService,
   ) {}
 
   // ─── ადმინი ──────────────────────────────────────────────────────────
@@ -74,6 +78,8 @@ export class PromoService {
         discountPercent: dto.discountPercent,
         planId: dto.type === PromoType.FREE_PLAN ? dto.planCode : null,
         freeDays: dto.freeDays,
+        // რამდენი უფასო ვიზიტი მიიღოს მშობელმა ამ კოდით
+        visitCount: dto.type === PromoType.FREE_VIDEO_VISIT ? (dto.visitCount ?? 1) : null,
         validFrom: dto.validFrom ?? new Date(),
         validUntil: dto.validUntil,
         maxRedemptions: dto.maxRedemptions,
@@ -220,6 +226,28 @@ export class PromoService {
           planName: promo.plan.name,
           validUntil: periodEnd,
         };
+      } else if (promo.type === PromoType.FREE_VIDEO_VISIT) {
+        // ვიზიტს ახლა არ ვქმნით — მშობელს ჯერ დღე უნდა აირჩიოს.
+        // კოდი უფლებას რიცხავს და ჯავშნისას ის გადახდას ცვლის.
+        const count = promo.visitCount ?? 1;
+
+        for (let index = 0; index < count; index += 1) {
+          await this.videoVisits.grantCredit(
+            userId,
+            'promo',
+            `პრომო კოდი: ${promo.code}`,
+            promo.freeDays ?? undefined,
+          );
+        }
+
+        result = {
+          type: promo.type,
+          message:
+            count === 1
+              ? 'უფასო ვიდეო ვიზიტი ჩაირიცხა — აირჩიეთ სასურველი დღე'
+              : `${count} უფასო ვიდეო ვიზიტი ჩაირიცხა`,
+          visitCredits: count,
+        };
       } else {
         // ფასდაკლება გადახდისას გამოიყენება — გამოწერას ახლა არ ვცვლით
         result = {
@@ -265,6 +293,10 @@ export class PromoService {
   private assertTypeConsistency(dto: CreatePromoDto): void {
     if (dto.type === PromoType.DISCOUNT && !dto.discountPercent) {
       throw new BadRequestException('ფასდაკლების კოდს პროცენტი სჭირდება');
+    }
+    if (dto.type === PromoType.FREE_VIDEO_VISIT && dto.visitCount !== undefined
+        && dto.visitCount < 1) {
+      throw new BadRequestException('ვიზიტების რაოდენობა ერთზე ნაკლები ვერ იქნება');
     }
     if (dto.type === PromoType.FREE_PLAN && !dto.planCode) {
       throw new BadRequestException('უფასო პაკეტის კოდს პაკეტი სჭირდება');

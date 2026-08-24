@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { buyVisit, type VisitDay } from './actions';
+import { useRouter } from 'next/navigation';
+import { bookFreeVisit, buyVisit, type VisitDay } from './actions';
 import type { ChildSummary } from '@/lib/children';
 import styles from './visit.module.css';
 
@@ -21,12 +22,16 @@ const MONTHS = [
 export function VisitBooking({
   days,
   price,
+  freeCredits,
   childProfiles,
 }: {
   days: VisitDay[];
   price: string;
+  /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */
+  freeCredits: number;
   childProfiles: ChildSummary[];
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(
     days.find((day) => day.free > 0)?.date ?? null,
   );
@@ -35,11 +40,25 @@ export function VisitBooking({
   const [error, setError] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
-  const buy = () => {
+  const book = () => {
     if (!selected) return;
     setError(null);
 
     startTransition(async () => {
+      // უფასო უფლება ბანკს გვერდს უვლის — გადახდის გვერდზე გასვლა
+      // უაზრო ნაბიჯი იქნებოდა
+      if (freeCredits > 0) {
+        const result = await bookFreeVisit(selected, childId, reason);
+
+        if (result.ok) {
+          router.refresh();
+          return;
+        }
+
+        setError(result.error ?? 'ჯავშანი ვერ შეიქმნა');
+        return;
+      }
+
       const result = await buyVisit(selected, childId, reason);
 
       if (result.url) {
@@ -58,6 +77,13 @@ export function VisitBooking({
         ზუსტ საათს ექიმი დანიშნავს და SMS-ით შეგატყობინებთ — ჩართვისთვის
         5 წუთით ადრე მზად იყავით.
       </p>
+
+      {freeCredits > 0 && (
+        <p className={styles.freeNote}>
+          თქვენ გაქვთ {freeCredits} უფასო ვიზიტი — ეს ჯავშანი გადახდას არ
+          მოითხოვს.
+        </p>
+      )}
 
       <div className={styles.days}>
         {days.map((day) => {
@@ -119,9 +145,9 @@ export function VisitBooking({
         type="button"
         className="btn btn-primary"
         disabled={!selected || busy}
-        onClick={buy}
+        onClick={book}
       >
-        {busy ? 'იხსნება…' : `ჯავშნა — ${price}`}
+        {busy ? 'იგზავნება…' : freeCredits > 0 ? 'ჯავშნა — უფასოდ' : `ჯავშნა — ${price}`}
       </button>
     </section>
   );

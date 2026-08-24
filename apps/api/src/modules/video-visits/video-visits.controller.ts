@@ -7,7 +7,7 @@ import {
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { ChatService } from '../chat/chat.service';
 import { SendMessageDto } from '../chat/dto/chat.dto';
-import { ScheduleVideoVisitDto } from './dto/video-visit.dto';
+import { RequestVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
 import { VideoVisitsService } from './video-visits.service';
 import { DAILY_CAPACITY, VISIT_CURRENCY, VISIT_PRICE_MINOR } from './video-visits.config';
 
@@ -26,15 +26,39 @@ export class VideoVisitsController {
   ) {}
 
   @Get('offer')
-  @ApiOperation({ summary: 'ფასი და დღეების ტევადობა' })
-  async offer() {
+  @ApiOperation({ summary: 'ფასი, დღეების ტევადობა და უფასო უფლებები' })
+  async offer(@CurrentUser('id') userId: string) {
+    const [days, credits] = await Promise.all([
+      this.visits.availability(),
+      this.visits.credits(userId),
+    ]);
+
     return {
       amountMinor: VISIT_PRICE_MINOR,
       currency: VISIT_CURRENCY,
       price: `$${VISIT_PRICE_MINOR / 100}`,
       dailyCapacity: DAILY_CAPACITY,
-      days: await this.visits.availability(),
+      days,
+      /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */
+      freeCredits: credits.length,
     };
+  }
+
+  /**
+   * ჯავშანი უფასო უფლებით.
+   *
+   * ცალკე მისამართია და არა გადახდის ნაწილი: აქ ბანკი საერთოდ არ
+   * მონაწილეობს და პასუხი მაშინვე ბრუნდება.
+   */
+  @Post('free')
+  @ApiOperation({ summary: 'ჯავშანი უფასო უფლებით — პრომო კოდიდან' })
+  bookFree(@Body() dto: RequestVideoVisitDto, @CurrentUser('id') userId: string) {
+    return this.visits.bookWithCredit({
+      parentId: userId,
+      date: new Date(dto.date),
+      childId: dto.childId,
+      reason: dto.reason,
+    });
   }
 
   @Get()

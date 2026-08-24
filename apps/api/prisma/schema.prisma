@@ -103,6 +103,7 @@ model User {
   consultationPacks  ConsultationPack[]
   videoVisits        VideoVisit[]                   @relation("VideoVisitParent")
   videoVisitsAsStaff VideoVisit[]                   @relation("VideoVisitStaff")
+  videoVisitCredits  VideoVisitCredit[]
   chatFeedback       ConversationFeedback[]
   feedbackAsOperator ConversationFeedback[]         @relation("FeedbackOperator")
   feedbackShares     ConversationFeedbackOperator[]
@@ -489,6 +490,8 @@ enum PromoType {
   DISCOUNT
   /// კონკრეტული პაკეტი უფასოდ, გარკვეული ვადით
   FREE_PLAN
+  /// ერთი უფასო ვიდეო ვიზიტი ექიმთან
+  FREE_VIDEO_VISIT
 }
 
 model PromoCode {
@@ -504,6 +507,9 @@ model PromoCode {
   planId   String?
   plan     Plan?   @relation(fields: [planId], references: [id], onDelete: SetNull)
   freeDays Int?
+
+  /// FREE_VIDEO_VISIT-ისთვის: რამდენი უფასო ვიზიტი მიიღოს მშობელმა
+  visitCount Int?
 
   /// კოდის მოქმედების ვადა
   validFrom  DateTime  @default(now())
@@ -1621,6 +1627,30 @@ enum VideoVisitStatus {
   NO_SHOW
 }
 
+/**
+ * უფასო ვიზიტის უფლება.
+ * პრომო კოდი ვიზიტს მაშინვე არ ქმნის — მშობელს ჯერ დღე უნდა აირჩიოს.
+ * ამიტომ კოდი უფლებას ჩარიცხავს და ჯავშნისას ის გადახდას ცვლის.
+ */
+model VideoVisitCredit {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// საიდან მოვიდა: "promo" ან "grant"
+  source String
+  note   String?
+
+  usedAt  DateTime?
+  visitId String?   @unique
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, usedAt])
+  @@map("video_visit_credits")
+}
+
 model VideoVisit {
   id       String @id @default(uuid())
   parentId String
@@ -1650,8 +1680,8 @@ model VideoVisit {
   ///
   /// მარტო „შემოვიდა" არ კმარა: ფანჯრის დახურვას სერვერი ვერ ხედავს
   /// და მეორე მხარე სამუდამოდ ფიქრობდა, რომ პარტნიორი ელოდება.
-  parentSeenAt DateTime?
-  staffSeenAt  DateTime?
+  parentSeenAt   DateTime?
+  staffSeenAt    DateTime?
   startedAt      DateTime?
   endedAt        DateTime?
   staffNote      String?

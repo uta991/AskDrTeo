@@ -147,7 +147,8 @@ export async function createStaff(
  * პრომო კოდის შექმნა.
  *
  * ორი სახეობაა და თითოეულს სხვა ველი სჭირდება: DISCOUNT-ს პროცენტი,
- * FREE_PLAN-ს კი პაკეტი და დღეების რაოდენობა. ცარიელი ველები
+ * FREE_PLAN-ს პაკეტი და დღეები, FREE_VIDEO_VISIT-ს კი ვიზიტების
+ * რაოდენობა. ცარიელი ველები
  * გამოტოვებულია, თორემ backend-ის ვალიდაცია `null`-ზე ჩავარდებოდა.
  */
 export async function createPromo(
@@ -172,6 +173,16 @@ export async function createPromo(
       return { error: 'ფასდაკლება 1-დან 100 პროცენტამდე' };
     }
     body.discountPercent = percent;
+  } else if (type === 'FREE_VIDEO_VISIT') {
+    const count = Number(formData.get('visitCount'));
+    if (!Number.isInteger(count) || count < 1 || count > 10) {
+      return { error: 'უფასო ვიზიტების რაოდენობა 1-დან 10-მდე' };
+    }
+    body.visitCount = count;
+
+    // ვადა არასავალდებულოა — უვადო კოდიც აზრიანია
+    const days = Number(formData.get('freeDays'));
+    if (Number.isInteger(days) && days > 0) body.freeDays = days;
   } else {
     const planCode = String(formData.get('planCode') ?? '').trim();
     if (!planCode) return { error: 'აირჩიეთ პაკეტი' };

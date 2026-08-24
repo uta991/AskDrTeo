@@ -59,18 +59,13 @@ export function AdminNav({
         {/* ოპერატორის ძირითადი სამუშაო ადგილი — წაუკითხავი წითლად ჩანს */}
         <ChatTabBadge active={active === 'chat'} />
 
-        <Link
-          href="/admin/appointments"
-          className={active === 'appointments' ? styles.tabActive : styles.tab}
-        >
-          ვიზიტები
-        </Link>
-
+        {/* ვიზიტი და ვიდეო ზარი ერთი სერვისია — ორი ცალკე ტაბი
+            პერსონალს მხოლოდ აბნევდა */}
         <Link
           href="/admin/video-visits"
           className={active === 'videoVisits' ? styles.tabActive : styles.tab}
         >
-          ვიდეო ჯავშნები
+          ვიზიტები
         </Link>
 
         {/* პრომო კოდები ოპერატორს არ ეკუთვნის — მისი საქმე ჩატია */}

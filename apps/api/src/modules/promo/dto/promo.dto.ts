@@ -34,6 +34,10 @@ export class CreatePromoDto {
   @IsOptional() @IsString() @IsNotEmpty()
   planCode?: string;
 
+  /** FREE_VIDEO_VISIT-ისთვის: რამდენი უფასო ვიზიტი გაიცეს (ნაგულისხმევი 1) */
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(10)
+  visitCount?: number;
+
   /** რამდენი დღით გააქტიურდეს უფასო პაკეტი */
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(3650)
   freeDays?: number;

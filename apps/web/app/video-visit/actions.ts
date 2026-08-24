@@ -16,6 +16,8 @@ export interface VisitOffer {
   price: string;
   dailyCapacity: number;
   days: VisitDay[];
+  /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */
+  freeCredits: number;
 }
 
 export type VisitStatus =
@@ -65,6 +67,25 @@ export async function buyVisit(
     return { url: result.url };
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'გადახდა ვერ დაიწყო' };
+  }
+}
+
+/** ჯავშანი უფასო უფლებით — ბანკი საერთოდ არ მონაწილეობს. */
+export async function bookFreeVisit(
+  date: string,
+  childId?: string,
+  reason?: string,
+): Promise<{ ok?: true; error?: string }> {
+  try {
+    await apiMutate('/video-visits/free', 'POST', {
+      date,
+      childId: childId || undefined,
+      reason: reason || undefined,
+    });
+    revalidatePath('/video-visit');
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'ჯავშანი ვერ შეიქმნა' };
   }
 }
 

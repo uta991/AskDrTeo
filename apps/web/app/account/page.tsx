@@ -89,7 +89,6 @@ export default async function AccountPage() {
               { href: '/assistant', icon: 'robot', color: '#7C5CFF', label: 'AI ასისტენტი' },
               { href: '/chat', icon: 'chat', color: '#2F6FED', label: 'ჩატი' },
               { href: '/videos', icon: 'play', color: '#E8A400', label: 'ვიდეოთეკა' },
-              { href: '/video-visit', icon: 'consultation', color: '#6FB6D9', label: 'ვიდეო ვიზიტი' },
               { href: '/nutrition', icon: 'nutrition', color: '#57A63A', label: 'კვება' },
               { href: '/sleep', icon: 'sleep', color: '#5B67CA', label: 'ძილი' },
               { href: '/travel', icon: 'traveler', color: '#00A3C4', label: 'პატარა მოგზაური' },
@@ -103,7 +102,7 @@ export default async function AccountPage() {
         </div>
 
         {/* ── შემდეგი ვიზიტი ─────────────────────────────── */}
-        <Link href="/booking" className={styles.nextVisit}>
+        <Link href="/video-visit" className={styles.nextVisit}>
           <span className={styles.nextVisitIcon}>
             <FeatureIcon name="consultation" color="#6FB6D9" size={35} />
           </span>

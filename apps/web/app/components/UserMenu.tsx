@@ -158,7 +158,7 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             ვიდეო ბიბლიოთეკა
           </Link>
 
-          <Link href="/booking" className={styles.item} role="menuitem">
+          <Link href="/video-visit" className={styles.item} role="menuitem">
             ვიზიტის ჯავშანი
           </Link>
 

@@ -19,6 +19,8 @@ import {
   BE_READY_MINUTES,
   BOOKING_HORIZON_DAYS,
   DAILY_CAPACITY,
+  JOIN_CLOSES_MINUTES,
+  JOIN_OPENS_MINUTES,
   roomUrl,
 } from './video-visits.config';
 import { ScheduleVideoVisitDto } from './dto/video-visit.dto';
@@ -107,6 +109,73 @@ export class VideoVisitsService {
     }
   }
 
+  /** გამოუყენებელი უფასო ვიზიტები — პრომო კოდიდან ან ხელით გაცემული. */
+  async credits(userId: string) {
+    const now = new Date();
+
+    return this.prisma.videoVisitCredit.findMany({
+      where: {
+        userId,
+        usedAt: null,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  /** უფასო ვიზიტის უფლების ჩარიცხვა — პრომო კოდი ამას იძახებს. */
+  async grantCredit(userId: string, source: string, note?: string, days?: number) {
+    return this.prisma.videoVisitCredit.create({
+      data: {
+        userId,
+        source,
+        note,
+        expiresAt: days ? addDays(new Date(), days) : null,
+      },
+    });
+  }
+
+  /**
+   * ჯავშანი უფასო უფლებით — გადახდის გარეშე.
+   *
+   * უფლება ჯავშნის შექმნასთან ერთად იხარჯება, ერთ ტრანზაქციაში:
+   * ორი პარალელური მოთხოვნა ერთსა და იმავე უფლებით ორ ვიზიტს ვერ
+   * შექმნის.
+   */
+  async bookWithCredit(input: {
+    parentId: string;
+    date: Date;
+    childId?: string | null;
+    reason?: string | null;
+  }) {
+    const [credit] = await this.credits(input.parentId);
+    if (!credit) throw new BadRequestException('უფასო ვიზიტის უფლება არ გაქვთ');
+
+    const claimed = await this.prisma.videoVisitCredit.updateMany({
+      where: { id: credit.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    if (!claimed.count) throw new BadRequestException('უფლება უკვე გამოყენებულია');
+
+    try {
+      const visit = await this.grant(input);
+
+      await this.prisma.videoVisitCredit.update({
+        where: { id: credit.id },
+        data: { visitId: visit.id },
+      });
+
+      return visit;
+    } catch (error) {
+      // ჯავშანი ვერ შეიქმნა — უფლება მშობელს უნდა დარჩეს
+      await this.prisma.videoVisitCredit.update({
+        where: { id: credit.id },
+        data: { usedAt: null },
+      });
+      throw error;
+    }
+  }
+
   /** გადახდის დადასტურების შემდეგ — ჯავშნის შექმნა. */
   async grant(input: {
     parentId: string;
@@ -154,13 +223,31 @@ export class VideoVisitsService {
     return visits.map((visit) => this.parentView(visit));
   }
 
-  /** მშობლის მხრიდან ჩართვა. */
+  /**
+   * მშობლის მხრიდან ჩართვა.
+   *
+   * ოთახი დანიშნულ საათს უკავშირდება: ღილაკის დამალვა კლიენტში
+   * საკმარისი არ არის — მისამართის პირდაპირ გახსნაც უნდა შეჩერდეს.
+   */
   async joinAsParent(id: string, parentId: string) {
     const visit = await this.prisma.videoVisit.findFirst({
       where: { id, parentId, deletedAt: null },
       include: { parent: { select: { firstName: true, lastName: true } } },
     });
     if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    const window = joinWindow(visit.status, visit.scheduledAt);
+
+    if (!window.open) {
+      throw new BadRequestException(
+        window.reason === 'not_scheduled'
+          ? 'ვიზიტის საათი ჯერ არ არის დანიშნული'
+          : window.reason === 'too_early'
+            ? `ჩართვა ${JOIN_OPENS_MINUTES} წუთით ადრე გაიხსნება — `
+              + `${formatTbilisi(visit.scheduledAt!)}-ზეა დანიშნული`
+            : 'ამ ვიზიტის დრო გავიდა',
+      );
+    }
 
     return this.join(visit.id, `${visit.parent.firstName} ${visit.parent.lastName}`, 'parent');
   }
@@ -440,13 +527,6 @@ export class VideoVisitsService {
     staffNote: string | null;
     child: { id: string; firstName: string } | null;
   }) {
-    const canJoin =
-      (visit.status === VideoVisitStatus.SCHEDULED || visit.status === VideoVisitStatus.LIVE) &&
-      !!visit.scheduledAt &&
-      // ჩართვა ნახევარი საათით ადრე იხსნება და ორ საათს რჩება ღია
-      Date.now() > visit.scheduledAt.getTime() - 30 * 60 * 1000 &&
-      Date.now() < visit.scheduledAt.getTime() + 2 * 60 * 60 * 1000;
-
     return {
       id: visit.id,
       date: tbilisiDayKey(visit.requestedDate),
@@ -455,7 +535,11 @@ export class VideoVisitsService {
       reason: visit.reason,
       staffNote: visit.staffNote,
       child: visit.child,
-      canJoin,
+      canJoin: joinWindow(visit.status, visit.scheduledAt).open,
+      /** როდის გაიხსნება ღილაკი — მშობელს ლოდინის მიზეზი უნდა ესმოდეს */
+      opensAt: visit.scheduledAt
+        ? new Date(visit.scheduledAt.getTime() - JOIN_OPENS_MINUTES * 60 * 1000)
+        : null,
     };
   }
 
@@ -512,4 +596,29 @@ export class VideoVisitsService {
 /** ნიშანი ჯერ ცოცხალია თუ დაძველდა. */
 function fresh(seenAt: Date | null, now: Date): boolean {
   return !!seenAt && now.getTime() - seenAt.getTime() < PRESENCE_TTL_MS;
+}
+
+/**
+ * ჩართვის ფანჯარა.
+ *
+ * იხსნება დანიშნულ საათამდე 10 წუთით ადრე და ორი საათის შემდეგ
+ * იკეტება — გვიან შემოსული მშობელიც უნდა მოხვდეს, უვადოდ ღია ოთახი
+ * კი ექიმს ნებისმიერ დროს გამოიძახებდა.
+ */
+function joinWindow(
+  status: VideoVisitStatus,
+  scheduledAt: Date | null,
+): { open: boolean; reason?: 'not_scheduled' | 'too_early' | 'too_late' } {
+  if (!scheduledAt || (status !== VideoVisitStatus.SCHEDULED && status !== VideoVisitStatus.LIVE)) {
+    return { open: false, reason: 'not_scheduled' };
+  }
+
+  const now = Date.now();
+  const opens = scheduledAt.getTime() - JOIN_OPENS_MINUTES * 60 * 1000;
+  const closes = scheduledAt.getTime() + JOIN_CLOSES_MINUTES * 60 * 1000;
+
+  if (now < opens) return { open: false, reason: 'too_early' };
+  if (now > closes) return { open: false, reason: 'too_late' };
+
+  return { open: true };
 }

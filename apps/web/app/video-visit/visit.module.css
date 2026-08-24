@@ -425,3 +425,12 @@
     animation: none;
   }
 }
+
+.freeNote {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2e9e5b;
+  background: rgba(46, 158, 91, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+}

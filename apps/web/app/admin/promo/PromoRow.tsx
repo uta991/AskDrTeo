@@ -8,7 +8,8 @@ import styles from '../admin.module.css';
 export interface PromoCode {
   id: string;
   code: string;
-  type: 'DISCOUNT' | 'FREE_PLAN';
+  type: 'DISCOUNT' | 'FREE_PLAN' | 'FREE_VIDEO_VISIT';
+  visitCount?: number | null;
   description?: string | null;
   discountPercent: number | null;
   freeDays: number | null;
@@ -48,7 +49,10 @@ export function PromoRow({ promo }: { promo: PromoCode }) {
   const benefit =
     promo.type === 'DISCOUNT'
       ? `${promo.discountPercent}% ფასდაკლება`
-      : `${promo.plan?.name ?? promo.plan?.code ?? 'პაკეტი'} · ${promo.freeDays} დღე უფასოდ`;
+      : promo.type === 'FREE_VIDEO_VISIT'
+        ? `${promo.visitCount ?? 1} უფასო ვიზიტი პედიატრთან` +
+          (promo.freeDays ? ` · ${promo.freeDays} დღის ვადით` : '')
+        : `${promo.plan?.name ?? promo.plan?.code ?? 'პაკეტი'} · ${promo.freeDays} დღე უფასოდ`;
 
   const usage = promo.maxRedemptions
     ? `${promo.redeemedCount} / ${promo.maxRedemptions}`
