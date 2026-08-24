@@ -29,6 +29,7 @@ import { PromoModule } from './modules/promo/promo.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { SmsModule } from './modules/sms/sms.module';
 
@@ -52,6 +53,7 @@ import { SmsModule } from './modules/sms/sms.module';
     AuthModule,
     AdminUsersModule,
     PlansModule,
+    PaymentsModule,
     ChildrenModule,
     StorageModule,
     MediaModule,

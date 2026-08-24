@@ -1,0 +1,27 @@
+.wrap {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.yearly {
+  background: none;
+  border: 0;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.yearly:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  color: var(--danger, #c4574d);
+  font-size: 12px;
+  text-align: center;
+}

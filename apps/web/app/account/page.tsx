@@ -112,7 +112,7 @@ export default async function AccountPage() {
               { href: '/calculator', icon: 'syrup', color: '#0EA5A5', label: 'დოზის კალკულატორი' },
               { href: '/assistant', icon: 'robot', color: '#7C5CFF', label: 'AI ასისტენტი' },
               { href: '/chat', icon: 'chat', color: '#2F6FED', label: 'ჩატი' },
-              { href: '/videos', icon: 'play', color: '#E8A400', label: 'ვიდეოები' },
+              { href: '/videos', icon: 'play', color: '#E8A400', label: 'ვიდეოთეკა' },
               { href: '/booking', icon: 'calendar', color: '#2E9E5B', label: 'ვიზიტის ჯავშანი' },
               { href: '/plans', icon: 'crown', color: '#E8A400', label: 'პაკეტები' },
             ] as { href: string; icon: FeatureIconName; color: string; label: string }[]

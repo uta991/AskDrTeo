@@ -151,7 +151,7 @@ export function HomeTab() {
                 key: 'videos',
                 icon: 'play' as const,
                 color: '#E8A400',
-                label: 'ვიდეოები',
+                label: 'ვიდეოთეკა',
                 onPress: () => router.push('/videos'),
               },
               {

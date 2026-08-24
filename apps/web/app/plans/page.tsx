@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { apiFetchPublic, getSessionUser } from '@/lib/session';
 import { getEntitlements, planColor } from '@/lib/entitlements';
 import { SunLogo } from '../components/Brand';
+import { PlanCheckout } from '../components/PlanCheckout';
 import styles from './plans.module.css';
 
 export const metadata = { title: 'პაკეტები — AskDrTeo' };
@@ -95,11 +96,15 @@ function featureLabel(feature: PlanFeature): string {
 export default async function PlansPage() {
   const user = await getSessionUser();
 
-  const [plans, entitlements] = await Promise.all([
+  const [plans, entitlements, payments] = await Promise.all([
     // ვიტრინა შესვლამდეც უნდა ჩანდეს — პაკეტების სია საჯაროა
     apiFetchPublic<Plan[]>('/plans'),
     user ? getEntitlements() : Promise.resolve(null),
+    apiFetchPublic<{ enabled: boolean }>('/payments/config'),
   ]);
+
+  // ბანკის გასაღებების გარეშე ღილაკი მხოლოდ ჩავარდნილ გადახდას მისცემდა
+  const canPay = Boolean(payments?.enabled);
 
   const current = entitlements?.planCode ?? null;
 
@@ -114,7 +119,7 @@ export default async function PlansPage() {
         <h1 className={styles.title}>პაკეტები</h1>
         <p className={styles.subtitle}>
           განვითარების მონიტორინგი უფასოშიც არის. ფასიანი პაკეტები ზრდის
-          დინამიკას, დოზის კალკულატორსა და AI ასისტენტს ამატებს.
+          დღიურს, დოზის კალკულატორსა და AI ასისტენტს ამატებს.
         </p>
       </div>
 
@@ -181,6 +186,16 @@ export default async function PlansPage() {
                 >
                   თქვენი პაკეტი
                 </span>
+              ) : canPay && user && !plan.isFree ? (
+                <PlanCheckout
+                  planCode={plan.code}
+                  color={planColor(plan.code)}
+                  label="პაკეტის აღება"
+                  yearLabel={
+                    price.year ? `წლიური — ${price.year.discounted}` : undefined
+                  }
+                  className={styles.cta}
+                />
               ) : (
                 <Link
                   href={user ? '/account' : '/register'}
@@ -191,7 +206,7 @@ export default async function PlansPage() {
                     color: '#ffffff',
                   }}
                 >
-                  {plan.isFree ? 'დაწყება' : 'პაკეტის აღება'}
+                  {plan.isFree ? 'დაწყება' : user ? 'პაკეტის აღება' : 'რეგისტრაცია'}
                 </Link>
               )}
             </section>
@@ -200,8 +215,9 @@ export default async function PlansPage() {
       </div>
 
       <p className={styles.note}>
-        გადახდის მეთოდის დასაკავშირებლად დაგვიკავშირდით — გამოწერას ხელით
-        გააქტიურებთ ჩვენი გუნდი.
+        {canPay
+          ? 'გადახდა ბანკის დაცულ გვერდზე ხდება — ბარათის მონაცემები AskDrTeo-ს არ გადმოეცემა.'
+          : 'გადახდის მეთოდის დასაკავშირებლად დაგვიკავშირდით — გამოწერას ხელით გააქტიურებთ ჩვენი გუნდი.'}
       </p>
     </main>
   );

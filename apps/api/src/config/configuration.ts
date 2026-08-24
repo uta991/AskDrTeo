@@ -63,6 +63,18 @@ export interface AppConfig {
     /** ანგარიშები ლიმიტის გარეშე — ტესტირებისთვის */
     unlimitedEmails: string[];
   };
+  payments: {
+    tbc: {
+      /** merchant dashboard-იდან */
+      clientId?: string;
+      clientSecret?: string;
+      /** developer portal-იდან — ყველა მოთხოვნის `apikey` header */
+      apiKey?: string;
+      apiUrl: string;
+      /** სად დაბრუნდეს მომხმარებელი ბანკიდან */
+      returnUrl: string;
+    };
+  };
   storage: {
     /** "local" | "r2" */
     fileDriver: string;
@@ -140,6 +152,17 @@ export default (): AppConfig => ({
     maxTokens: Number(process.env.AI_MAX_TOKENS ?? 2000),
     dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 0),
     unlimitedEmails: csv(process.env.AI_UNLIMITED_EMAILS).map((email) => email.toLowerCase()),
+  },
+  payments: {
+    tbc: {
+      clientId: process.env.TBC_CLIENT_ID,
+      clientSecret: process.env.TBC_CLIENT_SECRET,
+      apiKey: process.env.TBC_API_KEY,
+      apiUrl: process.env.TBC_API_URL ?? 'https://api.tbcbank.ge',
+      returnUrl:
+        process.env.TBC_RETURN_URL ??
+        `${process.env.WEB_URL ?? 'https://askdrteo.com'}/payment/result`,
+    },
   },
   storage: {
     fileDriver: process.env.FILE_STORAGE_DRIVER ?? 'local',
