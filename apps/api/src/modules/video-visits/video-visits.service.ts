@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { UserRole, VideoVisitStatus } from '@prisma/client';
+import { ConversationKind, UserRole, VideoVisitStatus } from '@prisma/client';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import {
   addDays,
@@ -549,7 +549,9 @@ export class VideoVisitsService {
 
     if (!conversationId) {
       const conversation = await this.prisma.conversation.create({
-        data: { subject: 'ვიდეო ვიზიტი' },
+        // სახეობა კრიტიკულია: ასე ეს საუბარი ოპერატორის რიგში,
+        // მშობლის ჩატებსა და წაუკითხავებში აღარ ჩნდება
+        data: { subject: 'ვიდეო ვიზიტი', kind: ConversationKind.VIDEO_VISIT },
       });
       conversationId = conversation.id;
 

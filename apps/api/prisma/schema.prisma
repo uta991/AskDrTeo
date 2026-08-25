@@ -949,9 +949,24 @@ enum ConversationStatus {
   CLOSED
 }
 
+/**
+ * საუბრის სახეობა.
+ * ვიდეო ვიზიტის ჩატი იმავე ცხრილში ცხოვრობს (დანართები, ისტორია და
+ * წაკითხვის აღრიცხვა ერთი და იგივეა), მაგრამ ოპერატორის რიგში,
+ * მშობლის ჩატების სიასა და წაუკითხავების მრიცხველში არ უნდა ჩანდეს —
+ * ეს ცალკე სერვისია და პაკეტთან კავშირი არ აქვს.
+ */
+enum ConversationKind {
+  /// მშობლის შეკითხვა ოპერატორთან
+  SUPPORT
+  /// ვიდეო ვიზიტის პარალელური ჩატი
+  VIDEO_VISIT
+}
+
 model Conversation {
   id                 String             @id @default(uuid())
   subject            String?
+  kind               ConversationKind   @default(SUPPORT)
   status             ConversationStatus @default(OPEN)
   assignedOperatorId String?
 
@@ -967,7 +982,7 @@ model Conversation {
   feedback     ConversationFeedback?
   videoVisit   VideoVisit?
 
-  @@index([status, lastMessageAt])
+  @@index([kind, status, lastMessageAt])
   @@index([assignedOperatorId, status])
   @@map("conversations")
 }

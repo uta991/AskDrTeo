@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ConversationKind,
   ConversationStatus,
   MediaStatus,
   MediaType,
@@ -65,7 +66,8 @@ export class ChatService {
    */
   async listForParent(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
-      where: { participants: { some: { userId } } },
+      // ვიდეო ვიზიტის ჩატი აქ არ ჩანს — ის ვიზიტის ეკრანზე ცხოვრობს
+      where: { kind: ConversationKind.SUPPORT, participants: { some: { userId } } },
       orderBy: { lastMessageAt: 'desc' },
       take: 50,
       include: {
@@ -106,7 +108,10 @@ export class ChatService {
    */
   async queue(status?: ConversationStatus) {
     const conversations = await this.prisma.conversation.findMany({
-      where: status ? { status } : { status: { not: ConversationStatus.CLOSED } },
+      where: {
+        kind: ConversationKind.SUPPORT,
+        ...(status ? { status } : { status: { not: ConversationStatus.CLOSED } }),
+      },
       orderBy: { lastMessageAt: 'desc' },
       take: 100,
       include: {
@@ -164,7 +169,10 @@ export class ChatService {
    */
   async unreadForStaff(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
-      where: { status: { not: ConversationStatus.CLOSED } },
+      where: {
+        kind: ConversationKind.SUPPORT,
+        status: { not: ConversationStatus.CLOSED },
+      },
       select: {
         id: true,
         participants: { where: { userId }, select: { lastReadAt: true } },
@@ -324,6 +332,9 @@ export class ChatService {
 
     if (STAFF_ROLES.includes(role)) {
       await this.notifyParent(conversationId, preview);
+    } else if (conversation.kind === ConversationKind.VIDEO_VISIT) {
+      // ვიზიტში ექიმი უკვე ეკრანზეა: „ოპერატორი მალე გიპასუხებთ"
+      // აქ უაზრობაა, ოპერატორების გაფრთხილება კი — მით უმეტეს
     } else {
       await this.autoReply(conversationId, userId);
       await this.notifyStaff(conversationId, preview);
@@ -625,7 +636,7 @@ export class ChatService {
    */
   async historyFor(userId: string) {
     const conversations = await this.prisma.conversation.findMany({
-      where: { participants: { some: { userId } } },
+      where: { kind: ConversationKind.SUPPORT, participants: { some: { userId } } },
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: {
@@ -906,6 +917,7 @@ export class ChatService {
       select: {
         id: true,
         subject: true,
+        kind: true,
         status: true,
         assignedOperatorId: true,
         participants: { select: { userId: true } },
