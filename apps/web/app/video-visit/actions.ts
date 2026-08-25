@@ -11,9 +11,15 @@ export interface VisitDay {
 }
 
 export interface VisitOffer {
-  amountMinor: number;
   currency: string;
+  /** ჩვეულებრივი ფასი */
+  basePrice: string;
+  baseAmountMinor: number;
+  /** რა დახვდება ახლა — ფასდაკლება უკვე გათვალისწინებულია */
+  amountMinor: number;
   price: string;
+  /** რამდენ პროცენტს ფარავს მოქმედი უფლება */
+  coverPercent: number;
   dailyCapacity: number;
   days: VisitDay[];
   /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */

@@ -12,7 +12,7 @@ const STATUS_LABELS: Record<VisitStatus, string> = {
   LIVE: 'მიმდინარეობს',
   DONE: 'დასრულდა',
   CANCELED: 'გაუქმდა',
-  NO_SHOW: 'არ შედგა',
+  NO_SHOW: 'დააგვიანეთ — ჩაეწერეთ ხელახლა',
 };
 
 /** ექიმის ჩართვა მშობელმა ჩართვამდე უნდა დაინახოს. */

@@ -47,6 +47,8 @@ export default async function VideoVisitPage({
         <VisitBooking
           days={offer.days}
           price={offer.price}
+          basePrice={offer.basePrice}
+          coverPercent={offer.coverPercent}
           freeCredits={offer.freeCredits}
           childProfiles={children ?? []}
         />

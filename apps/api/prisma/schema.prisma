@@ -1652,9 +1652,16 @@ model VideoVisitCredit {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// საიდან მოვიდა: "promo" ან "grant"
+  /// საიდან მოვიდა: "promo", "grant" ან "late"
   source String
   note   String?
+
+  /// ვიზიტის ღირებულების რამდენ პროცენტს ფარავს.
+  ///
+  /// 100 = სრულიად უფასო. დაგვიანების შემდეგ გაცემული უფლება 70-ია:
+  /// მშობელს ნახევრად დახარჯული დრო არ უნდა დაუბრუნდეს სრულად,
+  /// მაგრამ თანხის სრული დაკარგვაც უსამართლოა.
+  coverPercent Int @default(100)
 
   usedAt  DateTime?
   visitId String?   @unique

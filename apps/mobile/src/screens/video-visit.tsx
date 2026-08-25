@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<VisitStatus, string> = {
   LIVE: 'მიმდინარეობს',
   DONE: 'დასრულდა',
   CANCELED: 'გაუქმდა',
-  NO_SHOW: 'არ შედგა',
+  NO_SHOW: 'დააგვიანეთ — ჩაეწერეთ ხელახლა',
 };
 
 const WEEKDAYS = ['კვ', 'ორშ', 'სამ', 'ოთხ', 'ხუთ', 'პარ', 'შაბ'];
@@ -140,11 +140,16 @@ export default function VideoVisitScreen() {
             5 წუთით ადრე მზად იყავით.
           </Text>
 
-          {!!offer?.freeCredits && (
+          {offer?.freeCredits ? (
             <Text style={styles.freeNote}>
               თქვენ გაქვთ {offer.freeCredits} უფასო ვიზიტი
             </Text>
-          )}
+          ) : offer && offer.coverPercent > 0 ? (
+            <Text style={styles.discountNote}>
+              წინა ვიზიტზე დაგვიანების გამო იხდით ღირებულების მხოლოდ{' '}
+              {100 - offer.coverPercent}%-ს — {offer.price} ({offer.basePrice}-ის ნაცვლად)
+            </Text>
+          ) : null}
 
           <ScrollView
             horizontal
@@ -197,6 +202,14 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.bodyMedium, color: colors.textPrimary },
   hint: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
   freeNote: { ...typography.small, color: '#2E9E5B', fontWeight: '600' },
+  discountNote: {
+    ...typography.small,
+    color: colors.textPrimary,
+    lineHeight: 19,
+    backgroundColor: colors.primarySoft,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+  },
 
   days: { flexDirection: 'row', gap: spacing.xs, paddingVertical: 2 },
   day: {

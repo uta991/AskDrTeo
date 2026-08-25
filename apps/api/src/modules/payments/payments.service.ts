@@ -170,24 +170,30 @@ export class PaymentsService {
     const date = new Date(dto.visitDate!);
     await this.videoVisits.assertDayFree(date);
 
+    // ფასდაკლების უფლება (მაგ. დაგვიანების შემდეგ) აქვე გაითვალისწინება —
+    // მშობელი გადახდის გვერდზე უკვე შემცირებულ თანხას ხედავს
+    const pricing = await this.videoVisits.priceFor(userId);
+    const amountMinor = pricing.amountMinor || VISIT_PRICE_MINOR;
+
     const payment = await this.prisma.payment.create({
       data: {
         userId,
         provider: PaymentProvider.TBC,
         status: PaymentStatus.PENDING,
         currency: VISIT_CURRENCY,
-        amountMinor: VISIT_PRICE_MINOR,
+        amountMinor,
         metadata: {
           kind: 'video_visit',
           visitDate: dto.visitDate!,
           childId: dto.childId ?? '',
           reason: dto.reason ?? '',
+          creditId: pricing.creditId ?? '',
           planName: 'ვიდეო ვიზიტი ექიმთან',
         } as Prisma.InputJsonValue,
       },
     });
 
-    return this.sendToBank(payment.id, VISIT_PRICE_MINOR, VISIT_CURRENCY, 'Video visit');
+    return this.sendToBank(payment.id, amountMinor, VISIT_CURRENCY, 'Video visit');
   }
 
   /** ბანკში შეკვეთის შექმნა — გამოწერასაც და ლიმიტსაც ერთი გზა აქვს. */
@@ -425,6 +431,7 @@ export class PaymentsService {
           visitDate: String(meta.visitDate),
           childId: String(meta.childId ?? '') || null,
           reason: String(meta.reason ?? '') || null,
+          creditId: String(meta.creditId ?? '') || null,
         };
       }
 
@@ -506,6 +513,11 @@ export class PaymentsService {
         reason: result.reason,
         paymentId,
       });
+
+      // ფასდაკლების უფლება ჯავშანთან ერთად იხარჯება
+      if (result.creditId) {
+        await this.videoVisits.consumeCredit(result.creditId, visit.id).catch(() => undefined);
+      }
 
       return visit.requestedDate;
     }

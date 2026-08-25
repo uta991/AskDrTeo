@@ -30,21 +30,30 @@ export class VideoVisitsController {
   ) {}
 
   @Get('offer')
-  @ApiOperation({ summary: 'ფასი, დღეების ტევადობა და უფასო უფლებები' })
+  @ApiOperation({ summary: 'ფასი, დღეების ტევადობა და მოქმედი უფლებები' })
   async offer(@CurrentUser('id') userId: string) {
-    const [days, credits] = await Promise.all([
+    const [days, credits, pricing] = await Promise.all([
       this.visits.availability(),
       this.visits.credits(userId),
+      this.visits.priceFor(userId),
     ]);
 
+    const free = credits.filter((credit) => credit.coverPercent >= 100).length;
+
     return {
-      amountMinor: VISIT_PRICE_MINOR,
       currency: VISIT_CURRENCY,
-      price: `$${VISIT_PRICE_MINOR / 100}`,
+      /** ჩვეულებრივი ფასი */
+      basePrice: money(VISIT_PRICE_MINOR),
+      baseAmountMinor: VISIT_PRICE_MINOR,
+      /** რა დახვდება მშობელს ახლა — ფასდაკლება უკვე გათვალისწინებულია */
+      amountMinor: pricing.amountMinor,
+      price: money(pricing.amountMinor),
+      /** რამდენი პროცენტი ეფარება მოქმედი უფლებით */
+      coverPercent: pricing.coverPercent,
       dailyCapacity: DAILY_CAPACITY,
       days,
       /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */
-      freeCredits: credits.length,
+      freeCredits: free,
     };
   }
 
@@ -182,4 +191,10 @@ export class AdminVideoVisitsController {
   finish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.visits.finish(id, user.role);
   }
+}
+
+/** ცენტები დოლარად — მრგვალი თანხა ცენტების გარეშე. */
+function money(minor: number): string {
+  const amount = minor / 100;
+  return `$${minor % 100 === 0 ? amount.toFixed(0) : amount.toFixed(2)}`;
 }

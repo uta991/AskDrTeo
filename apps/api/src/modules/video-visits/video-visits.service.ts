@@ -3,9 +3,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConversationKind, UserRole, VideoVisitStatus } from '@prisma/client';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import {
   addDays,
@@ -22,6 +24,9 @@ import {
   DAILY_CAPACITY,
   JOIN_CLOSES_MINUTES,
   JOIN_OPENS_MINUTES,
+  LATE_AFTER_MINUTES,
+  LATE_COVER_PERCENT,
+  VISIT_PRICE_MINOR,
 } from './video-visits.config';
 import { CancelVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
 
@@ -42,6 +47,8 @@ const LIVE_STATUSES: VideoVisitStatus[] = [
 
 @Injectable()
 export class VideoVisitsService {
+  private readonly logger = new Logger(VideoVisitsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
@@ -120,19 +127,58 @@ export class VideoVisitsService {
         usedAt: null,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       },
-      orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ coverPercent: 'desc' }, { expiresAt: 'asc' }, { createdAt: 'asc' }],
     });
   }
 
   /** უფასო ვიზიტის უფლების ჩარიცხვა — პრომო კოდი ამას იძახებს. */
-  async grantCredit(userId: string, source: string, note?: string, days?: number) {
+  async grantCredit(
+    userId: string,
+    source: string,
+    note?: string,
+    days?: number,
+    coverPercent = 100,
+  ) {
     return this.prisma.videoVisitCredit.create({
       data: {
         userId,
         source,
         note,
+        coverPercent,
         expiresAt: days ? addDays(new Date(), days) : null,
       },
+    });
+  }
+
+  /**
+   * რა ფასი დახვდება მშობელს ახლა.
+   *
+   * უპირატესობა სრულ უფლებას აქვს — ნაწილობრივი უფლება მაშინ
+   * გამოიყენება, როცა უფასო აღარ დარჩა.
+   */
+  async priceFor(userId: string): Promise<{
+    amountMinor: number;
+    creditId: string | null;
+    coverPercent: number;
+  }> {
+    const [best] = (await this.credits(userId)).sort(
+      (a, b) => b.coverPercent - a.coverPercent,
+    );
+
+    if (!best) return { amountMinor: VISIT_PRICE_MINOR, creditId: null, coverPercent: 0 };
+
+    const amountMinor = Math.round(
+      (VISIT_PRICE_MINOR * (100 - best.coverPercent)) / 100,
+    );
+
+    return { amountMinor, creditId: best.id, coverPercent: best.coverPercent };
+  }
+
+  /** ფასდაკლების უფლების დახარჯვა — გადახდილი ჯავშნის შემდეგ. */
+  async consumeCredit(creditId: string, visitId: string): Promise<void> {
+    await this.prisma.videoVisitCredit.updateMany({
+      where: { id: creditId, usedAt: null },
+      data: { usedAt: new Date(), visitId },
     });
   }
 
@@ -151,6 +197,9 @@ export class VideoVisitsService {
   }) {
     const [credit] = await this.credits(input.parentId);
     if (!credit) throw new BadRequestException('უფასო ვიზიტის უფლება არ გაქვთ');
+    if (credit.coverPercent < 100) {
+      throw new BadRequestException('თქვენი უფლება ფასდაკლებაა — ჯავშანი გადახდით გრძელდება');
+    }
 
     const claimed = await this.prisma.videoVisitCredit.updateMany({
       where: { id: credit.id, usedAt: null },
@@ -246,7 +295,9 @@ export class VideoVisitsService {
           : window.reason === 'too_early'
             ? `ჩართვა ${JOIN_OPENS_MINUTES} წუთით ადრე გაიხსნება — `
               + `${formatTbilisi(visit.scheduledAt!)}-ზეა დანიშნული`
-            : 'ამ ვიზიტის დრო გავიდა',
+            : `სამწუხაროდ, თქვენ დააგვიანეთ ვიზიტზე ${LATE_AFTER_MINUTES} წუთზე მეტით. `
+              + 'გთხოვთ, ხელახლა ჩაეწეროთ — შემდეგ ჯავშანზე ღირებულების '
+              + `მხოლოდ ${100 - LATE_COVER_PERCENT}%-ს გადაიხდით.`,
       );
     }
 
@@ -471,6 +522,84 @@ export class VideoVisitsService {
           + ` გაუქმდა.`
           + (reason ? ` ${reason}` : '')
           + ` ჯავშანი დაგიბრუნდათ — აირჩიეთ სხვა დღე.`,
+      })
+      .catch(() => undefined);
+  }
+
+  /**
+   * გაცდენილი ვიზიტების დახურვა.
+   *
+   * ექიმის დრო დაჯავშნილი იყო და უშედეგოდ გავიდა — ვიზიტი იკეტება,
+   * მშობელს კი შემდეგ ჯავშანზე ფასდაკლება რჩება: თანხის სრული
+   * დაკარგვა უსამართლოა, სრული დაბრუნება კი ექიმის დროს არაფრად
+   * აქცევდა.
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async markMissed(): Promise<void> {
+    const cutoff = new Date(Date.now() - LATE_AFTER_MINUTES * 60 * 1000);
+
+    const missed = await this.prisma.videoVisit.findMany({
+      where: {
+        deletedAt: null,
+        status: VideoVisitStatus.SCHEDULED,
+        scheduledAt: { lt: cutoff },
+        parentJoinedAt: null,
+      },
+      select: { id: true, parentId: true, scheduledAt: true },
+      take: 50,
+    });
+
+    for (const visit of missed) {
+      await this.prisma.videoVisit.update({
+        where: { id: visit.id },
+        data: { status: VideoVisitStatus.NO_SHOW, endedAt: new Date() },
+      });
+
+      await this.grantCredit(
+        visit.parentId,
+        'late',
+        'დაგვიანებული ვიზიტის ფასდაკლება',
+        undefined,
+        LATE_COVER_PERCENT,
+      );
+
+      await this.tellMissed(visit.parentId, visit.scheduledAt).catch(() => undefined);
+      this.logger.warn(`ვიზიტი ${visit.id} გაცდენილად აღინიშნა`);
+    }
+  }
+
+  private async tellMissed(parentId: string, when: Date | null): Promise<void> {
+    const readable = when ? formatTbilisi(when) : null;
+    const share = 100 - LATE_COVER_PERCENT;
+    const price = `$${(Math.round((VISIT_PRICE_MINOR * share) / 100) / 100).toFixed(2)}`;
+
+    await this.notifications
+      .push({
+        userId: parentId,
+        title: 'ვიზიტი ვერ შედგა',
+        body:
+          `სამწუხაროდ, ${readable ? `${readable}-ზე დანიშნულ ` : ''}ვიზიტზე დააგვიანეთ. `
+          + `გთხოვთ, ხელახლა ჩაეწეროთ — შემდეგ ჯავშანზე ღირებულების მხოლოდ `
+          + `${share}%-ს (${price}) გადაიხდით.`,
+      })
+      .catch(() => undefined);
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { phone: true },
+    });
+    if (!parent?.phone) return;
+
+    await this.sms
+      .send({
+        userId: parentId,
+        phone: parent.phone,
+        templateKey: 'video_visit_missed',
+        body:
+          `AskDrTeo: სამწუხაროდ, ${readable ? `${readable}-ის ` : ''}ვიზიტი ვერ შედგა — `
+          + `დაგვიანება თქვენი მიზეზით მოხდა და ექიმის დრო დაიხარჯა. `
+          + `ამის გამო შემდეგი ვიზიტის დასაჯავშნად იხდით ღირებულების `
+          + `${share}%-ს — ${price}.`,
       })
       .catch(() => undefined);
   }

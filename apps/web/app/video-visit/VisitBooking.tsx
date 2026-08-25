@@ -22,11 +22,16 @@ const MONTHS = [
 export function VisitBooking({
   days,
   price,
+  basePrice,
+  coverPercent,
   freeCredits,
   childProfiles,
 }: {
   days: VisitDay[];
   price: string;
+  basePrice: string;
+  /** რამდენ პროცენტს ფარავს მოქმედი უფლება */
+  coverPercent: number;
   /** უფასო ვიზიტების ნაშთი — პრომო კოდიდან */
   freeCredits: number;
   childProfiles: ChildSummary[];
@@ -78,11 +83,18 @@ export function VisitBooking({
         5 წუთით ადრე მზად იყავით.
       </p>
 
-      {freeCredits > 0 && (
+      {freeCredits > 0 ? (
         <p className={styles.freeNote}>
           თქვენ გაქვთ {freeCredits} უფასო ვიზიტი — ეს ჯავშანი გადახდას არ
           მოითხოვს.
         </p>
+      ) : (
+        coverPercent > 0 && (
+          <p className={styles.discountNote}>
+            წინა ვიზიტზე დაგვიანების გამო ამ ჯავშანზე ღირებულების მხოლოდ{' '}
+            {100 - coverPercent}%-ს იხდით — <s>{basePrice}</s> <strong>{price}</strong>
+          </p>
+        )
       )}
 
       <div className={styles.days}>
@@ -147,7 +159,11 @@ export function VisitBooking({
         disabled={!selected || busy}
         onClick={book}
       >
-        {busy ? 'იგზავნება…' : freeCredits > 0 ? 'ჯავშნა — უფასოდ' : `ჯავშნა — ${price}`}
+        {busy
+          ? 'იგზავნება…'
+          : freeCredits > 0
+            ? 'ჯავშნა — უფასოდ'
+            : `ჯავშნა — ${price}`}
       </button>
     </section>
   );

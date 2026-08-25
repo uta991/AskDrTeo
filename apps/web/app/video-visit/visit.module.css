@@ -499,3 +499,16 @@
   padding: 8px 12px;
   border-radius: var(--radius-lg);
 }
+
+.discountNote {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--primary-soft);
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+}
+
+.discountNote s {
+  color: var(--text-secondary);
+}
