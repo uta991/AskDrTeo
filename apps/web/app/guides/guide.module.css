@@ -246,3 +246,53 @@
   max-width: 620px;
   margin: 0 auto;
 }
+
+/* ── ტელეფონი ───────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  .page {
+    padding: 16px 14px 44px;
+    gap: 16px;
+  }
+
+  .section,
+  .card {
+    padding: 16px;
+    border-radius: var(--radius-xl);
+  }
+
+  .title {
+    font-size: 21px;
+  }
+
+  /* ჩეკლისტის ჯგუფები ერთ სვეტში — ორი სვეტი ტელეფონზე
+     პუნქტებს სამ სტრიქონად ტეხდა */
+  .groups {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .checklistHead {
+    align-items: center;
+  }
+
+  .item {
+    font-size: 15px;
+    /* თითისთვის მეტი ადგილი — 18px-იან კვადრატში ძნელი მოსახვედრია */
+    padding: 3px 0;
+  }
+
+  .box {
+    width: 20px;
+    height: 20px;
+  }
+
+  .videoLink {
+    padding: 12px 14px;
+  }
+}

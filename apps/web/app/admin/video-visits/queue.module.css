@@ -237,3 +237,56 @@
   padding: 4px;
   white-space: nowrap;
 }
+
+/* ── ტელეფონი ───────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  /* მოქმედებები ქვემოთ ეშვება და მთელ სიგანეს იკავებს —
+     გვერდით სვეტში ღილაკები ორ სიმბოლომდე იკუმშებოდა */
+  .rowActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .rowActions > * {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .confirm {
+    flex-direction: row;
+    flex-basis: 100%;
+  }
+
+  .timeRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+
+  .detailGrid span {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .dayBar {
+    margin: 12px 0 10px;
+  }
+
+  .dayNav {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
