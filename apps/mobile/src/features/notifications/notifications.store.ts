@@ -8,6 +8,7 @@ export interface AppNotification {
   data: {
     conversationId?: string;
     appointmentId?: string;
+    videoVisitId?: string;
     vaccinationHistory?: boolean;
     vaccinations?: boolean;
     feedbackToken?: string;

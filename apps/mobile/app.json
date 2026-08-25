@@ -14,14 +14,27 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ge.askdrteo.app"
+      "bundleIdentifier": "ge.askdrteo.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ვიდეო ვიზიტისთვის აპლიკაციას კამერაზე წვდომა სჭირდება.",
+        "NSMicrophoneUsageDescription": "ვიდეო ვიზიტისთვის აპლიკაციას მიკროფონზე წვდომა სჭირდება.",
+        "UIBackgroundModes": [
+          "audio",
+          "voip"
+        ]
+      }
     },
     "android": {
       "package": "ge.askdrteo.app",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/adaptive-icon.png"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "MODIFY_AUDIO_SETTINGS",
+        "RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",

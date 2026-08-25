@@ -120,7 +120,7 @@ export function ProfileTab() {
               { label: 'ზრდის დღიური', path: '/growth' },
               { label: 'აცრების კალენდარი', path: '/vaccinations' },
               { label: 'ვიდეო ბიბლიოთეკა', path: '/videos' },
-              { label: 'ვიზიტის ჯავშანი', path: '/booking' },
+              { label: 'ვიზიტი პედიატრთან', path: '/video-visit' },
               { label: 'შეტყობინებები', path: '/notifications' },
             ].map((row) => (
               <Pressable

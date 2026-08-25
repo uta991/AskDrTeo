@@ -169,13 +169,6 @@ export function HomeTab() {
                 onPress: () => router.push('/videos'),
               },
               {
-                key: 'booking',
-                icon: 'calendar' as const,
-                color: '#2E9E5B',
-                label: 'ჯავშანი',
-                onPress: () => router.push('/booking'),
-              },
-              {
                 key: 'nutrition',
                 icon: 'nutrition' as const,
                 color: '#57A63A',
@@ -209,7 +202,7 @@ export function HomeTab() {
 
         {/* ── შემდეგი ვიზიტი ────────────────────────────────── */}
         {!isStaff && (
-          <Pressable style={styles.nextVisit} onPress={() => router.push('/booking')}>
+          <Pressable style={styles.nextVisit} onPress={() => router.push('/video-visit')}>
             <View style={styles.nextVisitIcon}>
               <Icon name="consultation" size={20} color={colors.primaryDeep} strokeWidth={1.9} />
             </View>

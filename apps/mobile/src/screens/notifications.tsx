@@ -21,7 +21,8 @@ function timeAgo(iso: string): string {
 /** სად გადავიდეს დაჭერისას — შეტყობინება კონტექსტს ატარებს. */
 function targetFor(item: AppNotification): string | null {
   if (item.data?.conversationId) return '/chat';
-  if (item.data?.appointmentId) return '/booking';
+  if (item.data?.appointmentId) return '/video-visit';
+  if (item.data?.videoVisitId) return '/video-visit';
   if (item.data?.vaccinationHistory) return '/vaccinations?mode=history';
   if (item.data?.vaccinations) return '/vaccinations';
   return null;

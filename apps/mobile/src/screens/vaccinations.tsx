@@ -90,7 +90,7 @@ export default function VaccinationsScreen() {
               : 'დარჩენილი აცრების სია SMS-ითაც გამოგიგზავნეთ.'}
           </Text>
 
-          <Button title="ვიზიტის დაჯავშნა" onPress={() => router.push('/booking')} />
+          <Button title="ვიზიტის დაჯავშნა" onPress={() => router.push('/video-visit')} />
           <Button
             title="კალენდარის ნახვა"
             variant="outline"
