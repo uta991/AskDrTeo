@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConversationKind, UserRole, VideoVisitStatus } from '@prisma/client';
+import { ConversationKind, ParentRole, UserRole, VideoVisitStatus } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import {
@@ -18,6 +18,8 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { SmsService } from '../sms/sms.service';
 import { AgoraService } from './agora.service';
+import { ConclusionPdfService } from './conclusion-pdf.service';
+import { DiagnosesService } from './diagnoses.service';
 import {
   BE_READY_MINUTES,
   BOOKING_HORIZON_DAYS,
@@ -29,7 +31,11 @@ import {
   REMINDER_BEFORE_MINUTES,
   VISIT_PRICE_MINOR,
 } from './video-visits.config';
-import { CancelVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
+import {
+  CancelVideoVisitDto,
+  ConclusionDto,
+  ScheduleVideoVisitDto,
+} from './dto/video-visit.dto';
 
 /**
  * რამდენი წამი ჩაითვლება მხარე „ოთახში მყოფად" ბოლო ნიშნიდან.
@@ -55,6 +61,8 @@ export class VideoVisitsService {
     private readonly notifications: NotificationsService,
     private readonly sms: SmsService,
     private readonly agora: AgoraService,
+    private readonly pdf: ConclusionPdfService,
+    private readonly diagnoses: DiagnosesService,
   ) {}
 
   // ─── მშობელი ─────────────────────────────────────────────────────
@@ -263,11 +271,17 @@ export class VideoVisitsService {
     return visit;
   }
 
+  /**
+   * მშობლის ვიზიტები — უახლესი ხუთი.
+   *
+   * გრძელი სია ჯავშნის გვერდს ავსებდა და მთავარ მოქმედებას —
+   * ახალი დღის არჩევას — ქვემოთ ხრიდა.
+   */
   async listForParent(parentId: string) {
     const visits = await this.prisma.videoVisit.findMany({
       where: { parentId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
-      take: 30,
+      take: 5,
       include: { child: { select: { id: true, firstName: true } } },
     });
 
@@ -807,13 +821,188 @@ export class VideoVisitsService {
       .catch(() => undefined);
   }
 
+  /**
+   * ექიმის დასკვნა — დიაგნოზი და დანიშნულება.
+   *
+   * ივსება ზარის დროსვე ან მისი დასრულების შემდეგ: საუბრისას ექიმს
+   * ხშირად წერის დრო არ აქვს, დასკვნა კი მაინც უნდა დარჩეს.
+   * შენახვისთანავე მშობელს ეგზავნება — მაგრამ მხოლოდ ერთხელ.
+   */
+  async saveConclusion(id: string, dto: ConclusionDto, role: UserRole) {
+    if (role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('დასკვნას მხოლოდ ექიმი წერს');
+    }
+
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, parentId: true, status: true, conclusionSentAt: true },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    const diagnosis = dto.diagnosis.trim();
+    const prescription = dto.prescription?.trim() || '';
+
+    const updated = await this.prisma.videoVisit.update({
+      where: { id },
+      data: {
+        diagnosis,
+        prescription,
+        visitWeightKg: dto.weightKg ?? undefined,
+        visitHeightCm: dto.heightCm ?? undefined,
+        concludedAt: new Date(),
+      },
+    });
+
+    // ცნობარი თავად ივსება — შემდეგ ჯერზე ეს დიაგნოზი ამოტივტივდება
+    await this.diagnoses.remember(diagnosis).catch(() => undefined);
+
+    // გაგზავნა ერთხელ — შესწორებისას მშობელს SMS აღარ ვუმეორებთ
+    if (!visit.conclusionSentAt) {
+      await this.sendConclusion(id);
+    }
+
+    return updated;
+  }
+
+  /** დასკვნის გაგზავნა მშობელთან — შეტყობინება და SMS ბმულით. */
+  private async sendConclusion(id: string): Promise<void> {
+    const visit = await this.prisma.videoVisit.findUnique({
+      where: { id },
+      select: {
+        parentId: true,
+        diagnosis: true,
+        conclusionSentAt: true,
+        parent: { select: { phone: true } },
+      },
+    });
+    if (!visit?.diagnosis || visit.conclusionSentAt) return;
+
+    await this.prisma.videoVisit.update({
+      where: { id },
+      data: { conclusionSentAt: new Date() },
+    });
+
+    await this.notifications
+      .push({
+        userId: visit.parentId,
+        title: 'ექიმის დასკვნა მზადაა',
+        body: visit.diagnosis,
+        data: { videoVisitId: id, conclusion: true },
+      })
+      .catch(() => undefined);
+
+    if (!visit.parent.phone) return;
+
+    // ბმული პირდაპირ PDF-ზე მიდის — შუალედური გვერდი მშობელს
+    // ზედმეტ ნაბიჯს ამატებდა
+    const link = `${process.env.WEB_URL ?? 'https://askdrteo.com'}/api/conclusion/${id}`;
+
+    await this.sms
+      .send({
+        userId: visit.parentId,
+        phone: visit.parent.phone,
+        templateKey: 'visit_conclusion',
+        body: `AskDrTeo: ექიმის დასკვნა მზადაა. იხილეთ და ჩამოტვირთეთ: ${link}`,
+      })
+      .catch(() => undefined);
+  }
+
+  /** დასკვნა PDF-ად — მშობელსაც და ექიმსაც. */
+  async conclusionPdf(id: string, userId: string, role: UserRole): Promise<Buffer> {
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        parent: { select: { id: true, firstName: true, lastName: true, phone: true } },
+        child: { select: { firstName: true, lastName: true, birthDate: true, parentRole: true } },
+        staff: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    if (role === UserRole.PARENT && visit.parentId !== userId) {
+      throw new ForbiddenException('ეს ვიზიტი თქვენი არ არის');
+    }
+    if (!visit.diagnosis) throw new NotFoundException('დასკვნა ჯერ არ არის შევსებული');
+
+    return this.pdf.render({
+      visitDate: visit.scheduledAt ?? visit.requestedDate,
+      concludedAt: visit.concludedAt,
+      parentName: `${visit.parent.firstName} ${visit.parent.lastName}`,
+      parentPhone: visit.parent.phone,
+      parentRoleLabel: parentRoleLabel(visit.child?.parentRole),
+      childName: visit.child
+        ? `${visit.child.firstName} ${visit.child.lastName ?? ''}`.trim()
+        : null,
+      childBirthDate: visit.child?.birthDate ?? null,
+      doctorName: visit.staff
+        ? `${visit.staff.firstName} ${visit.staff.lastName}`
+        : 'პედიატრი',
+      diagnosis: visit.diagnosis,
+      diagnosisNote: visit.diagnosisNote,
+      prescription: visit.prescription ?? '',
+      weightKg: visit.visitWeightKg,
+      heightCm: visit.visitHeightCm,
+    });
+  }
+
+  /**
+   * მშობლის დასკვნები თარიღების მიხედვით — პროფილისთვის.
+   *
+   * ერთი წლის ვადა: ძველი დანიშნულება ბავშვის მიმდინარე
+   * მდგომარეობაზე აღარაფერს ამბობს და სიაშიც მხოლოდ ხელს უშლის.
+   */
+  async conclusionsFor(parentId: string) {
+    const from = new Date();
+    from.setFullYear(from.getFullYear() - 1);
+
+    const visits = await this.prisma.videoVisit.findMany({
+      where: {
+        parentId,
+        deletedAt: null,
+        diagnosis: { not: null },
+        concludedAt: { gte: from },
+      },
+      orderBy: { concludedAt: 'desc' },
+      select: {
+        id: true,
+        scheduledAt: true,
+        requestedDate: true,
+        concludedAt: true,
+        diagnosis: true,
+        diagnosisNote: true,
+        prescription: true,
+        child: { select: { id: true, firstName: true } },
+        staff: { select: { firstName: true, lastName: true } },
+      },
+    });
+
+    return visits.map((visit) => ({
+      id: visit.id,
+      date: visit.scheduledAt ?? visit.requestedDate,
+      concludedAt: visit.concludedAt,
+      diagnosis: visit.diagnosis,
+      diagnosisNote: visit.diagnosisNote,
+      prescription: visit.prescription,
+      child: visit.child,
+      doctorName: visit.staff
+        ? `${visit.staff.firstName} ${visit.staff.lastName}`
+        : 'პედიატრი',
+    }));
+  }
+
   async finish(id: string, role: UserRole) {
     if (role === UserRole.PARENT) throw new ForbiddenException('ეს პერსონალის უფლებაა');
 
-    return this.prisma.videoVisit.update({
+    const done = await this.prisma.videoVisit.update({
       where: { id },
       data: { status: VideoVisitStatus.DONE, endedAt: new Date() },
     });
+
+    // ზარის დასრულებისას დასკვნა ავტომატურად მიდის — თუ ექიმმა ის
+    // საუბრის დროსვე შეავსო. თუ არა, გაგზავნა შევსებაზე მოხდება.
+    await this.sendConclusion(id);
+
+    return done;
   }
 
   // ─── შიდა ────────────────────────────────────────────────────────
@@ -1093,4 +1282,17 @@ function joinWindow(
   if (now > closes) return { open: false, reason: 'too_late' };
 
   return { open: true };
+}
+
+/**
+ * მშობლის როლი დოკუმენტში.
+ *
+ * ანგარიში მამასაც შეიძლება ეკუთვნოდეს — „დედა" ყოველ შემთხვევაში
+ * ვერ დაიწერება. სანამ როლი მითითებული არაა, ნეიტრალური რჩება.
+ */
+function parentRoleLabel(role?: ParentRole | null): string {
+  if (role === ParentRole.MOTHER) return 'დედა';
+  if (role === ParentRole.FATHER) return 'მამა';
+  if (role === ParentRole.GUARDIAN) return 'მეურვე';
+  return 'მშობელი';
 }

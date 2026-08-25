@@ -200,3 +200,86 @@
     padding: 0 14px;
   }
 }
+
+/* ── ექიმის დასკვნები ─────────────────────────────────────── */
+
+.conclusion {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.conclusionHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.conclusionHead:hover {
+  background: var(--surface-muted);
+}
+
+.conclusionMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.conclusionMeta {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.conclusionArrow {
+  font-size: 20px;
+  color: var(--text-secondary);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.conclusionBody {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.conclusionLabel {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.conclusionText {
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.pdfLink {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #3d7e9b;
+  border: 1.5px solid #6fb6d9;
+  border-radius: var(--radius-pill);
+  padding: 7px 16px;
+}
+
+.pdfLink:hover {
+  background: #eaf4fa;
+}

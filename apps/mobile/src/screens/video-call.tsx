@@ -198,31 +198,70 @@ export default function VideoCallScreen() {
 
   return (
     <View style={styles.screen}>
-      {/* ექიმის გამოსახულება — მთელ ეკრანზე */}
-      {access && remoteUid !== null ? (
-        <RtcSurfaceView style={styles.remote} canvas={{ uid: remoteUid }} />
-      ) : (
-        <View style={[styles.remote, styles.waiting]}>
-          {!error && <ActivityIndicator color="#ffffff" />}
-          <Text style={styles.waitingText}>
-            {error ?? (doctorIn ? 'ექიმი ერთვება…' : 'ველოდებით ექიმს…')}
-          </Text>
-        </View>
-      )}
+      {/*
+        ვიდეო ჩატის გახსნისას ზემოთ ფიქსირდება და ადგილიდან აღარ იძვრის —
+        ადრე ჩატი მასზე იწვა და სქროლისას ექიმი თვალიდან ეკარგებოდა.
+      */}
+      <View style={chatOpen ? styles.stagePinned : styles.stageFull}>
+        {access && remoteUid !== null ? (
+          <RtcSurfaceView style={styles.remote} canvas={{ uid: remoteUid }} />
+        ) : (
+          <View style={[styles.remote, styles.waiting]}>
+            {!error && <ActivityIndicator color="#ffffff" />}
+            <Text style={styles.waitingText}>
+              {error ?? (doctorIn ? 'ექიმი ერთვება…' : 'ველოდებით ექიმს…')}
+            </Text>
+          </View>
+        )}
 
-      {/* საკუთარი გამოსახულება */}
-      {!!access && camOn && (
-        <View style={[styles.local, { top: insets.top + spacing.md }]}>
-          <RtcSurfaceView style={styles.localVideo} canvas={{ uid: 0 }} />
-        </View>
-      )}
+        {/* საკუთარი გამოსახულება */}
+        {!!access && camOn && (
+          <View style={[styles.local, { top: insets.top + spacing.md }]}>
+            <RtcSurfaceView style={styles.localVideo} canvas={{ uid: 0 }} />
+          </View>
+        )}
 
-      <Pressable
-        style={[styles.close, { top: insets.top + spacing.md }]}
-        onPress={() => router.back()}
-      >
-        <Icon name="chevron-left" size={22} color="#ffffff" strokeWidth={2} />
-      </Pressable>
+        <Pressable
+          style={[styles.close, { top: insets.top + spacing.md }]}
+          onPress={() => router.back()}
+        >
+          <Icon name="chevron-left" size={22} color="#ffffff" strokeWidth={2} />
+        </Pressable>
+
+        {/* მართვა ვიდეოს არეშია — ჩატის გახსნისასაც ხელმისაწვდომი */}
+        <View
+          style={[
+            styles.controls,
+            { paddingBottom: chatOpen ? spacing.md : insets.bottom + spacing.md },
+          ]}
+        >
+          <Pressable
+            style={[styles.control, !micOn && styles.controlOff]}
+            onPress={toggleMic}
+          >
+            <Text style={styles.controlIcon}>{micOn ? '🎙' : '🔇'}</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.control, !camOn && styles.controlOff]}
+            onPress={toggleCam}
+          >
+            <Text style={styles.controlIcon}>{camOn ? '📹' : '🚫'}</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.control, chatOpen && styles.controlOff]}
+            onPress={() => setChatOpen(!chatOpen)}
+          >
+            <Icon name="chat" size={22} color="#ffffff" strokeWidth={1.9} />
+            {messages.length > 0 && !chatOpen && <View style={styles.chatDot} />}
+          </Pressable>
+
+          <Pressable style={[styles.control, styles.hangUp]} onPress={() => router.back()}>
+            <Text style={styles.controlIcon}>✕</Text>
+          </Pressable>
+        </View>
+      </View>
 
       {/* ─── ჩატი ─────────────────────────────────────────────── */}
       {chatOpen && (
@@ -302,39 +341,18 @@ export default function VideoCallScreen() {
         </KeyboardAvoidingView>
       )}
 
-      {/* ─── მართვა ───────────────────────────────────────────── */}
-      {!chatOpen && (
-        <View style={[styles.controls, { paddingBottom: insets.bottom + spacing.md }]}>
-          <Pressable
-            style={[styles.control, !micOn && styles.controlOff]}
-            onPress={toggleMic}
-          >
-            <Text style={styles.controlIcon}>{micOn ? '🎙' : '🔇'}</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.control, !camOn && styles.controlOff]}
-            onPress={toggleCam}
-          >
-            <Text style={styles.controlIcon}>{camOn ? '📹' : '🚫'}</Text>
-          </Pressable>
-
-          <Pressable style={styles.control} onPress={() => setChatOpen(true)}>
-            <Icon name="chat" size={22} color="#ffffff" strokeWidth={1.9} />
-            {messages.length > 0 && <View style={styles.chatDot} />}
-          </Pressable>
-
-          <Pressable style={[styles.control, styles.hangUp]} onPress={() => router.back()}>
-            <Text style={styles.controlIcon}>✕</Text>
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#101014' },
+
+  /* ჩატი დახურულია — ვიდეო მთელ ეკრანზე */
+  stageFull: { flex: 1 },
+  /* ჩატი გახსნილია — ვიდეოს თავისი, უცვლელი სიმაღლე აქვს */
+  stagePinned: { height: '46%' },
+
   remote: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   waiting: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   waitingText: {
@@ -399,12 +417,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#45D67F',
   },
 
+  /* ვიდეოს ქვემოთ დარჩენილი ადგილი — ცალკე სქროლით */
   chat: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    maxHeight: '62%',
+    flex: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -422,7 +437,7 @@ const styles = StyleSheet.create({
   chatTitle: { ...typography.bodyMedium, color: colors.textPrimary },
   chatClose: { ...typography.small, color: colors.skyBlueDeep, fontWeight: '600' },
 
-  feed: { flexGrow: 0 },
+  feed: { flex: 1 },
   feedContent: { padding: spacing.md, gap: spacing.xs },
   chatEmpty: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
 

@@ -1,5 +1,18 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  StreamableFile,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import {
   CurrentUser,
   type AuthenticatedUser,
@@ -9,9 +22,12 @@ import { ChatService } from '../chat/chat.service';
 import { SendMessageDto } from '../chat/dto/chat.dto';
 import {
   CancelVideoVisitDto,
+  ConclusionDto,
+  NewMedicationDto,
   RequestVideoVisitDto,
   ScheduleVideoVisitDto,
 } from './dto/video-visit.dto';
+import { DiagnosesService } from './diagnoses.service';
 import { VideoVisitsService } from './video-visits.service';
 import { DAILY_CAPACITY, VISIT_CURRENCY, VISIT_PRICE_MINOR } from './video-visits.config';
 
@@ -98,6 +114,24 @@ export class VideoVisitsController {
     return this.visits.renewToken(id, user.id, user.role);
   }
 
+  @Get('conclusions')
+  @ApiOperation({ summary: 'ექიმის დასკვნები — თარიღების მიხედვით' })
+  conclusions(@CurrentUser('id') userId: string) {
+    return this.visits.conclusionsFor(userId);
+  }
+
+  @Get(':id/conclusion.pdf')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'inline; filename="askdrteo-conclusion.pdf"')
+  @ApiOperation({ summary: 'დასკვნა PDF-ად' })
+  async conclusionPdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const pdf = await this.visits.conclusionPdf(id, user.id, user.role);
+    return new StreamableFile(pdf);
+  }
+
   @Get(':id/presence')
   @ApiOperation({ summary: 'ვინ არის ოთახში ახლა' })
   presence(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
@@ -136,7 +170,48 @@ export class AdminVideoVisitsController {
   constructor(
     private readonly visits: VideoVisitsService,
     private readonly chat: ChatService,
+    private readonly diagnoses: DiagnosesService,
   ) {}
+
+  /**
+   * დიაგნოზის შეთავაზება პირველივე ასოებზე.
+   *
+   * ცნობარი თავად ივსება: ექიმის ერთხელ ჩაწერილი დიაგნოზი აქვე რჩება.
+   */
+  @Get('diagnoses')
+  @RequirePermission('video_visit.view')
+  @ApiOperation({ summary: 'დიაგნოზების შეთავაზება' })
+  suggestDiagnoses(@Query('q') q = '') {
+    return this.diagnoses.suggest(q);
+  }
+
+  /** დანიშნულების შეთავაზება — დოზები ბავშვის წონაზეა დათვლილი. */
+  @Get('diagnoses/prescription')
+  @RequirePermission('video_visit.view')
+  @ApiOperation({ summary: 'რეკომენდებული მედიკამენტები და დოზები' })
+  suggestPrescription(
+    @Query('diagnosis') diagnosis: string,
+    @Query('weightKg') weightKg: string,
+    @Query('ageMonths') ageMonths: string,
+  ) {
+    return this.diagnoses.suggestPrescription(
+      diagnosis ?? '',
+      Number(weightKg),
+      Number(ageMonths),
+    );
+  }
+
+  /** ექიმის დამატებული პრეპარატი — დოზირებით, გადასამოწმებლად. */
+  @Post('medications')
+  @RequirePermission('video_visit.view')
+  @ApiOperation({ summary: 'ახალი პრეპარატი ექიმის დოზირებით' })
+  addMedication(@Body() dto: NewMedicationDto, @CurrentUser() user: AuthenticatedUser) {
+    if (user.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('პრეპარატს მხოლოდ ექიმი ამატებს');
+    }
+
+    return this.diagnoses.addMedication({ ...dto, doctorId: user.id });
+  }
 
   @Get()
   @RequirePermission('video_visit.view')
@@ -185,6 +260,35 @@ export class AdminVideoVisitsController {
   ) {
     const conversationId = await this.visits.conversationFor(id, user.id, user.role);
     return this.chat.send(conversationId, dto, user.id, user.role);
+  }
+
+  /**
+   * დასკვნა — ზარის დროსაც და მის შემდეგაც.
+   *
+   * `video_visit.view` საკმარისია მისამართამდე მისასვლელად; თავად
+   * წერის უფლებას სერვისი ამოწმებს — დასკვნა მხოლოდ ექიმისაა.
+   */
+  @Patch(':id/conclusion')
+  @RequirePermission('video_visit.view')
+  @ApiOperation({ summary: 'დიაგნოზი და დანიშნულება' })
+  conclusion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ConclusionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.visits.saveConclusion(id, dto, user.role);
+  }
+
+  @Get(':id/conclusion.pdf')
+  @RequirePermission('video_visit.view')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'inline; filename="askdrteo-conclusion.pdf"')
+  async conclusionPdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const pdf = await this.visits.conclusionPdf(id, user.id, user.role);
+    return new StreamableFile(pdf);
   }
 
   @Patch(':id/cancel')

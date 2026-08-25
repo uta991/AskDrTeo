@@ -247,6 +247,18 @@ model RolePermission {
 // 2. ბავშვის პროფილი
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * მშობლის როლი ბავშვთან.
+ * ანგარიში დედასაც შეიძლება ეკუთვნოდეს და მამასაც — დოკუმენტში
+ * „დედა" ყოველ შემთხვევაში ვერ დაიწერება.
+ */
+enum ParentRole {
+  MOTHER
+  FATHER
+  GUARDIAN
+  UNSPECIFIED
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -254,13 +266,15 @@ enum Gender {
 }
 
 model Child {
-  id        String   @id @default(uuid())
-  parentId  String
-  parent    User     @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  firstName String
-  lastName  String?
-  birthDate DateTime
-  gender    Gender   @default(UNSPECIFIED)
+  id         String     @id @default(uuid())
+  parentId   String
+  parent     User       @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  /// ანგარიშის მფლობელი ამ ბავშვის დედაა თუ მამა
+  parentRole ParentRole @default(UNSPECIFIED)
+  firstName  String
+  lastName   String?
+  birthDate  DateTime
+  gender     Gender     @default(UNSPECIFIED)
 
   /// ფოტო კერძოა — ბმული ყოველ ჯერზე ხელმოწერით გამოაქვს.
   /// გაუთვალისწინებელი საჯარო URL bearer-ბმულია: ვინც მიიღებს,
@@ -1250,6 +1264,16 @@ model Medication {
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
 
+  /// ექიმის მიერ ვიზიტზე დამატებული პრეპარატი.
+  ///
+  /// დოზირება ექიმმა ხელით შეიყვანა და პედიატრის დადასტურებამდე
+  /// კალკულატორის საჯარო სიაში არ ჩნდება — ბავშვის დოზა შემოწმების
+  /// გარეშე ვერ გავრცელდება.
+  addedByDoctorId String?
+  needsReview     Boolean @default(false)
+
+  diagnoses DiagnosisMedication[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -1622,6 +1646,57 @@ model Appointment {
 }
 
 /**
+ * დიაგნოზების ცნობარი.
+ * ექიმი ხელახლა არ კრებს იმას, რაც ერთხელ უკვე დაწერა: ჩაწერილი
+ * დიაგნოზი ცნობარში რჩება და შემდეგ ჯერზე პირველივე ასოებზე
+ * ამოტივტივდება. ხშირად გამოყენებული ზემოთ დგება.
+ * ნაწილი წინასწარ არის შევსებული, რომ სია ცარიელი არ დახვდეს.
+ */
+model DiagnosisEntry {
+  id   String @id @default(uuid())
+  name String @unique
+
+  /// რა არის ეს დაავადება — მშობლისთვის გასაგები ენით.
+  /// დასკვნაში ავტომატურად ჩაიწერება; ექიმს შეცვლა შეუძლია.
+  description String?
+  /// არამედიკამენტური რჩევა — რეჟიმი, სითხე, კონტროლი
+  advice      String?
+
+  /// რამდენჯერ დაისვა — სიის თანმიმდევრობას განსაზღვრავს
+  usageCount Int     @default(0)
+  /// წინასწარ შევსებული ჩანაწერი ექიმის დამატებულისგან განსხვავდება
+  isBuiltIn  Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  medications DiagnosisMedication[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([usageCount])
+  @@map("diagnosis_entries")
+}
+
+/**
+ * დიაგნოზი ↔ რეკომენდებული მედიკამენტი. დოზა წონაზე ითვლება.
+ */
+model DiagnosisMedication {
+  id          String         @id @default(uuid())
+  diagnosisId String
+  diagnosis   DiagnosisEntry @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  medicationId String
+  medication   Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  /// როდის მიიღოს — „ცხელებაზე", „საჭიროებისამებრ"
+  note     String?
+  position Int     @default(0)
+
+  @@unique([diagnosisId, medicationId])
+  @@map("diagnosis_medications")
+}
+
+/**
  * ვიდეო ვიზიტი — ჩატისგან სრულიად ცალკე სერვისი.
  * ჩატი მიმოწერაა და პაკეტში შედის; ვიდეო ვიზიტი კი ერთჯერადი,
  * ცალკე ანაზღაურებადი შეხვედრაა ექიმთან. ამიტომ საკუთარი ცხრილი
@@ -1697,6 +1772,19 @@ model VideoVisit {
   /// ვიზიტს ატარებს — მხოლოდ Super Admin
   staffId String?
   staff   User?   @relation("VideoVisitStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  /// ექიმის დასკვნა — ივსება ზარის დროს ან მის შემდეგ
+  diagnosis        String?
+  /// დიაგნოზის ახსნა — ცნობარიდან ავტომატურად, ექიმის რედაქტირებით
+  diagnosisNote    String?
+  prescription     String?
+  /// ვიზიტის დროინდელი გაზომვები — დოზა სწორედ მათზეა დათვლილი
+  visitHeightCm    Float?
+  visitWeightKg    Float?
+  /// როდის დაასრულა ექიმმა დასკვნა
+  concludedAt      DateTime?
+  /// როდის გაეგზავნა მშობელს — გამეორებას კეტავს
+  conclusionSentAt DateTime?
 
   parentJoinedAt DateTime?
   staffJoinedAt  DateTime?

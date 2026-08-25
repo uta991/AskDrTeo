@@ -162,8 +162,8 @@ export function VisitBooking({
         {busy
           ? 'იგზავნება…'
           : freeCredits > 0
-            ? 'ჯავშნა — უფასოდ'
-            : `ჯავშნა — ${price}`}
+            ? 'დაჯავშნა — 0 ₾'
+            : `დაჯავშნა — ${price}`}
       </button>
     </section>
   );

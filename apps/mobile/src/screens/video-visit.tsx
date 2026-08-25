@@ -113,10 +113,7 @@ export default function VideoVisitScreen() {
             <Icon name="consultation" size={34} color="#6FB6D9" strokeWidth={1.9} />
           </View>
           <Text style={styles.introTitle}>ონლაინ შეხვედრა ექიმთან</Text>
-          <Text style={styles.introText}>
-            ვიდეო, ხმა და ჩატი ერთ ოთახში. დღეში მხოლოდ{' '}
-            {offer?.dailyCapacity ?? 5} ვიზიტი ტარდება.
-          </Text>
+          <Text style={styles.introText}>ვიდეო, ხმა და ჩატი ერთ ოთახში.</Text>
         </View>
 
         {loading && !offer && <ActivityIndicator color={colors.skyBlue} />}
@@ -220,7 +217,7 @@ export default function VideoVisitScreen() {
           {!!notice && <Text style={styles.notice}>{notice}</Text>}
 
           <Button
-            title={offer?.freeCredits ? 'ჯავშნა — უფასოდ' : `ჯავშნა — ${offer?.price ?? ''}`}
+            title={offer?.freeCredits ? 'დაჯავშნა — 0 ₾' : `დაჯავშნა — ${offer?.price ?? ''}`}
             tone="blue"
             onPress={() =>
               selected && void book({ date: selected, childId: activeChild?.id })

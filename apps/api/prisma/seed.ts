@@ -1,6 +1,7 @@
 import { seedPlans } from './seed-plans';
 import { PrismaClient, UserRole } from '@prisma/client';
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from '../src/modules/permissions/permission-catalog';
+import { seedDiagnoses } from './seed-diagnoses';
 
 const prisma = new PrismaClient();
 
@@ -73,6 +74,8 @@ async function main(): Promise<void> {
     });
   }
   console.log(`✓ ${SETTINGS.length} სისტემური პარამეტრი`);
+
+  await seedDiagnoses(prisma);
 }
 
 main()

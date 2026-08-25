@@ -15,7 +15,8 @@
     "lint": "eslint \"src/**/*.ts\" --fix",
     "videos:reconcile": "tsx --env-file=.env prisma/reconcile-videos.ts",
     "visit:test": "npx tsx --env-file=.env prisma/test-visit.ts",
-    "cleanup:test": "npx tsx --env-file=.env prisma/cleanup-test-data.ts"
+    "cleanup:test": "npx tsx --env-file=.env prisma/cleanup-test-data.ts",
+    "pdf:preview": "npx tsx --env-file=.env prisma/preview-conclusion.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -47,6 +48,7 @@
     "multer": "^2.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.15.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -56,6 +58,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
     "prisma": "^6.2.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

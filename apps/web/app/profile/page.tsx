@@ -12,6 +12,7 @@ import { AddMedication } from '../admin/medications/AddMedication';
 import { MedicationRow } from '../admin/medications/MedicationRow';
 import { UserSearch } from '../admin/users/UserSearch';
 import { PromoRedeem } from '../account/PromoRedeem';
+import { Conclusions, type Conclusion } from './Conclusions';
 import { PasswordForm } from './PasswordForm';
 import styles from './profile.module.css';
 
@@ -47,7 +48,7 @@ export default async function ProfilePage({
   const params = new URLSearchParams({ role: 'PARENT', perPage: '50' });
   if (q.trim()) params.set('search', q.trim());
 
-  const [parents, staff, plans, promos, medications] = await Promise.all([
+  const [parents, staff, plans, promos, medications, conclusions] = await Promise.all([
     isStaff ? apiFetch<{ items: AdminUser[]; total: number }>(`/admin/users?${params}`) : null,
     isSuperAdmin
       ? apiFetch<{ items: AdminUser[] }>(
@@ -57,6 +58,8 @@ export default async function ProfilePage({
     apiFetch<PlanOption[]>('/plans'),
     canManageContent ? apiFetch<PromoCode[]>('/admin/promo') : null,
     canManageContent ? apiFetch<Medication[]>('/admin/medications') : null,
+    // დასკვნები მშობლისაა — პერსონალი მათ მომხმარებლის ბარათში ხედავს
+    isStaff ? null : apiFetch<Conclusion[]>('/video-visits/conclusions'),
   ]);
 
   return (
@@ -113,6 +116,21 @@ export default async function ProfilePage({
               </div>
             </section>
           </>
+        )}
+
+        {/* ── ექიმის დასკვნები ────────────────────────────────── */}
+        {!isStaff && (
+          <section className="card">
+            <h2 className={styles.sectionTitle}>
+              დიაგნოზები და დანიშნულებები{' '}
+              <span className={styles.count}>({conclusions?.length ?? 0})</span>
+            </h2>
+            <p className={styles.hint}>
+              ონლაინ ვიზიტების დასკვნები. ინახება გაცემიდან ერთი წლის განმავლობაში.
+            </p>
+
+            <Conclusions items={conclusions ?? []} />
+          </section>
         )}
 
         {/* ── მშობლების სია ───────────────────────────────────── */}

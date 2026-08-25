@@ -50,6 +50,10 @@ COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/package.json apps/api/package.json
 COPY --from=builder /app/apps/api/prisma apps/api/prisma
 
+# შრიფტები და ექიმის ფოტო — დასკვნის PDF მათ გარეშე ცარიელ
+# კვადრატებს დახატავდა: Linux-ზე ქართული სისტემური შრიფტი არ არის
+COPY --from=builder /app/apps/api/assets apps/api/assets
+
 # node_modules/@askdrteo/* symlink-ებია — შედგენილი JS უნდა გადმოვიდეს,
 # თორემ გაშვებისას require ჩავარდება
 COPY --from=builder /app/packages packages

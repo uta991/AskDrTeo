@@ -24,7 +24,7 @@ import { useActiveChild } from '@/features/children/children.store';
 import { useAi } from '@/features/ai/ai.store';
 
 const SUGGESTIONS = [
-  'რამდენს უნდა ეძინოს ჩემი ასაკის ბავშვს?',
+  'რამდენი უნდა ეძინოს ჩემი ასაკის ბავშვს?',
   'როგორ დავიწყო დამატებითი კვება?',
   'ცხელება აქვს — როდის მივმართო ექიმს?',
 ];

@@ -37,7 +37,6 @@ export default async function VideoVisitPage({
         <h1 className={styles.title}>ვიზიტი პედიატრთან</h1>
         <p className={styles.subtitle}>
           ონლაინ შეხვედრა ექიმთან — ვიდეო, ხმა და ჩატი ერთ ოთახში.
-          დღეში მხოლოდ {offer?.dailyCapacity ?? 5} ვიზიტი ტარდება.
         </p>
       </header>
 

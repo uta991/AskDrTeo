@@ -110,6 +110,9 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
               <Link href="/account" className={styles.item} role="menuitem">
                 ჩემი კაბინეტი
               </Link>
+              <Link href="/conclusions" className={styles.item} role="menuitem">
+                დიაგნოზები და დანიშნულებები
+              </Link>
               <Link href="/account/child" className={styles.item} role="menuitem">
                 ბავშვის დამატება
               </Link>
