@@ -204,7 +204,7 @@ export function HomeTab() {
         {!isStaff && (
           <Pressable style={styles.nextVisit} onPress={() => router.push('/video-visit')}>
             <View style={styles.nextVisitIcon}>
-              <Icon name="consultation" size={20} color={colors.primaryDeep} strokeWidth={1.9} />
+              <Icon name="consultation" size={30} color="#6FB6D9" strokeWidth={1.9} />
             </View>
 
             <View style={styles.nextVisitText}>
@@ -213,7 +213,7 @@ export function HomeTab() {
             </View>
 
             <View style={styles.nextVisitCta}>
-              <Icon name="calendar" size={26} color="#6FB6D9" strokeWidth={1.9} />
+              <Icon name="calendar" size={24} color="#6FB6D9" strokeWidth={1.9} />
               <Text style={styles.nextVisitCtaText}>დაჯავშნე ვიზიტი</Text>
               <Icon name="arrow-right" size={16} color="#6FB6D9" strokeWidth={1.9} />
             </View>
@@ -373,32 +373,34 @@ const styles = StyleSheet.create({
   },
 
   // ── შემდეგი ვიზიტი ──────────────────────────────────────
+  // საიტის ზოლის იგივე ხასიათი: თხელი ღია კანტი და რბილი ჩრდილი
   nextVisit: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
     padding: spacing.md,
     marginBottom: spacing.lg,
     ...shadows.card,
   },
+  // ფონის გარეშე — მხოლოდ სტეტოსკოპი, ისევე როგორც საიტზე
   nextVisitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
   },
   nextVisitCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginLeft: spacing.sm,
+    gap: 6,
+    marginLeft: spacing.xs,
     paddingLeft: spacing.sm,
     borderLeftWidth: 1,
-    borderLeftColor: colors.border,
+    borderLeftColor: '#EDEDED',
   },
   nextVisitCtaText: { ...typography.small, fontSize: 13.5, fontWeight: '600', color: '#6FB6D9' },
   nextVisitText: { flex: 1, gap: 2 },

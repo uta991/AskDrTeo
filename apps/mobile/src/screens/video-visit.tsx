@@ -107,6 +107,18 @@ export default function VideoVisitScreen() {
       <ScreenHeader title="ვიზიტი პედიატრთან" onBack={goBack} tone="blue" />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* ახსნა თავშივე — მშობელს ჯერ უნდა ესმოდეს, რას ჯავშნის */}
+        <View style={styles.intro}>
+          <View style={styles.introIcon}>
+            <Icon name="consultation" size={34} color="#6FB6D9" strokeWidth={1.9} />
+          </View>
+          <Text style={styles.introTitle}>ონლაინ შეხვედრა ექიმთან</Text>
+          <Text style={styles.introText}>
+            ვიდეო, ხმა და ჩატი ერთ ოთახში. დღეში მხოლოდ{' '}
+            {offer?.dailyCapacity ?? 5} ვიზიტი ტარდება.
+          </Text>
+        </View>
+
         {loading && !offer && <ActivityIndicator color={colors.skyBlue} />}
 
         {items.length > 0 && (
@@ -115,20 +127,26 @@ export default function VideoVisitScreen() {
 
             {items.map((visit) => (
               <View key={visit.id} style={styles.visitRow}>
-                <View style={styles.visitMain}>
+                <View style={styles.visitHead}>
                   <Text style={styles.visitDate}>
                     {visit.scheduledAt ? tbilisi(visit.scheduledAt) : visit.date}
                   </Text>
-                  <Text style={styles.visitMeta}>
-                    {STATUS_LABELS[visit.status]}
-                    {visit.child ? ` · ${visit.child.firstName}` : ''}
-                  </Text>
-
-                  {doctorIn[visit.id] && (
-                    <Text style={styles.doctorIn}>● ექიმი კავშირზეა</Text>
+                  {!!visit.child && (
+                    <Text style={styles.visitChild}>{visit.child.firstName}</Text>
                   )}
                 </View>
 
+                <Text style={styles.visitMeta}>{STATUS_LABELS[visit.status]}</Text>
+
+                {doctorIn[visit.id] && (
+                  <View style={styles.doctorIn}>
+                    <View style={styles.doctorDot} />
+                    <Text style={styles.doctorInText}>ექიმი კავშირზეა</Text>
+                  </View>
+                )}
+
+                {/* ღილაკი მთელ სიგანეზე — ვიწრო ეკრანზე გვერდით
+                    ჩამატება წარწერას ორ სტრიქონად ტეხდა */}
                 {visit.canJoin ? (
                   <Pressable
                     style={styles.joinButton}
@@ -136,15 +154,17 @@ export default function VideoVisitScreen() {
                     onPress={() => void enter(visit)}
                   >
                     <Icon name="consultation" size={18} color="#ffffff" strokeWidth={1.9} />
-                    <Text style={styles.joinText}>ჩართვა</Text>
+                    <Text style={styles.joinText}>ონლაინ ჩართვა</Text>
                   </Pressable>
                 ) : visit.status === 'REQUESTED' || visit.status === 'SCHEDULED' ? (
-                  <Pressable disabled={busy} onPress={() => void drop(visit)}>
-                    <Text style={styles.cancelLink}>გაუქმება</Text>
+                  <Pressable
+                    style={styles.cancelButton}
+                    disabled={busy}
+                    onPress={() => void drop(visit)}
+                  >
+                    <Text style={styles.cancelLink}>ჯავშნის გაუქმება</Text>
                   </Pressable>
-                ) : (
-                  <Text style={styles.visitWait}>—</Text>
-                )}
+                ) : null}
               </View>
             ))}
           </AuthCard>
@@ -214,6 +234,44 @@ export default function VideoVisitScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.xl, gap: spacing.sm, paddingBottom: spacing.xl },
+
+  intro: { alignItems: 'center', gap: 6, paddingBottom: spacing.xs },
+  introIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.skyBlueSoft,
+  },
+  introTitle: { ...typography.bodyMedium, fontSize: 17, color: colors.textPrimary },
+  introText: {
+    ...typography.small,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+
+  visitRow: {
+    gap: 5,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  visitHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  visitChild: {
+    ...typography.small,
+    fontSize: 11,
+    color: colors.textSecondary,
+    backgroundColor: colors.surfaceMuted,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  doctorIn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  doctorDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2E9E5B' },
+  doctorInText: { ...typography.small, fontSize: 12, color: '#2E9E5B', fontWeight: '600' },
+  cancelButton: { alignSelf: 'flex-start', paddingVertical: 4 },
   card: { gap: spacing.sm },
 
   cardTitle: { ...typography.bodyMedium, color: colors.textPrimary },
@@ -245,31 +303,22 @@ const styles = StyleSheet.create({
   dayNumber: { ...typography.bodyMedium, color: colors.textPrimary },
   dayFree: { ...typography.small, fontSize: 9.5, color: colors.textSecondary },
 
-  visitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  visitMain: { flex: 1, gap: 2 },
-  visitDate: { ...typography.small, color: colors.textPrimary },
-  visitMeta: { ...typography.small, fontSize: 11, color: colors.textSecondary },
+  visitDate: { ...typography.bodyMedium, fontSize: 15, color: colors.textPrimary },
+  visitMeta: { ...typography.small, fontSize: 12, color: colors.textSecondary },
   visitWait: { ...typography.small, fontSize: 11, color: colors.textSecondary },
   cancelLink: { ...typography.small, fontSize: 12, color: colors.danger },
-  doctorIn: { ...typography.small, fontSize: 11, color: '#2E9E5B', fontWeight: '600' },
 
   joinButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: colors.skyBlueDeep,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 9,
+    paddingVertical: 11,
     borderRadius: radius.pill,
+    marginTop: 4,
   },
-  joinText: { ...typography.small, fontSize: 13, color: '#ffffff', fontWeight: '600' },
+  joinText: { ...typography.small, fontSize: 14, color: '#ffffff', fontWeight: '700' },
 
   error: { ...typography.small, color: colors.danger },
   notice: { ...typography.small, color: colors.skyBlueDeep },
