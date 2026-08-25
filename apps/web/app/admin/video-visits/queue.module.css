@@ -290,3 +290,122 @@
     font-size: 13px;
   }
 }
+
+/* ── ექიმის დასკვნა ───────────────────────────────────────── */
+
+.conclusion {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1.5px solid #6fb6d9;
+  border-radius: var(--radius-xl);
+  background: #f8fcfe;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conclusionTitle {
+  font-size: 15px;
+  color: #3d7e9b;
+}
+
+.measureRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* შეთავაზების სია შენატანზე იწვა — ამიტომ ცალკე ფენაზეა */
+.suggestWrap {
+  position: relative;
+}
+
+.suggestList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin-top: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.suggestItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.suggestItem:hover {
+  background: #eaf4fa;
+}
+
+.suggestCount {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  background: var(--surface-muted);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+
+.doses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doseChip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 9px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.doseChip:hover:not(:disabled) {
+  border-color: #6fb6d9;
+}
+
+.doseChip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.doseChip span {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.adviceHint {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.savedNote {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e9e5b;
+}

@@ -206,8 +206,10 @@ export class AdminVideoVisitsController {
   @RequirePermission('video_visit.view')
   @ApiOperation({ summary: 'ახალი პრეპარატი ექიმის დოზირებით' })
   addMedication(@Body() dto: NewMedicationDto, @CurrentUser() user: AuthenticatedUser) {
-    if (user.role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('პრეპარატს მხოლოდ ექიმი ამატებს');
+    // პრეპარატს პერსონალი ამატებს; დოზირება ისედაც პედიატრის
+    // დადასტურებას ელოდება, სანამ კალკულატორში გამოჩნდება
+    if (user.role === UserRole.PARENT) {
+      throw new ForbiddenException('ეს პერსონალის უფლებაა');
     }
 
     return this.diagnoses.addMedication({ ...dto, doctorId: user.id });
@@ -233,6 +235,13 @@ export class AdminVideoVisitsController {
   @ApiOperation({ summary: 'ჩართვა — ექიმის მხრიდან' })
   join(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.visits.joinAsStaff(id, user.id, user.role);
+  }
+
+  @Get(':id')
+  @RequirePermission('video_visit.view')
+  @ApiOperation({ summary: 'ვიზიტის დეტალები — ზარის ოთახისთვის' })
+  detail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.visits.detail(id);
   }
 
   @Get(':id/presence')
@@ -265,8 +274,8 @@ export class AdminVideoVisitsController {
   /**
    * დასკვნა — ზარის დროსაც და მის შემდეგაც.
    *
-   * `video_visit.view` საკმარისია მისამართამდე მისასვლელად; თავად
-   * წერის უფლებას სერვისი ამოწმებს — დასკვნა მხოლოდ ექიმისაა.
+   * წერა პერსონალის უფლებაა: ადმინიც და ოპერატორიც ნიშნავენ
+   * დანიშნულებას. ვიდეო ზარში ჩართვა კი მხოლოდ ექიმს შეუძლია.
    */
   @Patch(':id/conclusion')
   @RequirePermission('video_visit.view')

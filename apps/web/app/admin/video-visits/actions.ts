@@ -27,6 +27,11 @@ export interface QueueVisit {
   parentWaiting: boolean;
   parentJoinedAt: string | null;
   staffJoinedAt: string | null;
+  diagnosis: string | null;
+  diagnosisNote: string | null;
+  prescription: string | null;
+  weightKg: number | null;
+  heightCm: number | null;
 }
 
 export interface Queue {
@@ -94,4 +99,82 @@ export async function queuePresence(date?: string): Promise<Record<string, boole
   if (!queue) return {};
 
   return Object.fromEntries(queue.visits.map((visit) => [visit.id, visit.parentWaiting]));
+}
+
+// ─── ექიმის დასკვნა ─────────────────────────────────────────────────
+
+export interface DiagnosisOption {
+  id: string;
+  name: string;
+  description: string | null;
+  advice: string | null;
+  usageCount: number;
+}
+
+export interface DoseItem {
+  medicationId: string;
+  name: string;
+  note: string | null;
+  needsReview: boolean;
+  dose: {
+    singleMgMin: number;
+    singleMgMax: number;
+    singleMlMin?: number;
+    singleMlMax?: number;
+    dosesPerDay: number;
+  } | null;
+  blocked: string | null;
+  concentration: string | null;
+}
+
+export interface PrescriptionSuggestion {
+  description: string | null;
+  advice: string | null;
+  items: DoseItem[];
+}
+
+/** დიაგნოზის შეთავაზება — ცნობარი ექიმის ნაწერით თავად ივსება. */
+export async function suggestDiagnoses(q: string): Promise<DiagnosisOption[]> {
+  return (
+    (await apiFetch<DiagnosisOption[]>(
+      `/admin/video-visits/diagnoses?q=${encodeURIComponent(q)}`,
+    )) ?? []
+  );
+}
+
+/** რეკომენდებული მედიკამენტები — დოზა ბავშვის წონაზეა დათვლილი. */
+export async function suggestPrescription(
+  diagnosis: string,
+  weightKg: number,
+  ageMonths: number,
+): Promise<PrescriptionSuggestion | null> {
+  const params = new URLSearchParams({
+    diagnosis,
+    weightKg: String(weightKg),
+    ageMonths: String(ageMonths),
+  });
+
+  return apiFetch<PrescriptionSuggestion>(
+    `/admin/video-visits/diagnoses/prescription?${params}`,
+  );
+}
+
+/** დასკვნის შენახვა — მშობელს მაშინვე მიდის შეტყობინება და SMS. */
+export async function saveConclusion(
+  id: string,
+  body: {
+    diagnosis: string;
+    diagnosisNote?: string;
+    prescription?: string;
+    weightKg?: number;
+    heightCm?: number;
+  },
+): Promise<{ error?: string }> {
+  try {
+    await apiMutate(`/admin/video-visits/${id}/conclusion`, 'PATCH', body);
+    revalidatePath('/admin/video-visits');
+    return {};
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'ვერ შევინახეთ' };
+  }
 }

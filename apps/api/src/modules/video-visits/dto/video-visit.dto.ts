@@ -42,6 +42,10 @@ export class ConclusionDto {
   @IsString() @MaxLength(2000)
   diagnosis!: string;
 
+  /** დიაგნოზის ახსნა — ცნობარიდან ავტომატურად, ექიმის რედაქტირებით */
+  @IsOptional() @IsString() @MaxLength(3000)
+  diagnosisNote?: string;
+
   @IsOptional() @IsString() @MaxLength(4000)
   prescription?: string;
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CallStage } from './CallStage';
+import { ConclusionForm } from '../admin/video-visits/ConclusionForm';
 import {
   sendVisitMessage,
   uploadVisitPhoto,
@@ -34,6 +35,7 @@ export function VisitRoom({
   admin,
   meId,
   title,
+  ageMonths,
 }: {
   visitId: string;
   /** არხი და ტოკენი — ინტერფეისს თავად ვხატავთ */
@@ -41,6 +43,8 @@ export function VisitRoom({
   admin: boolean;
   meId: string;
   title: string;
+  /** ბავშვის ასაკი — ექიმის დასკვნას დოზის დასათვლელად სჭირდება */
+  ageMonths?: number | null;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<VisitMessage[]>([]);
@@ -48,6 +52,7 @@ export function VisitRoom({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [presence, setPresence] = useState<Presence | null>(null);
+  const [tab, setTab] = useState<'chat' | 'conclusion'>('chat');
 
   const feedRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -150,7 +155,37 @@ export function VisitRoom({
         />
 
         <aside className={styles.chat}>
-          <h3 className={styles.chatTitle}>ჩატი</h3>
+          {/* ექიმს დასკვნა ზარის დროსვე უნდა შეეძლოს — შემდეგ მას
+              ხშირად აღარ უბრუნდებიან */}
+          {admin ? (
+            <div className={styles.tabs}>
+              <button
+                type="button"
+                className={tab === 'chat' ? styles.tabActive : styles.tab}
+                onClick={() => setTab('chat')}
+              >
+                ჩატი
+              </button>
+              <button
+                type="button"
+                className={tab === 'conclusion' ? styles.tabActive : styles.tab}
+                onClick={() => setTab('conclusion')}
+              >
+                დანიშნულება
+              </button>
+            </div>
+          ) : (
+            <h3 className={styles.chatTitle}>ჩატი</h3>
+          )}
+
+          {admin && tab === 'conclusion' && (
+            <div className={styles.conclusionPane}>
+              <ConclusionForm visitId={visitId} ageMonths={ageMonths ?? null} />
+            </div>
+          )}
+
+          {tab === 'chat' && (
+            <>
 
           <div ref={feedRef} className={styles.feed}>
             {!messages.length && (
@@ -240,6 +275,8 @@ export function VisitRoom({
               გაგზავნა
             </button>
           </form>
+            </>
+          )}
         </aside>
       </div>
     </div>

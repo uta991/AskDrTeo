@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { ConclusionForm } from './ConclusionForm';
 import {
   cancelVisit,
   finishVisit,
@@ -20,6 +21,16 @@ const STATUS_LABELS: Record<QueueVisit['status'], string> = {
   CANCELED: 'გაუქმდა',
   NO_SHOW: 'არ შედგა',
 };
+
+/** ასაკი თვეებში — დოზის გამოთვლას სჭირდება. */
+function monthsOld(birthDate: string): number {
+  const born = new Date(birthDate);
+  const now = new Date();
+  return Math.max(
+    0,
+    (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth()),
+  );
+}
 
 function age(birthDate: string): string {
   const born = new Date(birthDate);
@@ -54,6 +65,7 @@ export function QueueRow({
   const [note, setNote] = useState(visit.staffNote ?? '');
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [writing, setWriting] = useState(false);
   const [busy, startTransition] = useTransition();
   const router = useRouter();
 
@@ -169,7 +181,23 @@ export function QueueRow({
                 maxLength={500}
               />
             </label>
+
           </div>
+        )}
+
+        {/* დასკვნა ზარის დროსაც ივსება და მის შემდეგაც */}
+        {writing && (
+          <ConclusionForm
+            visitId={visit.id}
+            ageMonths={visit.child ? monthsOld(visit.child.birthDate) : null}
+            initial={{
+              diagnosis: visit.diagnosis,
+              diagnosisNote: visit.diagnosisNote,
+              prescription: visit.prescription,
+              weightKg: visit.weightKg,
+              heightCm: visit.heightCm,
+            }}
+          />
         )}
 
         {!!error && <p className={styles.error}>{error}</p>}
@@ -179,6 +207,21 @@ export function QueueRow({
         {canConduct && visit.status !== 'DONE' && visit.status !== 'CANCELED' && (
           <button type="button" className="btn btn-primary" disabled={busy} onClick={join}>
             ონლაინ ჩართვა
+          </button>
+        )}
+
+        {/* დანიშნულებას პერსონალიც წერს — ჩართვა მხოლოდ ექიმს შეუძლია */}
+        {visit.status !== 'CANCELED' && (
+          <button
+            type="button"
+            className={visit.diagnosis ? styles.finish : 'btn btn-primary'}
+            onClick={() => setWriting(!writing)}
+          >
+            {writing
+              ? 'დახურვა'
+              : visit.diagnosis
+                ? 'დანიშნულების ნახვა'
+                : 'დანიშნულების გაგზავნა'}
           </button>
         )}
 

@@ -492,7 +492,45 @@ export class VideoVisitsService {
         parentWaiting: fresh(visit.parentSeenAt, new Date()),
         parentJoinedAt: visit.parentJoinedAt,
         staffJoinedAt: visit.staffJoinedAt,
+        // დასკვნა რიგშივე ივსება — ზარის შემდეგ ექიმი აქ ბრუნდება
+        diagnosis: visit.diagnosis,
+        diagnosisNote: visit.diagnosisNote,
+        prescription: visit.prescription,
+        weightKg: visit.visitWeightKg,
+        heightCm: visit.visitHeightCm,
       })),
+    };
+  }
+
+  /**
+   * ერთი ვიზიტის დეტალები — ზარის ოთახს სჭირდება.
+   *
+   * ექიმს ოთახშივე უნდა უჩანდეს, ვის ესაუბრება და რა აწუხებთ:
+   * რიგში დასაბრუნებლად ზარის გაწყვეტა უაზრო იქნებოდა.
+   */
+  async detail(id: string) {
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        parent: { select: { firstName: true, lastName: true, phone: true } },
+        child: { select: { firstName: true, birthDate: true, gender: true } },
+      },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    return {
+      id: visit.id,
+      status: visit.status,
+      scheduledAt: visit.scheduledAt,
+      reason: visit.reason,
+      parent: visit.parent,
+      child: visit.child,
+      ageMonths: visit.child ? monthsSince(visit.child.birthDate) : null,
+      diagnosis: visit.diagnosis,
+      diagnosisNote: visit.diagnosisNote,
+      prescription: visit.prescription,
+      weightKg: visit.visitWeightKg,
+      heightCm: visit.visitHeightCm,
     };
   }
 
@@ -826,11 +864,16 @@ export class VideoVisitsService {
    *
    * ივსება ზარის დროსვე ან მისი დასრულების შემდეგ: საუბრისას ექიმს
    * ხშირად წერის დრო არ აქვს, დასკვნა კი მაინც უნდა დარჩეს.
+   *
+   * წერა პერსონალის უფლებაა — ზარში ჩართვისგან განსხვავებით, რომელიც
+   * მხოლოდ ექიმს აქვს.
    * შენახვისთანავე მშობელს ეგზავნება — მაგრამ მხოლოდ ერთხელ.
    */
   async saveConclusion(id: string, dto: ConclusionDto, role: UserRole) {
-    if (role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('დასკვნას მხოლოდ ექიმი წერს');
+    // დასკვნას პერსონალი წერს — ადმინიც და ოპერატორიც. ვიდეო ზარში
+    // ჩართვა კი მხოლოდ ექიმს შეუძლია: ეს ორი სხვადასხვა უფლებაა.
+    if (role === UserRole.PARENT) {
+      throw new ForbiddenException('ეს პერსონალის უფლებაა');
     }
 
     const visit = await this.prisma.videoVisit.findFirst({
@@ -846,6 +889,7 @@ export class VideoVisitsService {
       where: { id },
       data: {
         diagnosis,
+        diagnosisNote: dto.diagnosisNote?.trim() || null,
         prescription,
         visitWeightKg: dto.weightKg ?? undefined,
         visitHeightCm: dto.heightCm ?? undefined,
@@ -1295,4 +1339,14 @@ function parentRoleLabel(role?: ParentRole | null): string {
   if (role === ParentRole.FATHER) return 'მამა';
   if (role === ParentRole.GUARDIAN) return 'მეურვე';
   return 'მშობელი';
+}
+
+/** ასაკი თვეებში — დოზის გამოთვლას სჭირდება. */
+function monthsSince(birthDate: Date): number {
+  const now = new Date();
+  return Math.max(
+    0,
+    (now.getFullYear() - birthDate.getFullYear()) * 12 +
+      (now.getMonth() - birthDate.getMonth()),
+  );
 }

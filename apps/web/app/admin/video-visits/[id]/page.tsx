@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { VisitRoom } from '../../../video-visit/VisitRoom';
+import { apiFetch } from '@/lib/session';
 import { joinAsStaff } from '../actions';
 
 export const metadata = { title: 'ვიდეო ვიზიტი — AskDrTeo' };
@@ -15,7 +16,12 @@ export default async function StaffVisitRoomPage({
   if (user.role === 'PARENT') redirect('/video-visit');
 
   const { id } = await params;
-  const joined = await joinAsStaff(id);
+
+  const [joined, detail] = await Promise.all([
+    joinAsStaff(id),
+    // ასაკი დოზის დათვლას სჭირდება — ექიმი დასკვნას ოთახშივე წერს
+    apiFetch<{ ageMonths: number | null }>(`/admin/video-visits/${id}`),
+  ]);
 
   if (!joined.data) {
     redirect(
@@ -35,6 +41,7 @@ export default async function StaffVisitRoomPage({
       admin
       meId={user.id}
       title="ვიდეო ვიზიტი"
+      ageMonths={detail?.ageMonths ?? null}
     />
   );
 }
