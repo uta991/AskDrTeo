@@ -20,3 +20,9 @@ export class ScheduleVideoVisitDto {
   @IsOptional() @IsString() @MaxLength(500)
   staffNote?: string;
 }
+
+export class CancelVideoVisitDto {
+  /** მიზეზი მშობლისთვის — SMS-შიც და შეტყობინებაშიც ხვდება */
+  @IsOptional() @IsString() @MaxLength(300)
+  reason?: string;
+}

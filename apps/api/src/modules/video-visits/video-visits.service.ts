@@ -23,7 +23,7 @@ import {
   JOIN_CLOSES_MINUTES,
   JOIN_OPENS_MINUTES,
 } from './video-visits.config';
-import { ScheduleVideoVisitDto } from './dto/video-visit.dto';
+import { CancelVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
 
 /**
  * რამდენი წამი ჩაითვლება მხარე „ოთახში მყოფად" ბოლო ნიშნიდან.
@@ -367,6 +367,112 @@ export class VideoVisitsService {
       .catch(() => undefined);
 
     return this.join(visit.id, `${staff.firstName} ${staff.lastName}`, 'staff');
+  }
+
+  /**
+   * ვიზიტის გაუქმება ექიმის მხრიდან.
+   *
+   * მშობელს ჯავშანი უკან უბრუნდება: ვიზიტი მან უკვე გადაიხადა ან
+   * უფასო უფლება დახარჯა, გაუქმება კი ჩვენი მხრიდან მოვიდა —
+   * ხელახლა ჯავშნა დამატებით არ უნდა დაუჯდეს.
+   */
+  async cancel(id: string, dto: CancelVideoVisitDto, role: UserRole) {
+    if (role === UserRole.PARENT) throw new ForbiddenException('ეს პერსონალის უფლებაა');
+
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, parentId: true, status: true, scheduledAt: true },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    if (visit.status === VideoVisitStatus.CANCELED) {
+      throw new BadRequestException('ვიზიტი უკვე გაუქმებულია');
+    }
+    if (visit.status === VideoVisitStatus.DONE) {
+      throw new BadRequestException('შემდგარი ვიზიტი აღარ უქმდება');
+    }
+
+    const reason = dto.reason?.trim() || null;
+
+    const updated = await this.prisma.videoVisit.update({
+      where: { id },
+      data: {
+        status: VideoVisitStatus.CANCELED,
+        staffNote: reason ?? undefined,
+        endedAt: new Date(),
+      },
+    });
+
+    await this.returnEntitlement(id, visit.parentId);
+    await this.tellCanceled(visit.parentId, visit.scheduledAt, reason);
+
+    return updated;
+  }
+
+  /**
+   * ჯავშნის უფლების დაბრუნება.
+   *
+   * თუ უფასო უფლებით იყო აღებული, იგივე უფლება თავისუფლდება; თუ
+   * გადახდილი იყო, ახალი უფლება ეძლევა — თანხა ისე ვერ დაიკარგება,
+   * რომ ვიზიტი ჩვენ გავაუქმეთ.
+   */
+  private async returnEntitlement(visitId: string, parentId: string): Promise<void> {
+    const used = await this.prisma.videoVisitCredit.findFirst({ where: { visitId } });
+
+    if (used) {
+      await this.prisma.videoVisitCredit.update({
+        where: { id: used.id },
+        data: { usedAt: null, visitId: null },
+      });
+      return;
+    }
+
+    const paid = await this.prisma.videoVisit.findUnique({
+      where: { id: visitId },
+      select: { paymentId: true },
+    });
+    if (!paid?.paymentId) return;
+
+    await this.grantCredit(parentId, 'grant', 'გაუქმებული ვიზიტის ანაცვლება');
+  }
+
+  private async tellCanceled(
+    parentId: string,
+    when: Date | null,
+    reason: string | null,
+  ): Promise<void> {
+    const readable = when ? formatTbilisi(when) : null;
+
+    await this.notifications
+      .push({
+        userId: parentId,
+        title: 'ვიზიტი გაუქმდა',
+        body:
+          `სამწუხაროდ, ${readable ? `${readable}-ზე დანიშნული ` : ''}ვიზიტი გაუქმდა.`
+          + (reason ? ` ${reason}` : '')
+          + ' ჯავშანი დაგიბრუნდათ — აირჩიეთ სხვა დღე.',
+      })
+      .catch(() => undefined);
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { phone: true },
+    });
+    if (!parent?.phone) return;
+
+    await this.sms
+      .send({
+        userId: parentId,
+        phone: parent.phone,
+        templateKey: 'video_visit_canceled',
+        body:
+          `AskDrTeo: სამწუხაროდ, თქვენი ონლაინ ვიზიტი`
+          + (readable ? ` (${readable})` : '')
+          + ` გაუქმდა.`
+          + (reason ? ` ${reason}` : '')
+          + ` ჯავშანი დაგიბრუნდათ — აირჩიეთ სხვა დღე.`,
+      })
+      .catch(() => undefined);
   }
 
   async finish(id: string, role: UserRole) {

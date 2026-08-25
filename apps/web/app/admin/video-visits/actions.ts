@@ -64,6 +64,20 @@ export async function joinAsStaff(id: string): Promise<{ data?: JoinResult; erro
   }
 }
 
+/** ვიზიტის გაუქმება — მშობელს SMS მიდის და ჯავშანი უბრუნდება. */
+export async function cancelVisit(
+  id: string,
+  reason?: string,
+): Promise<{ error?: string }> {
+  try {
+    await apiMutate(`/admin/video-visits/${id}/cancel`, 'PATCH', { reason });
+    revalidatePath('/admin/video-visits');
+    return {};
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'გაუქმება ვერ მოხერხდა' };
+  }
+}
+
 export async function finishVisit(id: string): Promise<{ error?: string }> {
   try {
     await apiMutate(`/admin/video-visits/${id}/finish`, 'PATCH');

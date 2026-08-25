@@ -7,7 +7,11 @@ import {
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { ChatService } from '../chat/chat.service';
 import { SendMessageDto } from '../chat/dto/chat.dto';
-import { RequestVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
+import {
+  CancelVideoVisitDto,
+  RequestVideoVisitDto,
+  ScheduleVideoVisitDto,
+} from './dto/video-visit.dto';
 import { VideoVisitsService } from './video-visits.service';
 import { DAILY_CAPACITY, VISIT_CURRENCY, VISIT_PRICE_MINOR } from './video-visits.config';
 
@@ -160,6 +164,17 @@ export class AdminVideoVisitsController {
   ) {
     const conversationId = await this.visits.conversationFor(id, user.id, user.role);
     return this.chat.send(conversationId, dto, user.id, user.role);
+  }
+
+  @Patch(':id/cancel')
+  @RequirePermission('video_visit.schedule')
+  @ApiOperation({ summary: 'ვიზიტის გაუქმება — მშობელს SMS მიდის' })
+  cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CancelVideoVisitDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.visits.cancel(id, dto, user.role);
   }
 
   @Patch(':id/finish')

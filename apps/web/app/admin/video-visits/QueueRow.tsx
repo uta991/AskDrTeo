@@ -2,7 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { finishVisit, joinAsStaff, scheduleVisit, type QueueVisit } from './actions';
+import {
+  cancelVisit,
+  finishVisit,
+  joinAsStaff,
+  scheduleVisit,
+  type QueueVisit,
+} from './actions';
 import { TBILISI_OFFSET, dayTbilisi, timeTbilisi } from '@/lib/time';
 import styles from './queue.module.css';
 
@@ -47,6 +53,7 @@ export function QueueRow({
   );
   const [note, setNote] = useState(visit.staffNote ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [busy, startTransition] = useTransition();
   const router = useRouter();
 
@@ -62,6 +69,18 @@ export function QueueRow({
         note,
       );
       if (result.error) setError(result.error);
+    });
+  };
+
+  // გაუქმება ორ ნაბიჯად — შემთხვევით დაჭერა მშობელს უსაფუძვლო SMS-ს
+  // გაუგზავნიდა და ჯავშანს გაუუქმებდა
+  const cancel = () => {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await cancelVisit(visit.id, note.trim() || undefined);
+      if (result.error) setError(result.error);
+      else setConfirming(false);
     });
   };
 
@@ -140,7 +159,9 @@ export function QueueRow({
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>შენიშვნა მშობლისთვის</span>
+              <span className={styles.fieldLabel}>
+                შენიშვნა მშობლისთვის — გაუქმებისას SMS-შიც ხვდება
+              </span>
               <input
                 className={styles.input}
                 value={note}
@@ -170,6 +191,38 @@ export function QueueRow({
           >
             დასრულება
           </button>
+        )}
+
+        {visit.status !== 'DONE' && visit.status !== 'CANCELED' && (
+          confirming ? (
+            <div className={styles.confirm}>
+              <button
+                type="button"
+                className={styles.danger}
+                disabled={busy}
+                onClick={cancel}
+              >
+                {busy ? 'იგზავნება…' : 'დიახ, გაუქმდეს'}
+              </button>
+              <button
+                type="button"
+                className={styles.finish}
+                disabled={busy}
+                onClick={() => setConfirming(false)}
+              >
+                არა
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.cancelLink}
+              disabled={busy}
+              onClick={() => setConfirming(true)}
+            >
+              ვიზიტის გაუქმება
+            </button>
+          )
         )}
       </div>
     </article>

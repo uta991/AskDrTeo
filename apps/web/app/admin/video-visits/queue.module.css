@@ -209,3 +209,31 @@
     animation: none;
   }
 }
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.danger {
+  border: 0;
+  background: #e5484d;
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelLink {
+  border: 0;
+  background: none;
+  color: #c4574d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+  white-space: nowrap;
+}
