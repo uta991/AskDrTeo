@@ -39,9 +39,20 @@ export interface MyVisit {
   canJoin: boolean;
 }
 
+/**
+ * ზარის წვდომა.
+ *
+ * ბმული აღარ არის — ინტერფეისი ჩვენია. კლიენტი იღებს არხსა და
+ * მოკლევადიან ტოკენს; Agora-ს გასაღები სერვერს არ ტოვებს.
+ */
 export interface JoinResult {
   id: string;
-  roomUrl: string;
+  appId: string;
+  channel: string;
+  token: string;
+  uid: number;
+  tokenExpiresAt: string;
+  displayName: string;
   conversationId: string;
   otherSideReady: boolean;
   status: VisitStatus;

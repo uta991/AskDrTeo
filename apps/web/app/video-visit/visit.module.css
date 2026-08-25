@@ -211,12 +211,77 @@
 .stage {
   position: relative;
   background: #000000;
+  overflow: hidden;
 }
 
-.video {
-  width: 100%;
-  height: 100%;
+/* მეორე მხარის ვიდეო მთელ ფართობს იკავებს */
+.remote {
+  position: absolute;
+  inset: 0;
+}
+
+/* საკუთარი გამოსახულება კუთხეში — ისე, როგორც ყველა ზარშია მიღებული */
+.local {
+  position: absolute;
+  right: 14px;
+  bottom: 90px;
+  width: 132px;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1c1c22;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.stageNote {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.control {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   border: 0;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.control:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.controlOff {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.controlEnd {
+  background: #e5484d;
+}
+
+.controlEnd:hover {
+  background: #d13a3f;
 }
 
 .chat {

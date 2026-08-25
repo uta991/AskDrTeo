@@ -31,34 +31,32 @@ export const JOIN_CLOSES_MINUTES = 120;
 export const BOOKING_HORIZON_DAYS = 30;
 
 /**
- * ვიდეო ოთახის მისამართი.
+ * Agora-ს წვდომა ერთი ვიზიტისთვის.
  *
- * ცალკე ანგარიშსა და გასაღებს არ ითხოვს — ოთახის სახელი შემთხვევითია
- * და მისამართის გამოცნობა შეუძლებელია. მოგვიანებით სხვა სერვისზე
- * გადასვლას მხოლოდ ეს ერთი ფუნქცია დასჭირდება.
+ * ინტერფეისი ჩვენია — Agora მხოლოდ არხს იძლევა. App Certificate
+ * მხოლოდ სერვერზეა და კლიენტს არასდროს გადაეცემა: მას მოკლევადიანი
+ * ტოკენი ხვდება, რომელიც ერთ არხსა და ერთ მონაწილეზეა გამოშვებული.
  */
-export function roomUrl(roomName: string, displayName: string): string {
-  const base = process.env.VIDEO_ROOM_BASE ?? 'https://meet.jit.si';
+export interface AgoraAccess {
+  appId: string;
+  channel: string;
+  token: string;
+  uid: number;
+  expiresAt: Date;
+}
 
-  const options = [
-    // ტელეფონის ბრაუზერი ნაგულისხმევად აპლიკაციის ჩამოტვირთვას სთავაზობს
-    // და ვიზიტი იქვე ჩერდება. ვიზიტი ბრაუზერშივე უნდა ტარდებოდეს.
-    'config.disableDeepLinking=true',
-    'interfaceConfig.MOBILE_APP_PROMO=false',
+/**
+ * მონაწილის ნომერი არხში.
+ *
+ * ორივე მხარეს ფიქსირებული ნომერი აქვს — ასე კლიენტი წინასწარ იცის,
+ * რომელი ვიდეო ვისია და ხელახლა შემოსვლისას დუბლიკატი არ ჩნდება.
+ */
+export const PARENT_UID = 1;
+export const STAFF_UID = 2;
 
-    // წინასწარი ეკრანი ზედმეტი ნაბიჯია — მშობელმა ჩართვას უკვე დააჭირა.
-    // ორივე სახელს ვწერთ: ახალ ვერსიებში პარამეტრი გადაერქვა.
-    'config.prejoinPageEnabled=false',
-    'config.prejoinConfig.enabled=false',
+/** ტოკენის მოქმედების ვადა — ვიზიტის ფანჯარაზე ოდნავ გრძელი. */
+export const TOKEN_TTL_SECONDS = (JOIN_OPENS_MINUTES + JOIN_CLOSES_MINUTES + 30) * 60;
 
-    // ჩართვისას მიკროფონი და კამერა ღიაა — ეს სამედიცინო შეხვედრაა
-    'config.startWithAudioMuted=false',
-    'config.startWithVideoMuted=false',
-
-    // hash-პარამეტრებს Jitsi JS მნიშვნელობებად კითხულობს, ამიტომ
-    // ტექსტს ბრჭყალები სჭირდება
-    `userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`,
-  ];
-
-  return `${base}/${roomName}#${options.join('&')}`;
+export function agoraConfigured(): boolean {
+  return Boolean(process.env.AGORA_APP_ID && process.env.AGORA_APP_CERTIFICATE);
 }

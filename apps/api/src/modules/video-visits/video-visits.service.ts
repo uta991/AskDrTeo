@@ -15,13 +15,13 @@ import {
 } from '@/common/utils/tbilisi-time';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SmsService } from '../sms/sms.service';
+import { AgoraService } from './agora.service';
 import {
   BE_READY_MINUTES,
   BOOKING_HORIZON_DAYS,
   DAILY_CAPACITY,
   JOIN_CLOSES_MINUTES,
   JOIN_OPENS_MINUTES,
-  roomUrl,
 } from './video-visits.config';
 import { ScheduleVideoVisitDto } from './dto/video-visit.dto';
 
@@ -46,6 +46,7 @@ export class VideoVisitsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly sms: SmsService,
+    private readonly agora: AgoraService,
   ) {}
 
   // ─── მშობელი ─────────────────────────────────────────────────────
@@ -407,9 +408,17 @@ export class VideoVisitsService {
 
     const conversationId = await this.ensureConversation(visit.id);
 
+    // ინტერფეისი ჩვენია — კლიენტს არხი და ტოკენი გადაეცემა, არა ბმული
+    const access = this.agora.issue(visit.roomName, side);
+
     return {
       id: visit.id,
-      roomUrl: roomUrl(visit.roomName, displayName),
+      appId: access.appId,
+      channel: access.channel,
+      token: access.token,
+      uid: access.uid,
+      tokenExpiresAt: access.expiresAt,
+      displayName,
       conversationId,
       /** მეორე მხარე უკვე ოთახშია თუ არა */
       otherSideReady: side === 'parent' ? !!visit.staffJoinedAt : !!visit.parentJoinedAt,

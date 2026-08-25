@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { CallStage } from './CallStage';
 import {
   sendVisitMessage,
   uploadVisitPhoto,
@@ -28,17 +30,19 @@ const PRESENCE_MS = 5000;
  */
 export function VisitRoom({
   visitId,
-  roomUrl,
+  call,
   admin,
   meId,
   title,
 }: {
   visitId: string;
-  roomUrl: string;
+  /** არხი და ტოკენი — ინტერფეისს თავად ვხატავთ */
+  call: { appId: string; channel: string; token: string; uid: number };
   admin: boolean;
   meId: string;
   title: string;
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<VisitMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -135,14 +139,13 @@ export function VisitRoom({
       </div>
 
       <div className={styles.roomBody}>
-        <div className={styles.stage}>
-          <iframe
-            src={roomUrl}
-            className={styles.video}
-            allow="camera; microphone; fullscreen; display-capture; autoplay"
-            title="ვიდეო ვიზიტი"
-          />
-        </div>
+        <CallStage
+          appId={call.appId}
+          channel={call.channel}
+          token={call.token}
+          uid={call.uid}
+          onLeave={() => router.push(admin ? '/admin/video-visits' : '/video-visit')}
+        />
 
         <aside className={styles.chat}>
           <h3 className={styles.chatTitle}>ჩატი</h3>

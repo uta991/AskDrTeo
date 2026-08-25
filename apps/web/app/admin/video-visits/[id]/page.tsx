@@ -26,7 +26,12 @@ export default async function StaffVisitRoomPage({
   return (
     <VisitRoom
       visitId={id}
-      roomUrl={joined.data.roomUrl}
+      call={{
+        appId: joined.data.appId,
+        channel: joined.data.channel,
+        token: joined.data.token,
+        uid: joined.data.uid,
+      }}
       admin
       meId={user.id}
       title="ვიდეო ვიზიტი"
