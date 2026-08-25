@@ -19,8 +19,7 @@
         "NSCameraUsageDescription": "ვიდეო ვიზიტისთვის აპლიკაციას კამერაზე წვდომა სჭირდება.",
         "NSMicrophoneUsageDescription": "ვიდეო ვიზიტისთვის აპლიკაციას მიკროფონზე წვდომა სჭირდება.",
         "UIBackgroundModes": [
-          "audio",
-          "voip"
+          "audio"
         ]
       }
     },
