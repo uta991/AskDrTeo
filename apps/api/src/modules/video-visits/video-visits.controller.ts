@@ -86,6 +86,18 @@ export class VideoVisitsController {
     return this.visits.joinAsParent(id, userId);
   }
 
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'ჯავშნის გაუქმება — ჯავშანი სრულად რჩება' })
+  cancelMine(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+    return this.visits.cancelByParent(id, userId);
+  }
+
+  @Post(':id/token')
+  @ApiOperation({ summary: 'ტოკენის განახლება — ზარი შუაში არ უნდა გაწყდეს' })
+  renewToken(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.visits.renewToken(id, user.id, user.role);
+  }
+
   @Get(':id/presence')
   @ApiOperation({ summary: 'ვინ არის ოთახში ახლა' })
   presence(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {

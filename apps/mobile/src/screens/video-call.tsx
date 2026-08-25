@@ -25,6 +25,7 @@ import { colors, radius, spacing, typography } from '@/theme';
 import { useAuth } from '@/features/auth/auth.store';
 import { pickChatFile, uploadChatFile } from '@/features/media/upload';
 import {
+  renewCallToken,
   sendVisitMessage,
   useVideoVisits,
   visitMessages,
@@ -87,6 +88,13 @@ export default function VideoCallScreen() {
           onUserJoined: (_connection, uid) => setRemoteUid(uid),
           onUserOffline: () => setRemoteUid(null),
           onError: () => setError('ზარში პრობლემაა — შეამოწმეთ ინტერნეტი'),
+
+          // ვადის ამოწურვა შუა კონსულტაციაში ყველაზე ცუდი მომენტია
+          onTokenPrivilegeWillExpire: () => {
+            void renewCallToken(id)
+              .then((renewed) => engine.renewToken(renewed.token))
+              .catch(() => undefined);
+          },
         });
 
         engine.enableVideo();

@@ -12,6 +12,9 @@ export const VISIT_CURRENCY = 'USD';
 /** დღეში რამდენი ვიდეო ვიზიტი დაიშვება. */
 export const DAILY_CAPACITY = 5;
 
+/** რამდენი წუთით ადრე მიდის შეხსენება. */
+export const REMINDER_BEFORE_MINUTES = 60;
+
 /** რამდენი წუთით ადრე ვთხოვთ მშობელს მზადყოფნას. */
 export const BE_READY_MINUTES = 5;
 
@@ -70,8 +73,14 @@ export interface AgoraAccess {
 export const PARENT_UID = 1;
 export const STAFF_UID = 2;
 
-/** ტოკენის მოქმედების ვადა — ვიზიტის ფანჯარაზე ოდნავ გრძელი. */
-export const TOKEN_TTL_SECONDS = (JOIN_OPENS_MINUTES + JOIN_CLOSES_MINUTES + 30) * 60;
+/**
+ * ტოკენის მოქმედების ვადა.
+ *
+ * ორი საათი განზრახ გულუხვია: ზარი შეიძლება გაგრძელდეს და ვადის
+ * ამოწურვა შუა კონსულტაციაში ყველაზე ცუდი მომენტია. კლიენტიც
+ * წინასწარ ინახლებს, მაგრამ მარაგი მაინც უნდა ჰქონდეს.
+ */
+export const TOKEN_TTL_SECONDS = 2 * 60 * 60;
 
 export function agoraConfigured(): boolean {
   return Boolean(process.env.AGORA_APP_ID && process.env.AGORA_APP_CERTIFICATE);

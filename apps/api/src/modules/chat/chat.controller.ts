@@ -17,8 +17,16 @@ import { RateConversationDto, SendMessageDto, StartConversationDto } from './dto
  * წვდომა `chat_with_operator`-ზეა მიბმული — უფასო პაკეტში არ შედის.
  */
 @ApiTags('chat')
+/**
+ * `@RequireFeature` აქ განზრახ არ არის.
+ *
+ * ჩატზე წვდომას ორი გზა აქვს — პაკეტი ან ცალკე ნაყიდი კონსულტაციის
+ * ლიმიტი. გარდის დონეზე პაკეტის მოთხოვნა მეორე გზას მთლიანად კეტავდა
+ * და ნაყიდი ლიმიტი უსარგებლო რჩებოდა. გადაწყვეტილება სერვისშია,
+ * სადაც ორივე შემთხვევა ჩანს; დანარჩენი მისამართები ისედაც მხოლოდ
+ * საკუთარ საუბრებს უშვებს.
+ */
 @Controller('chat')
-@RequireFeature('chat_with_operator')
 export class ChatController {
   constructor(private readonly chat: ChatService) {}
 

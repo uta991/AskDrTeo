@@ -6,6 +6,7 @@ import type {
   ICameraVideoTrack,
   IMicrophoneAudioTrack,
 } from 'agora-rtc-sdk-ng';
+import { renewCallToken } from './actions';
 import styles from './visit.module.css';
 
 /**
@@ -16,12 +17,16 @@ import styles from './visit.module.css';
  * რადგან ის `window`-ს ეყრდნობა და სერვერზე ჩავარდებოდა.
  */
 export function CallStage({
+  visitId,
+  admin,
   appId,
   channel,
   token,
   uid,
   onLeave,
 }: {
+  visitId: string;
+  admin: boolean;
   appId: string;
   channel: string;
   token: string;
@@ -70,6 +75,13 @@ export function CallStage({
 
       client.on('user-left', () => setRemoteIn(false));
 
+      // ტოკენს ვადა გრძელი ზარისას შეიძლება ამოეწუროს — ბანკის მსგავსად
+      // აქაც ვადის ამოწურვამდე ვახლებთ, რომ საუბარი არ გაწყდეს
+      client.on('token-privilege-will-expire', async () => {
+        const renewed = await renewCallToken(visitId, admin);
+        if (renewed?.token) await client.renewToken(renewed.token);
+      });
+
       try {
         await client.join(appId, channel, token, uid);
 
@@ -106,7 +118,7 @@ export function CallStage({
       camRef.current?.close();
       void clientRef.current?.leave();
     };
-  }, [appId, channel, token, uid]);
+  }, [appId, channel, token, uid, visitId, admin]);
 
   const toggleMic = async () => {
     if (!micRef.current) return;

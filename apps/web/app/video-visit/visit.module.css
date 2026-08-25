@@ -512,3 +512,17 @@
 .discountNote s {
   color: var(--text-secondary);
 }
+
+.cancelLink {
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  white-space: nowrap;
+}
+
+.cancelLink:hover {
+  color: #c4574d;
+}

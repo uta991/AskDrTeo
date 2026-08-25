@@ -140,6 +140,8 @@ export function VisitRoom({
 
       <div className={styles.roomBody}>
         <CallStage
+          visitId={visitId}
+          admin={admin}
           appId={call.appId}
           channel={call.channel}
           token={call.token}

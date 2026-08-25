@@ -1706,6 +1706,9 @@ model VideoVisit {
   /// და მეორე მხარე სამუდამოდ ფიქრობდა, რომ პარტნიორი ელოდება.
   parentSeenAt   DateTime?
   staffSeenAt    DateTime?
+
+  /// შეხსენება გაგზავნილია თუ არა — ორმაგი SMS-ის დამცავი
+  reminderSentAt DateTime?
   startedAt      DateTime?
   endedAt        DateTime?
   staffNote      String?

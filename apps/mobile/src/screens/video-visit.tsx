@@ -10,6 +10,7 @@ import { goBack } from '@/navigation/goBack';
 import { colors, radius, spacing, typography } from '@/theme';
 import { useActiveChild } from '@/features/children/children.store';
 import {
+  cancelMyVisit,
   useVideoVisits,
   visitPresence,
   type MyVisit,
@@ -81,6 +82,18 @@ export default function VideoVisitScreen() {
     return () => clearInterval(timer);
   }, [key]);
 
+  const drop = async (visit: MyVisit) => {
+    setBusy(true);
+    try {
+      await cancelMyVisit(visit.id);
+      await load();
+    } catch {
+      // შეცდომა სიაშივე გამოჩნდება — მდგომარეობა store-ში იწერება
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const enter = async (visit: MyVisit) => {
     setBusy(true);
     const access = await join(visit.id);
@@ -124,6 +137,10 @@ export default function VideoVisitScreen() {
                   >
                     <Icon name="consultation" size={18} color="#ffffff" strokeWidth={1.9} />
                     <Text style={styles.joinText}>ჩართვა</Text>
+                  </Pressable>
+                ) : visit.status === 'REQUESTED' || visit.status === 'SCHEDULED' ? (
+                  <Pressable disabled={busy} onPress={() => void drop(visit)}>
+                    <Text style={styles.cancelLink}>გაუქმება</Text>
                   </Pressable>
                 ) : (
                   <Text style={styles.visitWait}>—</Text>
@@ -240,6 +257,7 @@ const styles = StyleSheet.create({
   visitDate: { ...typography.small, color: colors.textPrimary },
   visitMeta: { ...typography.small, fontSize: 11, color: colors.textSecondary },
   visitWait: { ...typography.small, fontSize: 11, color: colors.textSecondary },
+  cancelLink: { ...typography.small, fontSize: 12, color: colors.danger },
   doctorIn: { ...typography.small, fontSize: 11, color: '#2E9E5B', fontWeight: '600' },
 
   joinButton: {

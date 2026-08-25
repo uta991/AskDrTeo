@@ -26,6 +26,7 @@ import {
   JOIN_OPENS_MINUTES,
   LATE_AFTER_MINUTES,
   LATE_COVER_PERCENT,
+  REMINDER_BEFORE_MINUTES,
   VISIT_PRICE_MINOR,
 } from './video-visits.config';
 import { CancelVideoVisitDto, ScheduleVideoVisitDto } from './dto/video-visit.dto';
@@ -304,6 +305,137 @@ export class VideoVisitsService {
     return this.join(visit.id, `${visit.parent.firstName} ${visit.parent.lastName}`, 'parent');
   }
 
+  /**
+   * მშობლის მხრიდან გაუქმება.
+   *
+   * წინასწარ გაუქმებისას ჯავშანი სრულად რჩება: ეს ზუსტად ის ქცევაა,
+   * რაც გვინდა — ექიმი დროულად იგებს და ადგილი თავისუფლდება. თუ
+   * ვიზიტამდე ნაკლებია, ვიდრე ჩართვის ფანჯარა, გაუქმება იკეტება:
+   * ამ დროს ექიმი უკვე ელოდება.
+   */
+  async cancelByParent(id: string, parentId: string) {
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id, parentId, deletedAt: null },
+      select: { id: true, status: true, scheduledAt: true },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    if (visit.status === VideoVisitStatus.CANCELED) {
+      throw new BadRequestException('ვიზიტი უკვე გაუქმებულია');
+    }
+    if (visit.status === VideoVisitStatus.DONE || visit.status === VideoVisitStatus.LIVE) {
+      throw new BadRequestException('მიმდინარე ან შემდგარი ვიზიტი აღარ უქმდება');
+    }
+
+    if (
+      visit.scheduledAt &&
+      Date.now() > visit.scheduledAt.getTime() - JOIN_OPENS_MINUTES * 60 * 1000
+    ) {
+      throw new BadRequestException(
+        `ვიზიტამდე ${JOIN_OPENS_MINUTES} წუთზე ნაკლებია — გაუქმება აღარ შეიძლება`,
+      );
+    }
+
+    const updated = await this.prisma.videoVisit.update({
+      where: { id },
+      data: {
+        status: VideoVisitStatus.CANCELED,
+        endedAt: new Date(),
+        staffNote: 'მშობელმა გააუქმა',
+      },
+    });
+
+    await this.returnEntitlement(id, parentId);
+    await this.notifyStaffCanceled(id, visit.scheduledAt).catch(() => undefined);
+
+    return updated;
+  }
+
+  private async notifyStaffCanceled(visitId: string, when: Date | null): Promise<void> {
+    const staff = await this.prisma.user.findMany({
+      where: { role: { in: [UserRole.ADMIN, UserRole.SUPER_ADMIN] }, deletedAt: null },
+      select: { id: true },
+    });
+
+    await Promise.all(
+      staff.map((user) =>
+        this.notifications
+          .push({
+            userId: user.id,
+            title: 'ვიზიტი გაუქმდა',
+            body: `მშობელმა გააუქმა${when ? ` — ${formatTbilisi(when)}` : ''}. ადგილი გათავისუფლდა.`,
+            data: { videoVisitId: visitId },
+          })
+          .catch(() => undefined),
+      ),
+    );
+  }
+
+  /**
+   * შეხსენება ვიზიტამდე.
+   *
+   * დანიშვნის SMS შეიძლება რამდენიმე დღით ადრე მივიდეს და დაგვიწყდეს.
+   * დაგვიანების ჯარიმა გვაქვს — შეხსენება იაფი გზაა, რომ ის საერთოდ
+   * არ ამოქმედდეს.
+   */
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async sendReminders(): Promise<void> {
+    const now = Date.now();
+    const from = new Date(now + REMINDER_BEFORE_MINUTES * 60 * 1000 - 5 * 60 * 1000);
+    const to = new Date(now + REMINDER_BEFORE_MINUTES * 60 * 1000 + 5 * 60 * 1000);
+
+    const soon = await this.prisma.videoVisit.findMany({
+      where: {
+        deletedAt: null,
+        status: VideoVisitStatus.SCHEDULED,
+        reminderSentAt: null,
+        scheduledAt: { gte: from, lte: to },
+      },
+      select: { id: true, parentId: true, scheduledAt: true },
+      take: 50,
+    });
+
+    for (const visit of soon) {
+      // ნიშანს ჯერ ვსვამთ: გაგზავნის ჩავარდნა ორმაგ SMS-ს არ უნდა იწვევდეს
+      await this.prisma.videoVisit.update({
+        where: { id: visit.id },
+        data: { reminderSentAt: new Date() },
+      });
+
+      await this.tellReminder(visit.parentId, visit.scheduledAt!).catch(() => undefined);
+    }
+  }
+
+  private async tellReminder(parentId: string, when: Date): Promise<void> {
+    const readable = formatTbilisi(when);
+
+    await this.notifications
+      .push({
+        userId: parentId,
+        title: 'ვიზიტი მალე იწყება',
+        body: `${readable} — ჩართვა ${JOIN_OPENS_MINUTES} წუთით ადრე გაიხსნება.`,
+      })
+      .catch(() => undefined);
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { phone: true },
+    });
+    if (!parent?.phone) return;
+
+    await this.sms
+      .send({
+        userId: parentId,
+        phone: parent.phone,
+        templateKey: 'video_visit_reminder',
+        body:
+          `AskDrTeo: შეგახსენებთ — თქვენი ონლაინ ვიზიტი ${readable}-ზეა. `
+          + `ჩართვა ${JOIN_OPENS_MINUTES} წუთით ადრე გაიხსნება. `
+          + `${LATE_AFTER_MINUTES} წუთზე მეტი დაგვიანებისას ვიზიტი ვერ შედგება.`,
+      })
+      .catch(() => undefined);
+  }
+
   // ─── პერსონალი ───────────────────────────────────────────────────
 
   /**
@@ -566,6 +698,77 @@ export class VideoVisitsService {
       await this.tellMissed(visit.parentId, visit.scheduledAt).catch(() => undefined);
       this.logger.warn(`ვიზიტი ${visit.id} გაცდენილად აღინიშნა`);
     }
+
+    await this.sweepDoctorNoShow(cutoff);
+  }
+
+  /**
+   * ექიმის მხრიდან გაცდენა.
+   *
+   * მშობელი ოთახში შევიდა და ელოდა, ექიმი კი არ გამოჩნდა — აქ ჯარიმა
+   * უადგილოა: ვიზიტი სრულად უბრუნდება. ამის გარეშე შეცდომის ფასს
+   * მთლიანად მშობელი იხდიდა და ეს ცალმხრივი იქნებოდა.
+   */
+  private async sweepDoctorNoShow(cutoff: Date): Promise<void> {
+    const missed = await this.prisma.videoVisit.findMany({
+      where: {
+        deletedAt: null,
+        status: VideoVisitStatus.SCHEDULED,
+        scheduledAt: { lt: cutoff },
+        parentJoinedAt: { not: null },
+        staffJoinedAt: null,
+      },
+      select: { id: true, parentId: true, scheduledAt: true },
+      take: 50,
+    });
+
+    for (const visit of missed) {
+      await this.prisma.videoVisit.update({
+        where: { id: visit.id },
+        data: {
+          status: VideoVisitStatus.CANCELED,
+          endedAt: new Date(),
+          staffNote: 'ექიმი ვერ დაესწრო — ჯავშანი სრულად დაბრუნდა',
+        },
+      });
+
+      await this.returnEntitlement(visit.id, visit.parentId);
+      await this.tellDoctorMissed(visit.parentId, visit.scheduledAt).catch(() => undefined);
+
+      this.logger.error(`ვიზიტს ${visit.id} ექიმი არ დაესწრო`);
+    }
+  }
+
+  private async tellDoctorMissed(parentId: string, when: Date | null): Promise<void> {
+    const readable = when ? formatTbilisi(when) : null;
+
+    await this.notifications
+      .push({
+        userId: parentId,
+        title: 'ბოდიშს გიხდით — ვიზიტი ვერ შედგა',
+        body:
+          `${readable ? `${readable}-ზე დანიშნულ ` : ''}ვიზიტს ექიმი ვერ დაესწრო. `
+          + 'ჯავშანი სრულად დაგიბრუნდათ — აირჩიეთ სხვა დღე.',
+      })
+      .catch(() => undefined);
+
+    const parent = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { phone: true },
+    });
+    if (!parent?.phone) return;
+
+    await this.sms
+      .send({
+        userId: parentId,
+        phone: parent.phone,
+        templateKey: 'video_visit_doctor_missed',
+        body:
+          `AskDrTeo: ბოდიშს გიხდით — ${readable ? `${readable}-ის ` : ''}ვიზიტს `
+          + 'ექიმი ვერ დაესწრო. ჯავშანი სრულად დაგიბრუნდათ, ხელახლა ჩაწერა '
+          + 'დამატებით არ დაგიჯდებათ.',
+      })
+      .catch(() => undefined);
   }
 
   private async tellMissed(parentId: string, when: Date | null): Promise<void> {
@@ -747,6 +950,29 @@ export class VideoVisitsService {
       staffName: visit.staff ? `${visit.staff.firstName} ${visit.staff.lastName}` : null,
       status: updated.status,
     };
+  }
+
+  /**
+   * ტოკენის განახლება მიმდინარე ზარისთვის.
+   *
+   * `join`-ისგან იმით განსხვავდება, რომ მდგომარეობას არ ცვლის —
+   * ჩართვის დროს ხელახლა არ ითვლება და სტატუსი არ იძვრება.
+   */
+  async renewToken(visitId: string, userId: string, role: UserRole) {
+    const visit = await this.prisma.videoVisit.findFirst({
+      where: { id: visitId, deletedAt: null },
+      select: { parentId: true, roomName: true },
+    });
+    if (!visit) throw new NotFoundException('ვიზიტი ვერ მოიძებნა');
+
+    const isParent = role === UserRole.PARENT;
+    if (isParent && visit.parentId !== userId) {
+      throw new ForbiddenException('ეს ვიზიტი თქვენი არ არის');
+    }
+
+    const access = this.agora.issue(visit.roomName, isParent ? 'parent' : 'staff');
+
+    return { token: access.token, uid: access.uid, expiresAt: access.expiresAt };
   }
 
   /** ვიზიტის ჩატი — მონაწილეობის შემოწმებით. */

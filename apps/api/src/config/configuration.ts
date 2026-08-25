@@ -55,9 +55,8 @@ export interface AppConfig {
     /**
      * დღიური ლიმიტი ერთ მშობელზე. 0 = შეზღუდვის გარეშე.
      *
-     * სატესტო ეტაპზე გამორთულია; გაშვებამდე 10-ზე უნდა დაბრუნდეს —
-     * ერთი პასუხი ≈ 4 თეთრია და 40-ლარიან პაკეტს გაუთვლელი მოხმარება
-     * მარჟას შეუჭამს.
+     * ერთი პასუხი ≈ 4 თეთრია და გაუთვლელი მოხმარება პაკეტის მარჟას
+     * შეჭამდა. `AI_UNLIMITED_EMAILS` ტესტის ანგარიშებს ზღვარს უხსნის.
      */
     dailyLimit: number;
     /** ანგარიშები ლიმიტის გარეშე — ტესტირებისთვის */
@@ -150,7 +149,7 @@ export default (): AppConfig => ({
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: process.env.AI_MODEL ?? 'claude-sonnet-5',
     maxTokens: Number(process.env.AI_MAX_TOKENS ?? 2000),
-    dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 0),
+    dailyLimit: Number(process.env.AI_DAILY_LIMIT ?? 10),
     unlimitedEmails: csv(process.env.AI_UNLIMITED_EMAILS).map((email) => email.toLowerCase()),
   },
   payments: {

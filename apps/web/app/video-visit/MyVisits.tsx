@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { visitPresence, type MyVisit, type VisitStatus } from './actions';
+import { cancelMyVisit, visitPresence, type MyVisit, type VisitStatus } from './actions';
 import { formatTbilisi } from '@/lib/time';
 import styles from './visit.module.css';
 
@@ -49,6 +49,16 @@ export function MyVisits({ visits, notice }: { visits: MyVisit[]; notice?: strin
 
   // ჩართვას თავად ოთახის გვერდი აკეთებს — აქ მხოლოდ გადავდივართ,
   // რომ ერთი და იგივე მოქმედება ორჯერ არ შესრულდეს
+  const drop = (id: string) => {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await cancelMyVisit(id);
+      if (result.error) setError(result.error);
+      else router.refresh();
+    });
+  };
+
   const join = (id: string) => {
     setError(null);
     startTransition(() => router.push(`/video-visit/${id}`));
@@ -95,6 +105,19 @@ export function MyVisits({ visits, notice }: { visits: MyVisit[]; notice?: strin
             <span className={styles.visitWait}>
               {visit.status === 'REQUESTED' ? 'ელოდება საათს' : '—'}
             </span>
+          )}
+
+          {/* წინასწარი გაუქმებისას ჯავშანი სრულად რჩება — ეს სჯობს
+              იმას, რომ მშობელმა დააგვიანოს და 70% დაკარგოს */}
+          {(visit.status === 'REQUESTED' || visit.status === 'SCHEDULED') && !visit.canJoin && (
+            <button
+              type="button"
+              className={styles.cancelLink}
+              disabled={busy}
+              onClick={() => drop(visit.id)}
+            >
+              გაუქმება
+            </button>
           )}
         </div>
       ))}

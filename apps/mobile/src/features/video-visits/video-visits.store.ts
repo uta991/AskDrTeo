@@ -173,3 +173,13 @@ export function sendVisitMessage(
     body: { body: body.trim() || undefined, assetIds },
   });
 }
+
+/** ჯავშნის გაუქმება — წინასწარ გაუქმებისას უფლება სრულად რჩება. */
+export function cancelMyVisit(id: string): Promise<void> {
+  return api(`/video-visits/${id}/cancel`, { method: 'PATCH' });
+}
+
+/** ტოკენის განახლება — გრძელი ზარი შუაში არ უნდა გაწყდეს. */
+export function renewCallToken(id: string): Promise<{ token: string }> {
+  return api<{ token: string }>(`/video-visits/${id}/token`, { method: 'POST' });
+}

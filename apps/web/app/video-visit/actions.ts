@@ -208,3 +208,28 @@ export async function visitPresence(id: string, admin: boolean): Promise<Presenc
   const base = admin ? '/admin/video-visits' : '/video-visits';
   return apiFetch<Presence>(`${base}/${id}/presence`);
 }
+
+/** ჯავშნის გაუქმება მშობლის მხრიდან — უფლება სრულად რჩება. */
+export async function cancelMyVisit(id: string): Promise<{ error?: string }> {
+  try {
+    await apiMutate(`/video-visits/${id}/cancel`, 'PATCH');
+    revalidatePath('/video-visit');
+    return {};
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'გაუქმება ვერ მოხერხდა' };
+  }
+}
+
+/** ტოკენის განახლება — გრძელი ზარი შუაში არ უნდა გაწყდეს. */
+export async function renewCallToken(
+  id: string,
+  admin: boolean,
+): Promise<{ token: string } | null> {
+  const base = admin ? '/admin/video-visits' : '/video-visits';
+
+  try {
+    return await apiMutate<{ token: string }>(`${base}/${id}/token`, 'POST');
+  } catch {
+    return null;
+  }
+}

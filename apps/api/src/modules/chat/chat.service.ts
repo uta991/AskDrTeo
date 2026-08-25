@@ -20,6 +20,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EntitlementsService } from '../entitlements/entitlements.service';
+import { PacksService } from '../packs/packs.service';
 import { MediaAccessService } from '../media/media-access.service';
 import { SmsService } from '../sms/sms.service';
 import { VIDEO_STORAGE, type VideoStorageProvider } from '../storage/storage.types';
@@ -56,6 +57,7 @@ export class ChatService {
     private readonly sms: SmsService,
     private readonly config: ConfigService,
     private readonly mediaAccess: MediaAccessService,
+    private readonly packs: PacksService,
     @Inject(VIDEO_STORAGE) private readonly videoStorage: VideoStorageProvider,
   ) {}
 
@@ -203,6 +205,7 @@ export class ChatService {
     // ადგილას ერთი და იგივე კითხვა დახვდებოდა
     const open = await this.prisma.conversation.findFirst({
       where: {
+        kind: ConversationKind.SUPPORT,
         participants: { some: { userId } },
         status: { in: WRITABLE },
       },
@@ -216,6 +219,11 @@ export class ChatService {
       if (text) await this.send(open.id, { body: text }, userId, UserRole.PARENT);
       return this.messages(open.id, userId, UserRole.PARENT);
     }
+
+    // პაკეტში ჩატი თუ არ შედის, კონსულტაციის ლიმიტი იხარჯება —
+    // ერთი ლიმიტი ერთ ახალ შეკითხვას შეესაბამება. ამის გარეშე
+    // ნაყიდი ლიმიტი მხოლოდ ბაზაში იწერებოდა და არაფერს აკეთებდა.
+    await this.assertCanStart(userId);
 
     const conversation = await this.prisma.conversation.create({
       data: {
@@ -909,6 +917,24 @@ export class ChatService {
       where: { conversationId, userId },
       data: { lastReadAt: new Date() },
     });
+  }
+
+  /**
+   * ახალი შეკითხვის უფლება.
+   *
+   * თანმიმდევრობა მნიშვნელოვანია: ჯერ პაკეტს ვამოწმებთ და მხოლოდ
+   * მერე ლიმიტს — თორემ პრემიუმ მშობელს ნაყიდი ლიმიტი უსაფუძვლოდ
+   * დაეხარჯებოდა.
+   */
+  private async assertCanStart(userId: string): Promise<void> {
+    if (await this.entitlements.can(userId, 'chat_with_operator')) return;
+
+    const used = await this.packs.consume(userId);
+    if (used) return;
+
+    throw new ForbiddenException(
+      'ჩატი თქვენს პაკეტში არ შედის — აირჩიეთ კონსულტაციის ლიმიტი ან პაკეტი',
+    );
   }
 
   private async assertAccess(conversationId: string, userId: string, role: UserRole) {
