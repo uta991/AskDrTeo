@@ -108,6 +108,8 @@ export interface DiagnosisOption {
   name: string;
   description: string | null;
   advice: string | null;
+  /** ონლაინ კონსულტაციით ვერ იმართება — სასწრაფო დახმარებაა საჭირო */
+  isUrgent: boolean;
   usageCount: number;
 }
 

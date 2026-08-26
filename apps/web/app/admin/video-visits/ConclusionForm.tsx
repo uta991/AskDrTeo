@@ -48,6 +48,7 @@ export function ConclusionForm({
   const [openList, setOpenList] = useState(false);
   const [doses, setDoses] = useState<DoseItem[]>([]);
   const [advice, setAdvice] = useState<string | null>(null);
+  const [urgent, setUrgent] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -73,6 +74,7 @@ export function ConclusionForm({
   const pick = (option: DiagnosisOption) => {
     setDiagnosis(option.name);
     setOpenList(false);
+    setUrgent(option.isUrgent);
     if (!note.trim() && option.description) setNote(option.description);
   };
 
@@ -205,7 +207,10 @@ export function ConclusionForm({
                     className={styles.suggestItem}
                     onClick={() => pick(option)}
                   >
-                    {option.name}
+                    <span>
+                      {option.name}
+                      {option.isUrgent && <span className={styles.urgentTag}>სასწრაფო</span>}
+                    </span>
                     {option.usageCount > 0 && (
                       <span className={styles.suggestCount}>{option.usageCount}</span>
                     )}
@@ -216,6 +221,15 @@ export function ConclusionForm({
           )}
         </div>
       </label>
+
+      {/* ასეთი დიაგნოზი ონლაინ ვერ იმართება — ექიმმა ოჯახი
+          დაუყოვნებლივ უნდა გადაამისამართოს */}
+      {urgent && (
+        <p className={styles.urgentNote}>
+          ეს მდგომარეობა ონლაინ კონსულტაციით არ იმართება — ოჯახი დაუყოვნებლივ
+          სასწრაფო დახმარებაში გადაამისამართეთ.
+        </p>
+      )}
 
       <label className={styles.field}>
         <span className={styles.fieldLabel}>დიაგნოზის ახსნა — მშობლისთვის</span>

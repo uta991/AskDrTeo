@@ -17,11 +17,13 @@ export async function seedDiagnoses(prisma: PrismaClient): Promise<void> {
         name: item.name,
         description: item.description ?? null,
         advice: item.advice ?? null,
+        isUrgent: item.urgent ?? false,
         isBuiltIn: true,
       },
       update: {
         description: item.description ?? null,
         advice: item.advice ?? null,
+        isUrgent: item.urgent ?? false,
         isBuiltIn: true,
       },
       select: { id: true },

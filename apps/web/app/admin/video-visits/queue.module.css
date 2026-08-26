@@ -409,3 +409,26 @@
   font-weight: 600;
   color: #2e9e5b;
 }
+
+/* ── გადაუდებელი მდგომარეობა ──────────────────────────────── */
+
+.urgentTag {
+  margin-left: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #e5484d;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  vertical-align: middle;
+}
+
+.urgentNote {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #ffffff;
+  background: #e5484d;
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+}

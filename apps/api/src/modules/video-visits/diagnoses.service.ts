@@ -33,7 +33,14 @@ export class DiagnosesService {
       where: { isActive: true, name: { contains: q, mode: 'insensitive' } },
       orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
       take: 25,
-      select: { id: true, name: true, description: true, advice: true, usageCount: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        advice: true,
+        isUrgent: true,
+        usageCount: true,
+      },
     });
 
     const lower = q.toLowerCase();
@@ -55,7 +62,14 @@ export class DiagnosesService {
       where: { isActive: true },
       orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
       take: 25,
-      select: { id: true, name: true, description: true, advice: true, usageCount: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        advice: true,
+        isUrgent: true,
+        usageCount: true,
+      },
     });
   }
 
