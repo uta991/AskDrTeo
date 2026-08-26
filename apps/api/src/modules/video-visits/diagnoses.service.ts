@@ -32,7 +32,7 @@ export class DiagnosesService {
     const rows = await this.prisma.diagnosisEntry.findMany({
       where: { isActive: true, name: { contains: q, mode: 'insensitive' } },
       orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
-      take: 8,
+      take: 25,
       select: { id: true, name: true, description: true, advice: true, usageCount: true },
     });
 
@@ -44,12 +44,17 @@ export class DiagnosesService {
     });
   }
 
-  /** ხშირად დასმული — ცარიელ ველზე ესენი ჩნდება. */
+  /**
+   * ხშირად დასმული — ცარიელ ველზე ესენი ჩნდება.
+   *
+   * სია გრძელია და ეკრანზე იხვევა: ექიმს ცნობარის დათვალიერებაც
+   * უნდა შეეძლოს და არა მხოლოდ ზუსტი კრეფა.
+   */
   private frequent() {
     return this.prisma.diagnosisEntry.findMany({
       where: { isActive: true },
       orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
-      take: 8,
+      take: 25,
       select: { id: true, name: true, description: true, advice: true, usageCount: true },
     });
   }
