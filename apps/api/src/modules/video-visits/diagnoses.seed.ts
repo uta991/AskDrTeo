@@ -105,6 +105,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'ცხვირის გამორეცხვა. ხანგრძლივი ხვრინვა ან ძილში სუნთქვის '
       + 'შეჩერება — ექიმთან.',
     medications: [
+      { slug: 'fluticasone-nasal', note: 'ექიმის დანიშნულებით' },
       { slug: 'saline-nasal', note: 'დღეში 3-ჯერ' },
     ],
   },
@@ -116,6 +117,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ხმის დასვენება, ნოტიო ჰაერი, თბილი სითხე.',
     medications: [
+      { slug: 'ambroxol', note: 'მშრალ ხველაზე' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
   },
@@ -138,6 +140,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ნოტიო ჰაერი, თბილი სითხე.',
     medications: [
+      { slug: 'ambroxol', note: 'მშრალ ხველაზე' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
   },
@@ -151,6 +154,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'უხვი სითხე, ნოტიო ჰაერი. სუნთქვის გაძნელებისას დაუყოვნებლივ '
       + 'ექიმთან.',
     medications: [
+      { slug: 'ambroxol', note: 'ლორწოს გამათხელებლად' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
   },
@@ -163,6 +167,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'ნოტიო ჰაერი, უხვი სითხე. ხიხინის გაძლიერება — დაუყოვნებლივ '
       + 'ექიმთან.',
     medications: [
+      { slug: 'budesonide-inhaled', note: 'განმეორებადი ეპიზოდებისას' },
       { slug: 'salbutamol', note: 'ინჰალაციით, სპეისერით' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
@@ -189,6 +194,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'დასვენება, უხვი სითხე, ტემპერატურის კონტროლი. კურსი ბოლომდე.',
     medications: [
+      { slug: 'ambroxol', note: 'ლორწოს გამათხელებლად' },
+      { slug: 'ceftriaxone', note: 'მძიმე ფორმისას, სტაციონარში' },
       { slug: 'amoxicillin', note: 'ექიმის დანიშნულებით' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
@@ -202,6 +209,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'გამომწვევის მოცილება, სამოქმედო გეგმა ექიმთან ერთად, '
       + 'ინჰალატორის სწორი ტექნიკა.',
     medications: [
+      { slug: 'montelukast', note: 'ხანგრძლივი კონტროლისთვის' },
+      { slug: 'budesonide-inhaled', note: 'ბაზისური მკურნალობა' },
       { slug: 'salbutamol', note: 'გამწვავებაზე' },
       { slug: 'prednisolone', note: 'მძიმე გამწვავებაზე, მოკლე კურსი' },
     ],
@@ -215,6 +224,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ცხვირის გამორეცხვა, უხვი სითხე.',
     medications: [
+      { slug: 'xylometazoline', note: 'მოკლე კურსი, 5 დღემდე' },
       { slug: 'saline-nasal', note: 'დღეში 3–4-ჯერ' },
       { slug: 'amoxicillin', note: 'ბაქტერიული ფორმისას' },
     ],
@@ -238,6 +248,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'კონტროლი 48 საათში. ცურვა და ყურში წვეთების თვითნებური '
       + 'ჩაწვეთება დაუშვებელია.',
     medications: [
+      { slug: 'ear-drops-analgesic', note: 'ტკივილზე, აპკის მთლიანობისას' },
       { slug: 'ibuprofen', note: 'ტკივილსა და ცხელებაზე' },
       { slug: 'amoxicillin', note: 'ბაქტერიული ფორმისას' },
     ],
@@ -269,6 +280,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ხშირი ხელის დაბანა, ცალკე პირსახოცი. ჩირქოვანი გამონადენი — '
       + 'ექიმთან.',
+    medications: [
+      { slug: 'tobramycin-eye', note: 'ბაქტერიული ფორმისას' },
+    ],
   },
   {
     name: 'ცრემლსადენის გაუვალობა',
@@ -286,6 +300,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'გრილი, რბილი საკვები. სითხე მთავარია.',
     medications: [
+      { slug: 'chlorhexidine', note: '6 წლიდან, გამოსავლებად' },
       { slug: 'paracetamol', note: 'ტკივილზე' },
     ],
   },
@@ -297,6 +312,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'საწოვრებისა და ბოთლების მოხარშვა.',
     medications: [
+      { slug: 'fluconazole', note: 'მდგრადი ფორმისას, ექიმის დანიშნულებით' },
       { slug: 'nystatin', note: 'დღეში 4-ჯერ, კვების შემდეგ' },
     ],
   },
@@ -310,6 +326,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'გაგრძელდეს. შარდის შემცირება, ლეთარგია, სისხლი განავალში — '
       + 'დაუყოვნებლივ ექიმთან.',
     medications: [
+      { slug: 'probiotic', note: 'კურსი 5–7 დღე' },
+      { slug: 'ondansetron', note: 'ღებინებისას, ექიმის დანიშნულებით' },
+      { slug: 'paracetamol-supp', note: 'ღებინებისას ცხელებაზე' },
       { slug: 'ors', note: 'ყოველი განავლის შემდეგ' },
       { slug: 'zinc', note: 'კურსი 10–14 დღე' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
@@ -324,6 +343,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'პატარა ულუფებით სითხე ყოველ 5–10 წუთში. მწვანე ან სისხლიანი '
       + 'ღებინება — დაუყოვნებლივ ექიმთან.',
     medications: [
+      { slug: 'ondansetron', note: 'ექიმის დანიშნულებით' },
+      { slug: 'paracetamol-supp', note: 'ცხელებაზე' },
       { slug: 'ors', note: 'მცირე ულუფებით' },
     ],
   },
@@ -347,6 +368,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'კვების შემდეგ 20–30 წუთი ვერტიკალურად დაჭერა, მცირე ულუფებით '
       + 'ხშირი კვება.',
+    medications: [
+      { slug: 'domperidone', note: 'ექიმის დანიშნულებით, მოკლე კურსი' },
+    ],
   },
   {
     name: 'ჩვილთა კოლიკა',
@@ -385,6 +409,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ხელის დაბანა, ფრჩხილების მოკლედ შეჭრა, თეთრეულის ცხელი რეცხვა.',
     medications: [
+      { slug: 'albendazole', note: 'ერთჯერადად, გამეორება 2 კვირაში' },
       { slug: 'mebendazole', note: 'ერთჯერადად, გამეორება 2 კვირაში' },
     ],
   },
@@ -398,6 +423,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'დამატენიანებელი დღეში ორჯერ, ხანმოკლე ბანაობა თბილი წყლით, '
       + 'ბამბის ტანსაცმელი.',
     medications: [
+      { slug: 'hydrocortisone-topical', note: 'გამწვავებაზე, მოკლე კურსი' },
+      { slug: 'dexpanthenol', note: 'დამატენიანებლად' },
       { slug: 'fenistil', note: 'ქავილზე' },
       { slug: 'cetirizine', note: 'ძლიერ ქავილზე' },
     ],
@@ -409,6 +436,11 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'შედეგი.',
     advice:
       'ხშირი გამოცვლა, კანის ჰაერზე შეშრობა, დამცავი კრემი.',
+    medications: [
+      { slug: 'zinc-oxide', note: 'ყოველი გამოცვლისას' },
+      { slug: 'dexpanthenol', note: 'გაღიზიანებაზე' },
+      { slug: 'clotrimazole-topical', note: 'სოკოვანი ფორმისას' },
+    ],
   },
   {
     name: 'ჭინჭრის ციება',
@@ -431,6 +463,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ცალკე პირსახოცი, ხელის ხშირი დაბანა. ბაღში დაბრუნება '
       + 'მკურნალობის 24 საათის შემდეგ.',
+    medications: [
+      { slug: 'mupirocin', note: 'დღეში 3-ჯერ, კურსი 5 დღე' },
+    ],
   },
   {
     name: 'მოლუსკი',
@@ -447,6 +482,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'უბანი.',
     advice:
       'კანი მშრალად შეინახეთ; ცალკე პირსახოცი და თეთრეული.',
+    medications: [
+      { slug: 'clotrimazole-topical', note: 'დღეში 2-ჯერ, კურსი 2–4 კვირა' },
+    ],
   },
   {
     name: 'ჩვილთა სებორეული დერმატიტი',
@@ -489,6 +527,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'ალერგენთან კონტაქტის შემცირება, ცხვირის გამორეცხვა.',
     medications: [
+      { slug: 'fluticasone-nasal', note: 'ცხვირის სპრეი, დღეში ერთხელ' },
+      { slug: 'montelukast', note: 'მძიმე ფორმისას' },
       { slug: 'cetirizine', note: 'დღეში ერთხელ, საღამოს' },
       { slug: 'loratadine', note: 'ალტერნატივა 2 წლიდან' },
       { slug: 'saline-nasal', note: 'გამორეცხვა' },
@@ -549,6 +589,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'ფრჩხილები მოკლედ, გრილი აბაზანა. იბუპროფენი ჩუტყვავილაზე არ '
       + 'გამოიყენება.',
     medications: [
+      { slug: 'acyclovir', note: 'რისკის ჯგუფში, ექიმის დანიშნულებით' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
       { slug: 'fenistil', note: 'ქავილზე' },
     ],
@@ -608,6 +649,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'დასვენება, უხვი სითხე. სუნთქვის გაძნელება — ექიმთან.',
     medications: [
+      { slug: 'oseltamivir', note: 'პირველი 48 საათის განმავლობაში' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
       { slug: 'ibuprofen', note: 'ალტერნატივა' },
     ],
@@ -634,6 +676,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'შარდის ანალიზი და კულტურა აუცილებელია. უხვი სითხე; კურსი '
       + 'ბოლომდე.',
     medications: [
+      { slug: 'cefixime', note: 'ექიმის დანიშნულებით' },
+      { slug: 'nitrofurantoin', note: 'ალტერნატივა' },
       { slug: 'amoxicillin', note: 'ექიმის დანიშნულებით' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
@@ -699,6 +743,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'გასაღრღნელი გრილი რგოლი, ღრძილების ნაზი მასაჟი.',
     medications: [
+      { slug: 'teething-gel', note: 'კვებამდე' },
       { slug: 'paracetamol', note: 'ძლიერ მოუსვენრობაზე' },
     ],
   },
@@ -711,6 +756,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'რკინით მდიდარი საკვები. პრეპარატი C ვიტამინთან ერთად, '
       + 'კვებამდე.',
     medications: [
+      { slug: 'folic-acid', note: 'რკინასთან ერთად' },
       { slug: 'iron', note: 'დილით, კვებამდე' },
     ],
   },
@@ -1054,6 +1100,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'სახლის რეჟიმი, უხვი სითხე. სუნთქვის გაძნელება — ექიმთან.',
     medications: [
+      { slug: 'paracetamol-supp', note: 'ღებინებისას ცხელებაზე' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
   },
@@ -1065,6 +1112,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'რეჰიდრატაცია მთავარია. აცრა მძიმე ფორმისგან იცავს.',
     medications: [
+      { slug: 'probiotic', note: 'კურსი 5–7 დღე' },
+      { slug: 'paracetamol-supp', note: 'ღებინებისას ცხელებაზე' },
       { slug: 'ors', note: 'ყოველი განავლის შემდეგ' },
       { slug: 'zinc', note: 'კურსი 10–14 დღე' },
     ],
@@ -1078,6 +1127,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'რეჰიდრატაცია. ანტიბიოტიკი მხოლოდ ცალკეულ შემთხვევებში, ექიმის '
       + 'გადაწყვეტილებით.',
     medications: [
+      { slug: 'probiotic', note: 'კურსი 7 დღე' },
       { slug: 'ors', note: 'მცირე ულუფებით' },
     ],
   },
@@ -1088,6 +1138,10 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'შებერილობა, წონის კლება.',
     advice:
       'ჰიგიენა, სუფთა წყალი. მკურნალობა ექიმის დანიშნულებით.',
+    medications: [
+      { slug: 'metronidazole', note: 'კურსი 5–7 დღე' },
+      { slug: 'albendazole', note: 'ალტერნატივა' },
+    ],
   },
   {
     name: 'ჰერპესული გინგივოსტომატიტი',
@@ -1098,6 +1152,8 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'გრილი, რბილი საკვები. სითხის მიღება მთავარია — დეჰიდრატაციის '
       + 'რისკი მაღალია.',
     medications: [
+      { slug: 'acyclovir', note: 'პირველი 72 საათის განმავლობაში' },
+      { slug: 'teething-gel', note: 'ღრძილების გასაუტკივარებლად' },
       { slug: 'paracetamol', note: 'ტკივილსა და ცხელებაზე' },
     ],
   },
@@ -1109,6 +1165,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'უხვი სითხე. გამონაყარის გაჩენა გამოჯანმრთელების ნიშანია.',
     medications: [
+      { slug: 'paracetamol', note: 'ცხელებაზე' },
       { slug: 'paracetamol', note: 'ცხელებაზე' },
     ],
   },
@@ -1237,6 +1294,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'მკურნალობა ოჯახის ყველა წევრს ერთდროულად. თეთრეულის ცხელი '
       + 'რეცხვა.',
+    medications: [
+      { slug: 'permethrin', note: 'ერთჯერადად, გამეორება 7 დღეში' },
+    ],
   },
   {
     name: 'პედიკულოზი',
@@ -1245,6 +1305,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
     advice:
       'სპეციალური საშუალება და სავარცხელი. ოჯახის შემოწმება, '
       + 'თეთრეულის რეცხვა.',
+    medications: [
+      { slug: 'permethrin', note: 'გამეორება 7 დღეში' },
+    ],
   },
   {
     name: 'ვიტილიგო',
@@ -1328,6 +1391,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'გამომწვევის დადგენას.',
     advice:
       'ჩირქოვანი გამონადენი პირველ დღეებში — დაუყოვნებლივ ექიმთან.',
+    medications: [
+      { slug: 'tobramycin-eye', note: 'ექიმის დანიშნულებით' },
+    ],
   },
   {
     name: 'ჭიპლარის თიაქარი',
@@ -1365,6 +1431,7 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       'ჰიგიენა, აცრები, D ვიტამინი. ზრდის ჩამორჩენა ან მძიმე '
       + 'ინფექციები — იმუნოლოგთან.',
     medications: [
+      { slug: 'probiotic', note: 'კურსი ანტიბიოტიკის შემდეგ' },
       { slug: 'vitamin-d', note: 'დღეში ერთხელ' },
     ],
   },
@@ -1375,6 +1442,9 @@ export const DIAGNOSIS_SEED: SeedDiagnosis[] = [
       + 'ასთმა, რეფლუქსი, ალერგია.',
     advice:
       'ხველის დღიური. ბავშვთან ახლოს მოწევა დაუშვებელია.',
+    medications: [
+      { slug: 'montelukast', note: 'ალერგიული მიზეზისას' },
+    ],
   },
   {
     name: 'უცხო სხეული ცხვირში',
