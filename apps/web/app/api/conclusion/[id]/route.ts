@@ -8,7 +8,7 @@ import { API_URL, getAccessToken, getSessionUser } from '@/lib/session';
  * ამიტომ ფაილს სერვერი იღებს და უცვლელად გადმოსცემს.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -21,10 +21,10 @@ export async function GET(
   // პირდაპირ დოკუმენტზე ვაბრუნებთ.
   if (!user || !token) {
     const next = encodeURIComponent(`/api/conclusion/${id}`);
-    return Response.redirect(
-      new URL(`/login?next=${next}`, process.env.WEB_URL ?? 'http://localhost:3100'),
-      302,
-    );
+
+    // მისამართს თავად მოთხოვნიდან ვიღებთ და არა ცვლადიდან:
+    // პროდაქშენში `WEB_URL` არ იდგა და მშობელი localhost-ზე ხვდებოდა
+    return Response.redirect(new URL(`/login?next=${next}`, request.url), 302);
   }
 
   // პერსონალი ადმინის მისამართით მიდის — მას სხვისი ვიზიტიც უჩანს
