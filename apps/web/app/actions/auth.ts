@@ -108,10 +108,26 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   await saveSession(payload.tokens.accessToken, payload.tokens.refreshToken);
 
-  // როლი განსაზღვრავს სად მიდის: პერსონალი პანელში, მშობელი — თავის
-  // კაბინეტში. ორივეს ერთ ადგილას გაგზავნა ერთს ჩიხში ტოვებდა.
+  // თუ მშობელი კონკრეტული ბმულიდან მოვიდა (მაგალითად SMS-ის
+  // დანიშნულებიდან), იქვე ვაბრუნებთ. სხვა შემთხვევაში როლი
+  // განსაზღვრავს: პერსონალი პანელში, მშობელი — თავის კაბინეტში.
+  const back = safeNext(formData.get('next'));
+  if (back) redirect(back);
+
   const user = await getSessionUser();
   redirect(user && user.role !== 'PARENT' ? '/admin' : '/account');
+}
+
+/**
+ * დასაბრუნებელი მისამართი.
+ *
+ * მხოლოდ საკუთარი საიტის შიდა გზა დაიშვება — გარე მისამართი
+ * შესვლის ფორმას სხვისკენ გადამისამართების იარაღად აქცევდა.
+ */
+function safeNext(value: FormDataEntryValue | null): string | undefined {
+  if (typeof value !== 'string' || !value) return undefined;
+  if (!value.startsWith('/') || value.startsWith('//')) return undefined;
+  return value;
 }
 
 export async function logout(): Promise<void> {
@@ -316,6 +332,10 @@ export async function verifyLoginCode(
       maxAge: 30 * 24 * 60 * 60,
     });
   }
+
+  // ორეტაპიანი შესვლის შემდეგაც იმავე ბმულზე ვბრუნდებით
+  const back = safeNext(formData.get('next'));
+  if (back) redirect(back);
 
   const user = await getSessionUser();
   redirect(user && user.role !== 'PARENT' ? '/admin' : '/account');

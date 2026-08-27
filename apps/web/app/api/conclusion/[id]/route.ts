@@ -11,13 +11,21 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await getSessionUser();
-  if (!user) return new Response('ავტორიზაცია საჭიროა', { status: 401 });
-
-  const token = await getAccessToken();
-  if (!token) return new Response('სესია ამოიწურა', { status: 401 });
-
   const { id } = await params;
+
+  const user = await getSessionUser();
+  const token = user ? await getAccessToken() : null;
+
+  // SMS-ის ბმულს მშობელი ხშირად იმ ბრაუზერში ხსნის, სადაც შესული
+  // არაა. ცარიელი შეცდომის ნაცვლად შესვლაზე ვგზავნით და შემდეგ
+  // პირდაპირ დოკუმენტზე ვაბრუნებთ.
+  if (!user || !token) {
+    const next = encodeURIComponent(`/api/conclusion/${id}`);
+    return Response.redirect(
+      new URL(`/login?next=${next}`, process.env.WEB_URL ?? 'http://localhost:3100'),
+      302,
+    );
+  }
 
   // პერსონალი ადმინის მისამართით მიდის — მას სხვისი ვიზიტიც უჩანს
   const base = user.role === 'PARENT' ? '/video-visits' : '/admin/video-visits';

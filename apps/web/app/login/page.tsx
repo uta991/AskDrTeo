@@ -8,10 +8,19 @@ import styles from './login.module.css';
 
 export const metadata = { title: 'შესვლა — AskDrTeo' };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  const destination = safeNext(next);
+
   // უკვე შესულს login აღარ სჭირდება
   const current = await getSessionUser();
-  if (current) redirect(current.role !== 'PARENT' ? '/admin' : '/account');
+  if (current) {
+    redirect(destination ?? (current.role !== 'PARENT' ? '/admin' : '/account'));
+  }
 
   return (
     <main className={styles.page}>
@@ -27,7 +36,7 @@ export default async function LoginPage() {
           <p className={styles.subtitle}>იმავე მონაცემებით, რითაც აპლიკაციაში</p>
         </div>
 
-        <LoginForm />
+        <LoginForm next={destination} />
 
         <SocialAuth
           googleClientId={process.env.GOOGLE_WEB_CLIENT_ID}
@@ -43,4 +52,16 @@ export default async function LoginPage() {
       </div>
     </main>
   );
+}
+
+/**
+ * დასაბრუნებელი მისამართი.
+ *
+ * მხოლოდ საკუთარი საიტის შიდა გზა დაიშვება — გარე მისამართი
+ * შესვლის ფორმას სხვისკენ გადამისამართების იარაღად აქცევდა.
+ */
+function safeNext(value?: string): string | undefined {
+  if (!value) return undefined;
+  if (!value.startsWith('/') || value.startsWith('//')) return undefined;
+  return value;
 }

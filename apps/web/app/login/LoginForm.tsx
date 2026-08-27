@@ -27,7 +27,7 @@ function SubmitButton() {
  * `challengeId`-ს და ნომერზე აგზავნის კოდს. მეორე ფორმა სწორედ ამ
  * კოდს ადასტურებს.
  */
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(login, {});
   const [codeState, codeAction] = useActionState<LoginState, FormData>(verifyLoginCode, {});
 
@@ -38,6 +38,7 @@ export function LoginForm() {
     return (
       <CodeStep
         action={codeAction}
+        next={next}
         challengeId={challengeId}
         maskedPhone={maskedPhone}
         error={codeState.error}
@@ -47,6 +48,9 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className={styles.form}>
+      {/* საიდან მოვიდა — შესვლის შემდეგ იქვე ბრუნდება */}
+      {!!next && <input type="hidden" name="next" value={next} />}
+
       <label className={styles.field}>
         <span className={styles.label}>ელ. ფოსტა ან ტელეფონი</span>
         <input
@@ -79,11 +83,13 @@ export function LoginForm() {
 
 function CodeStep({
   action,
+  next,
   challengeId,
   maskedPhone,
   error,
 }: {
   action: (formData: FormData) => void;
+  next?: string;
   challengeId: string;
   maskedPhone?: string;
   error?: string;
@@ -101,6 +107,8 @@ function CodeStep({
 
   return (
     <form action={action} className={styles.form}>
+      {!!next && <input type="hidden" name="next" value={next} />}
+
       <input type="hidden" name="challengeId" value={challengeId} />
 
       <p className={styles.note}>
