@@ -450,3 +450,9 @@
   border-color: var(--primary);
   background: var(--primary-soft);
 }
+
+.topicsTitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 14px;
+}

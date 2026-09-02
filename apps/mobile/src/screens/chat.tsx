@@ -25,18 +25,19 @@ import { useChat, type ChatMessage } from '@/features/chat/chat.store';
 import { pickChatFile, uploadChatFile } from '@/features/media/upload';
 
 /**
- * ხშირად დასმული კითხვები.
+ * სწრაფი პასუხები.
  *
- * ცარიელი ველი მშობელს აჩერებს — არ იცის, რა ჰკითხოს და როგორ
- * ჩამოაყალიბოს. მზა კითხვა ტექსტში ჩაჯდება, რომ შეასწოროს.
+ * ბევრ კითხვაზე პასუხი უკვე გვაქვს მზა სახით — ვიდეოთი და
+ * გზამკვლევით. ოპერატორის ლოდინი ასეთ დროს ზედმეტია, ამიტომ
+ * მინიშნება პირდაპირ მასალაზე გადაჰყავს.
  */
-const SUGGESTIONS = [
-  'ცხელება აქვს — როდის მივმართო ექიმს?',
-  'გამონაყარი გამოუჩნდა, ფოტოს გამოგიგზავნით',
-  'რამდენი უნდა ეძინოს ამ ასაკში?',
-  'კვებაზე უარს ამბობს — რა ვქნა?',
-  'აცრის შემდეგ ცხელება აქვს, ნორმალურია?',
-  'რა დოზით მივცე წამალი?',
+const TOPICS: { label: string; href: string }[] = [
+  { label: 'ცხელება — როდის მივმართო ექიმს', href: '/emergency' },
+  { label: 'რამდენი უნდა ეძინოს ამ ასაკში', href: '/sleep' },
+  { label: 'კვებაზე უარს ამბობს', href: '/nutrition' },
+  { label: 'ახალშობილის მოვლა', href: '/newborn' },
+  { label: 'აცრები და კალენდარი', href: '/vaccinations' },
+  { label: 'რა დოზით მივცე წამალი', href: '/calculator' },
 ];
 
 const STAFF_ROLES = ['OPERATOR', 'ADMIN', 'SUPER_ADMIN'];
@@ -159,14 +160,16 @@ export default function ChatScreen() {
 
               <Button title="ჩატის დაწყება" onPress={() => void start()} loading={sending} />
 
+              <Text style={styles.topicsTitle}>ან იხილეთ მზა მასალა</Text>
+
               <View style={styles.suggestions}>
-                {SUGGESTIONS.map((suggestion) => (
+                {TOPICS.map((topic) => (
                   <Pressable
-                    key={suggestion}
+                    key={topic.href}
                     style={styles.suggestion}
-                    onPress={() => setInput(suggestion)}
+                    onPress={() => router.push(topic.href)}
                   >
-                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                    <Text style={styles.suggestionText}>{topic.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -316,7 +319,8 @@ const styles = StyleSheet.create({
   lockedTitle: { ...typography.h2, color: colors.textPrimary },
   lockedText: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
 
-  suggestions: { gap: spacing.xs, marginTop: spacing.sm },
+  topicsTitle: { ...typography.small, color: colors.textSecondary, marginTop: spacing.sm },
+  suggestions: { gap: spacing.xs, marginTop: spacing.xs },
   suggestion: {
     borderWidth: 1.5,
     borderColor: colors.border,

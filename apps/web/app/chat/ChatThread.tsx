@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useEffect, useRef, useState, useTransition } from 'react';
 import {
   closeConversation,
@@ -42,19 +44,19 @@ function time(value: string): string {
  * მხარეა ეს ბრაუზერი.
  */
 /**
- * ხშირად დასმული კითხვები.
+ * სწრაფი პასუხები.
  *
- * ცარიელი ველი მშობელს აჩერებს — არ იცის, რა ჰკითხოს და როგორ
- * ჩამოაყალიბოს. მზა კითხვა პირველ ნაბიჯს ხსნის; დაჭერისთანავე
- * ტექსტში ჩაჯდება, რომ საჭიროებისამებრ შეასწოროს.
+ * ბევრ კითხვაზე პასუხი უკვე გვაქვს მზა სახით — ვიდეოთი და
+ * გზამკვლევით. ოპერატორის ლოდინი ასეთ დროს ზედმეტია, ამიტომ
+ * მინიშნება პირდაპირ მასალაზე გადაჰყავს.
  */
-const SUGGESTIONS = [
-  'ცხელება აქვს — როდის მივმართო ექიმს?',
-  'გამონაყარი გამოუჩნდა, ფოტოს გამოგიგზავნით',
-  'რამდენი უნდა ეძინოს ამ ასაკში?',
-  'კვებაზე უარს ამბობს — რა ვქნა?',
-  'აცრის შემდეგ ცხელება აქვს, ნორმალურია?',
-  'რა დოზით მივცე წამალი?',
+const TOPICS: { label: string; href: string }[] = [
+  { label: 'ცხელება — როდის მივმართო ექიმს', href: '/emergency' },
+  { label: 'რამდენი უნდა ეძინოს ამ ასაკში', href: '/sleep' },
+  { label: 'კვებაზე უარს ამბობს', href: '/nutrition' },
+  { label: 'ახალშობილის მოვლა', href: '/newborn' },
+  { label: 'აცრები და კალენდარი', href: '/vaccinations' },
+  { label: 'რა დოზით მივცე წამალი', href: '/calculator' },
 ];
 
 export function ChatThread({
@@ -229,16 +231,13 @@ export function ChatThread({
             {pending ? 'იხსნება…' : 'ჩატის დაწყება'}
           </button>
 
+          <p className={styles.topicsTitle}>ან იხილეთ მზა მასალა</p>
+
           <div className={styles.suggestions}>
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                className={styles.suggestion}
-                onClick={() => setInput(suggestion)}
-              >
-                {suggestion}
-              </button>
+            {TOPICS.map((topic) => (
+              <Link key={topic.href} href={topic.href} className={styles.suggestion}>
+                {topic.label}
+              </Link>
             ))}
           </div>
         </div>
@@ -344,15 +343,10 @@ export function ChatThread({
       */}
       {!staff && started && !closed && !parentWrote && (
         <div className={styles.suggestions}>
-          {SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              className={styles.suggestion}
-              onClick={() => setInput(suggestion)}
-            >
-              {suggestion}
-            </button>
+          {TOPICS.map((topic) => (
+            <Link key={topic.href} href={topic.href} className={styles.suggestion}>
+              {topic.label}
+            </Link>
           ))}
         </div>
       )}
