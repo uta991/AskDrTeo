@@ -82,6 +82,20 @@ export const STAFF_UID = 2;
  */
 export const TOKEN_TTL_SECONDS = 2 * 60 * 60;
 
+/**
+ * ვიდეო ვიზიტი მშობლისთვის ხელმისაწვდომია თუ არა.
+ *
+ * გამორთვისას ჯავშნის გვერდი და ღილაკები ქრება, უკვე გაცემული
+ * დასკვნები კი ხელმისაწვდომი რჩება — ისინი სამედიცინო დოკუმენტია
+ * და სერვისის შეჩერებას არ უნდა გაჰყვეს.
+ *
+ * ერთი ცვლადი მართავს საიტსაც და აპლიკაციასაც: ჩართვისთვის
+ * `VIDEO_VISITS_ENABLED=true` საკმარისია, ხელახალი ატვირთვის გარეშე.
+ */
+export function videoVisitsEnabled(): boolean {
+  return process.env.VIDEO_VISITS_ENABLED === 'true';
+}
+
 export function agoraConfigured(): boolean {
   return Boolean(process.env.AGORA_APP_ID && process.env.AGORA_APP_CERTIFICATE);
 }

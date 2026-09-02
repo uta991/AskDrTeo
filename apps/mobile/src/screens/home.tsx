@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { SkyBackground } from '@/components/SkyBackground';
 import { AuthCard } from '@/components/AuthCard';
 import { Logo } from '@/components/Logo';
 import { Icon } from '@/components/ui/Icon';
+import { api } from '@/api/client';
 import { FeatureTiles, type Tile } from '@/components/FeatureTiles';
 import { useTabs } from '@/features/tabs';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
@@ -60,6 +61,16 @@ export function HomeTab() {
   useEffect(() => {
     if (activeChild) void loadGrowth(activeChild.id).catch(() => undefined);
   }, [activeChild, loadGrowth]);
+
+  // ონლაინ ვიზიტი დროებით გამორთულია — გადამრთველი სერვერზეა, რომ
+  // საიტიც და აპლიკაციაც ერთსა და იმავეს ეკითხებოდნენ
+  const [visitsOn, setVisitsOn] = useState(false);
+
+  useEffect(() => {
+    void api<{ enabled: boolean }>('/video-visits/config')
+      .then((config) => setVisitsOn(config.enabled))
+      .catch(() => setVisitsOn(false));
+  }, []);
 
   return (
     <SkyBackground showDoves={false}>
@@ -200,8 +211,8 @@ export function HomeTab() {
           </View>
         )}
 
-        {/* ── შემდეგი ვიზიტი ────────────────────────────────── */}
-        {!isStaff && (
+        {/* ── ონლაინ ვიზიტი — დროებით გამორთულია ─────────────── */}
+        {!isStaff && visitsOn && (
           <Pressable style={styles.nextVisit} onPress={() => router.push('/video-visit')}>
             <View style={styles.nextVisitIcon}>
               <Icon name="consultation" size={30} color="#6FB6D9" strokeWidth={1.9} />

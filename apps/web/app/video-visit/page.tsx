@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
+import { videoVisitsEnabled } from '@/lib/video-visits';
 import { getChildren } from '@/lib/children';
 import { SunLogo } from '../components/Brand';
 import { getMyVisits, getOffer } from './actions';
@@ -19,6 +20,9 @@ export default async function VideoVisitPage({
   const user = await getSessionUser();
   if (!user) redirect('/login');
   if (user.role !== 'PARENT') redirect('/admin/video-visits');
+
+  // სერვისი დროებით გამორთულია — გვერდი მშობელს აღარ ეჩვენება
+  if (!(await videoVisitsEnabled())) redirect('/account');
 
   const [offer, visits, children] = await Promise.all([
     getOffer(),

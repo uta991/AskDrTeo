@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
+import { videoVisitsEnabled } from '@/lib/video-visits';
 import { enterVisit } from '../actions';
 import { VisitRoom } from '../VisitRoom';
 
@@ -19,6 +20,8 @@ export default async function VisitRoomPage({
 }) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
+
+  if (!(await videoVisitsEnabled())) redirect('/account');
 
   const { id } = await params;
   const joined = await enterVisit(id);

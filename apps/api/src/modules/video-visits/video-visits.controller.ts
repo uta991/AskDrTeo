@@ -17,6 +17,7 @@ import {
   CurrentUser,
   type AuthenticatedUser,
 } from '@/common/decorators/current-user.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
 import { ChatService } from '../chat/chat.service';
 import { SendMessageDto } from '../chat/dto/chat.dto';
@@ -29,7 +30,12 @@ import {
 } from './dto/video-visit.dto';
 import { DiagnosesService } from './diagnoses.service';
 import { VideoVisitsService } from './video-visits.service';
-import { DAILY_CAPACITY, VISIT_CURRENCY, VISIT_PRICE_MINOR } from './video-visits.config';
+import {
+  DAILY_CAPACITY,
+  VISIT_CURRENCY,
+  VISIT_PRICE_MINOR,
+  videoVisitsEnabled,
+} from './video-visits.config';
 
 /**
  * ვიდეო ვიზიტი — ერთჯერადი შეხვედრა ექიმთან.
@@ -44,6 +50,19 @@ export class VideoVisitsController {
     private readonly visits: VideoVisitsService,
     private readonly chat: ChatService,
   ) {}
+
+  /**
+   * სერვისი ჩართულია თუ არა.
+   *
+   * საიტიც და აპლიკაციაც ამას ეკითხებიან, სანამ ჯავშნის ღილაკს
+   * დახატავდნენ — ერთი ცვლადი ორივეს მართავს.
+   */
+  @Get('config')
+  @Public()
+  @ApiOperation({ summary: 'ონლაინ ვიზიტი ხელმისაწვდომია თუ არა' })
+  config() {
+    return { enabled: videoVisitsEnabled() };
+  }
 
   @Get('offer')
   @ApiOperation({ summary: 'ფასი, დღეების ტევადობა და მოქმედი უფლებები' })

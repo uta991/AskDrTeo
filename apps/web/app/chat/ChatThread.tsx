@@ -41,6 +41,22 @@ function time(value: string): string {
  * მარჯვნივ უჩანს, ოპერატორს — თავისი. `staff` განსაზღვრავს რომელი
  * მხარეა ეს ბრაუზერი.
  */
+/**
+ * ხშირად დასმული კითხვები.
+ *
+ * ცარიელი ველი მშობელს აჩერებს — არ იცის, რა ჰკითხოს და როგორ
+ * ჩამოაყალიბოს. მზა კითხვა პირველ ნაბიჯს ხსნის; დაჭერისთანავე
+ * ტექსტში ჩაჯდება, რომ საჭიროებისამებრ შეასწოროს.
+ */
+const SUGGESTIONS = [
+  'ცხელება აქვს — როდის მივმართო ექიმს?',
+  'გამონაყარი გამოუჩნდა, ფოტოს გამოგიგზავნით',
+  'რამდენი უნდა ეძინოს ამ ასაკში?',
+  'კვებაზე უარს ამბობს — რა ვქნა?',
+  'აცრის შემდეგ ცხელება აქვს, ნორმალურია?',
+  'რა დოზით მივცე წამალი?',
+];
+
 export function ChatThread({
   thread,
   staff = false,
@@ -100,6 +116,9 @@ export function ChatThread({
       })
       .finally(() => setUploading(false));
   };
+
+  // მშობელს უკვე დაუწერია თუ არა — მინიშნებები მხოლოდ მანამდე ჩანს
+  const parentWrote = !!current?.messages.some((message) => !isStaffMessage(message));
 
   const send = () => {
     const text = input.trim();
@@ -209,6 +228,19 @@ export function ChatThread({
           >
             {pending ? 'იხსნება…' : 'ჩატის დაწყება'}
           </button>
+
+          <div className={styles.suggestions}>
+            {SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                className={styles.suggestion}
+                onClick={() => setInput(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -301,6 +333,26 @@ export function ChatThread({
                 ×
               </button>
             </span>
+          ))}
+        </div>
+      )}
+
+      {/*
+        მზა კითხვები — მშობელს, სანამ თავად არაფერი დაუწერია.
+        ოპერატორის ავტომატური პასუხი მათ არ ხურავს: მშობელს სწორედ
+        მაშინ სჭირდება მინიშნება, როცა პასუხის დაწერა უწევს.
+      */}
+      {!staff && started && !closed && !parentWrote && (
+        <div className={styles.suggestions}>
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className={styles.suggestion}
+              onClick={() => setInput(suggestion)}
+            >
+              {suggestion}
+            </button>
           ))}
         </div>
       )}

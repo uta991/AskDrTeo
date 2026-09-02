@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
+import { videoVisitsEnabled } from '@/lib/video-visits';
 import { SunLogo } from '../components/Brand';
 import { FeatureIcon, type FeatureIconName } from '../components/FeatureIcon';
 import { UserMenu } from '../components/UserMenu';
@@ -28,9 +29,10 @@ export default async function AccountPage() {
   // პერსონალს პანელი უფრო გამოადგება
   if (user.role !== 'PARENT') redirect('/admin');
 
-  const [children, news] = await Promise.all([
+  const [children, news, visitsOn] = await Promise.all([
     apiFetch<Child[]>('/children'),
     apiFetch<NewsPost[]>('/news'),
+    videoVisitsEnabled(),
   ]);
 
   // პირველი ბავშვი — იგივე ლოგიკა, რაც აპლიკაციის მთავარ ეკრანზე
@@ -101,7 +103,8 @@ export default async function AccountPage() {
           ))}
         </div>
 
-        {/* ── შემდეგი ვიზიტი ─────────────────────────────── */}
+        {/* ── ონლაინ ვიზიტი — დროებით გამორთულია ─────────── */}
+        {visitsOn && (
         <Link href="/video-visit" className={styles.nextVisit}>
           <span className={styles.nextVisitIcon}>
             <FeatureIcon name="consultation" color="#6FB6D9" size={35} />
@@ -118,6 +121,7 @@ export default async function AccountPage() {
             <FeatureIcon name="arrow-right" color="#6FB6D9" size={20} />
           </span>
         </Link>
+        )}
 
 
         {/* ── სიახლეები ──────────────────────────────────────── */}

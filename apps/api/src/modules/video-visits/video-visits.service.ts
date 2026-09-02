@@ -30,6 +30,7 @@ import {
   LATE_COVER_PERCENT,
   REMINDER_BEFORE_MINUTES,
   VISIT_PRICE_MINOR,
+  videoVisitsEnabled,
 } from './video-visits.config';
 import {
   CancelVideoVisitDto,
@@ -104,6 +105,11 @@ export class VideoVisitsService {
 
   /** დღეზე ადგილის შემოწმება — გადახდის დაწყებამდეც და ჩარიცხვამდეც. */
   async assertDayFree(date: Date): Promise<void> {
+    // სერვისი დროებით გამორთულია — ახალი ჯავშანი აღარ იქმნება
+    if (!videoVisitsEnabled()) {
+      throw new BadRequestException('ონლაინ ვიზიტი დროებით მიუწვდომელია');
+    }
+
     const day = tbilisiStartOfDay(date);
 
     if (day.getTime() < tbilisiStartOfDay(new Date()).getTime()) {

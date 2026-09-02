@@ -161,9 +161,8 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             ვიდეო ბიბლიოთეკა
           </Link>
 
-          <Link href="/video-visit" className={styles.item} role="menuitem">
-            ვიზიტის ჯავშანი
-          </Link>
+          {/* ონლაინ ვიზიტი დროებით გამორთულია — გაცემული დასკვნები
+              „დიაგნოზები და დანიშნულებებში" რჩება */}
 
           <Link href="/calculator" className={styles.item} role="menuitem">
             დოზის კალკულატორი

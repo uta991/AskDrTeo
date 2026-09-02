@@ -24,6 +24,21 @@ import { useEntitlements } from '@/features/entitlements/entitlements.store';
 import { useChat, type ChatMessage } from '@/features/chat/chat.store';
 import { pickChatFile, uploadChatFile } from '@/features/media/upload';
 
+/**
+ * ხშირად დასმული კითხვები.
+ *
+ * ცარიელი ველი მშობელს აჩერებს — არ იცის, რა ჰკითხოს და როგორ
+ * ჩამოაყალიბოს. მზა კითხვა ტექსტში ჩაჯდება, რომ შეასწოროს.
+ */
+const SUGGESTIONS = [
+  'ცხელება აქვს — როდის მივმართო ექიმს?',
+  'გამონაყარი გამოუჩნდა, ფოტოს გამოგიგზავნით',
+  'რამდენი უნდა ეძინოს ამ ასაკში?',
+  'კვებაზე უარს ამბობს — რა ვქნა?',
+  'აცრის შემდეგ ცხელება აქვს, ნორმალურია?',
+  'რა დოზით მივცე წამალი?',
+];
+
 const STAFF_ROLES = ['OPERATOR', 'ADMIN', 'SUPER_ADMIN'];
 
 /** ახალი შეტყობინებების მოტანის რიტმი — ღია ეკრანზე. */
@@ -143,6 +158,18 @@ export default function ChatScreen() {
               </Text>
 
               <Button title="ჩატის დაწყება" onPress={() => void start()} loading={sending} />
+
+              <View style={styles.suggestions}>
+                {SUGGESTIONS.map((suggestion) => (
+                  <Pressable
+                    key={suggestion}
+                    style={styles.suggestion}
+                    onPress={() => setInput(suggestion)}
+                  >
+                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </AuthCard>
           )}
 
@@ -288,6 +315,17 @@ const styles = StyleSheet.create({
   },
   lockedTitle: { ...typography.h2, color: colors.textPrimary },
   lockedText: { ...typography.small, color: colors.textSecondary, lineHeight: 19 },
+
+  suggestions: { gap: spacing.xs, marginTop: spacing.sm },
+  suggestion: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingVertical: 9,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  suggestionText: { ...typography.small, fontSize: 13, color: colors.textPrimary },
 
   startCard: { gap: spacing.md, alignItems: 'center' },
   startText: {
