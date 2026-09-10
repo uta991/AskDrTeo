@@ -20,8 +20,11 @@
         "NSMicrophoneUsageDescription": "ვიდეო ვიზიტისთვის აპლიკაციას მიკროფონზე წვდომა სჭირდება.",
         "UIBackgroundModes": [
           "audio"
-        ]
-      }
+        ],
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryAddUsageDescription": "აპლიკაციას ფოტოს შესანახად სჭირდება გალერეაზე წვდომა."
+      },
+      "buildNumber": "1"
     },
     "android": {
       "package": "ge.askdrteo.app",
