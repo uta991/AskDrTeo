@@ -162,6 +162,15 @@ export class MediaWebhookService {
       });
     }
 
+    // ბრაუზერიდან პირდაპირ ატვირთული ვიდეო DRAFT-ად იქმნება და აქ
+    // ქვეყნდება. publishedAt-ის გარეშე მხოლოდ ასეთი ჩანაწერია — ადმინის
+    // მიერ შეგნებულად მოხსნილ ვიდეოს ძველი თარიღი აქვს და ხელახლა არ
+    // გამოქვეყნდება.
+    await this.prisma.video.updateMany({
+      where: { mediaAssetId: assetId, status: VideoStatus.DRAFT, publishedAt: null },
+      data: { status: VideoStatus.PUBLISHED, publishedAt: new Date() },
+    });
+
     this.logger.log(`ვიდეო მზადაა: ${providerAssetId} (${details?.durationSec ?? 0} წმ)`);
 
     // ვიდეოს მოლოდინში მყოფი სიახლეები ახლა ქვეყნდება — ატვირთვისას

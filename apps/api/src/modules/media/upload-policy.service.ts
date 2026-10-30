@@ -122,6 +122,38 @@ export class UploadPolicyService {
   }
 
   /**
+   * შემოწმება პირდაპირი ატვირთვისთვის — ფაილი ჩვენამდე არ მოდის.
+   *
+   * ბაიტების გარეშე MIME-ს ხელმოწერით ვერ დავადგენთ, ამიტომ ბრაუზერის
+   * მიერ გამოცხადებულ ტიპსა და ზომას ვამოწმებთ. ეს მოტყუებადია —
+   * რეალური ჭერი Bunny-ის ბიბლიოთეკის პარამეტრებშიც უნდა იდგეს.
+   */
+  async assertDeclaredAllowed(
+    declared: { mimeType: string; sizeBytes: number },
+    kind: UploadKind,
+    actor: UploadActor,
+  ): Promise<void> {
+    const rules = RULES[kind];
+
+    await this.assertPermission(rules, actor);
+    const limitMb = await this.resolveLimitMb(rules, actor);
+
+    if (!rules.allowedMime.includes(declared.mimeType)) {
+      throw new BadRequestException(
+        `ფაილის ტიპი დაუშვებელია. დასაშვებია: ${rules.allowedMime.join(', ')}`,
+      );
+    }
+
+    if (declared.sizeBytes <= 0) {
+      throw new BadRequestException('ფაილი ცარიელია');
+    }
+
+    if (declared.sizeBytes > limitMb * MB) {
+      throw new BadRequestException(`ფაილი დიდია. მაქსიმუმი: ${limitMb} MB`);
+    }
+  }
+
+  /**
    * 1. უფლება.
    *
    * როლი აქ აღარ ფიგურირებს — რომელ როლს შეუძლია ვიდეოს ატვირთვა,

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { createReadStream, rmSync, statSync } from 'node:fs';
@@ -8,7 +8,11 @@ import type {
   UploadedVideo,
   VideoDetails,
   VideoStorageProvider,
+  VideoUploadTicket,
 } from '../storage.types';
+
+/** Bunny-ს TUS endpoint — განახლებადი ატვირთვა პირდაპირ ბრაუზერიდან */
+const TUS_ENDPOINT = 'https://video.bunnycdn.com/tusupload';
 
 interface BunnyVideo {
   guid: string;
@@ -76,6 +80,44 @@ export class BunnyVideoProvider implements VideoStorageProvider {
       // transcoding ჯერ მიმდინარეობს; thumbnail სტანდარტული სახელით ჩნდება
       thumbnailUrl: `https://${this.cdnHost}/${created.guid}/thumbnail.jpg`,
       durationSec: 0,
+    };
+  }
+
+  /**
+   * პირდაპირი ატვირთვის ნებართვა.
+   *
+   * ხელმოწერის ფორმულა Bunny-ს TUS დოკუმენტაციიდანაა:
+   * sha256(libraryId + apiKey + expires + videoId), hex. გასაღები
+   * ხელმოწერაშია ჩაშლილი და მისგან ვერ აღდგება — ბრაუზერს ის
+   * არ სჭირდება.
+   */
+  async createUploadTicket(title: string, expiresInSec: number): Promise<VideoUploadTicket> {
+    // არასწორი/ძველი გასაღები Bunny-სგან 401-ს იღებს — ადმინს „Internal
+    // server error"-ის ნაცვლად ის უნდა დახვდეს, რისი გასწორებაც შეუძლია
+    const created = await this.request<BunnyVideo>('videos', {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+      headers: { 'Content-Type': 'application/json' },
+    }).catch((error: unknown) => {
+      this.logger.error(`Bunny-ზე ჩანაწერი ვერ შეიქმნა: ${error}`);
+      throw new ServiceUnavailableException(
+        'ვიდეოს სერვისთან კავშირი ვერ დამყარდა — შეამოწმეთ Bunny-ს გასაღებები',
+      );
+    });
+
+    const expires = Math.floor(Date.now() / 1000) + expiresInSec;
+    const signature = createHash('sha256')
+      .update(`${this.libraryId}${this.apiKey}${expires}${created.guid}`)
+      .digest('hex');
+
+    this.logger.log(`Bunny ატვირთვის ნებართვა: ${created.guid}`);
+
+    return {
+      endpoint: TUS_ENDPOINT,
+      libraryId: this.libraryId,
+      providerVideoId: created.guid,
+      signature,
+      expires,
     };
   }
 

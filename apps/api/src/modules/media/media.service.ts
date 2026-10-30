@@ -17,6 +17,15 @@ import {
 } from '../storage/storage.types';
 
 /**
+ * პირდაპირი ატვირთვის ხელმოწერის ვადა.
+ *
+ * Bunny ერთ საათს მინიმუმად ურჩევს; 200MB ვიდეო სუსტ მობილურ
+ * ინტერნეტზე უფრო დიდხანს იტვირთება. ბილეთი მხოლოდ ერთ კონკრეტულ
+ * ჩანაწერზე მუშაობს, ამიტომ გაჟონვის შემთხვევაშიც ზიანი შეზღუდულია.
+ */
+const UPLOAD_TICKET_TTL_SEC = 6 * 60 * 60;
+
+/**
  * მედიის სერვისი.
  *
  * კონკრეტული საცავი აქ არსად ფიგურირებს — მხოლოდ ინტერფეისები.
@@ -131,6 +140,60 @@ export class MediaService {
       assetId: asset.id,
       title: video.title,
       thumbnailUrl: uploaded.thumbnailUrl,
+    };
+  }
+
+  /**
+   * ვიდეო ბრაუზერიდან პირდაპირი ატვირთვისთვის.
+   *
+   * ჩანაწერები ზუსტად ისევე იქმნება, როგორც `createVideoFromUpload`-ში —
+   * webhook ასეტს `storageKey`-ით პოულობს და READY-ზე თავად გადაიყვანს,
+   * სიახლეც მზადყოფნისას თავად გამოქვეყნდება. განსხვავება მხოლოდ ისაა,
+   * რომ ბაიტებს ბრაუზერი აგზავნის და არა ჩვენი სერვერი.
+   */
+  async createVideoTicket(
+    declared: { title?: string; mimeType: string; sizeBytes: number },
+    ownerId: string,
+  ) {
+    const title = declared.title?.trim() || 'ვიდეო';
+    const ticket = await this.videos.createUploadTicket(title, UPLOAD_TICKET_TTL_SEC);
+
+    const asset = await this.prisma.mediaAsset.create({
+      data: {
+        ownerId,
+        type: MediaType.VIDEO,
+        source: MediaSource.ADMIN,
+        // ფაილი ჯერ არც კი ატვირთულა — READY webhook-ით დადგება
+        status: MediaStatus.PROCESSING,
+        provider: this.videoProviderEnum(),
+        storageKey: ticket.providerVideoId,
+        playbackId: ticket.providerVideoId,
+        mimeType: declared.mimeType,
+        sizeBytes: declared.sizeBytes,
+      },
+    });
+
+    const slug = ticket.providerVideoId.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 40);
+
+    // DRAFT და publishedAt-ის გარეშე: თუ ატვირთვა შუაში გაწყდა, მშობელი
+    // ვიდეოთეკაში სამუდამოდ „მუშავდება"-ს არ დაინახავს. გამოქვეყნებას
+    // webhook აკეთებს, როცა Bunny გადაშიფვრას დაასრულებს.
+    const video = await this.prisma.video.create({
+      data: {
+        slug: `${slug}-${Date.now().toString(36)}`,
+        title,
+        mediaAssetId: asset.id,
+        status: VideoStatus.DRAFT,
+      },
+      select: { id: true, title: true },
+    });
+
+    this.logger.log(`ატვირთვის ნებართვა: ვიდეო ${video.id}, Bunny ${ticket.providerVideoId}`);
+
+    return {
+      videoId: video.id,
+      title: video.title,
+      upload: ticket,
     };
   }
 

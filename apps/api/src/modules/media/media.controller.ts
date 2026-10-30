@@ -21,6 +21,7 @@ import { MediaService } from './media.service';
 import { UploadPolicyService } from './upload-policy.service';
 import { MediaCleanupService } from './media-cleanup.service';
 import { RequirePermission } from '@/common/decorators/require-permission.decorator';
+import { VideoTicketDto } from './dto/video-ticket.dto';
 
 /** multer-ის დროებითი საქაღალდე — საბოლოო ადგილს პროვაიდერი წყვეტს. */
 const TMP_DIR = join(tmpdir(), 'askdrteo-uploads');
@@ -81,6 +82,23 @@ export class MediaController {
 
     await this.policy.assertAllowed(file, 'image', actor);
     return this.media.uploadImage(file, actor.id);
+  }
+
+  @Post('video/ticket')
+  @ApiOperation({
+    summary: 'ვიდეოს პირდაპირი ატვირთვის ნებართვა',
+    description:
+      'ქმნის ჩანაწერს და აბრუნებს ხელმოწერას, რომლითაც ბრაუზერი ფაილს ' +
+      'პირდაპირ Bunny-ს ტვირთავს (TUS). ფაილი ჩვენს სერვერზე არ გადის. ' +
+      'უფლება და ლიმიტი იგივეა, რაც POST /media/video-ზე.',
+  })
+  async videoTicket(@Body() dto: VideoTicketDto, @CurrentUser() actor: AuthenticatedUser) {
+    await this.policy.assertDeclaredAllowed(
+      { mimeType: dto.mimeType, sizeBytes: dto.sizeBytes },
+      'video',
+      actor,
+    );
+    return this.media.createVideoTicket(dto, actor.id);
   }
 
   @Post('video')

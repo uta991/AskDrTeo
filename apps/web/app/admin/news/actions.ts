@@ -1,18 +1,51 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiMutate, apiUpload } from '@/lib/session';
+import { apiMutate } from '@/lib/session';
 
 export interface NewsState {
   error?: string;
   notice?: string;
 }
 
+/** ბრაუზერის პირდაპირი ატვირთვის ნებართვა — ხელმოწერა სერვერზე იქმნება. */
+export interface VideoTicket {
+  videoId: string;
+  upload: {
+    endpoint: string;
+    libraryId: string;
+    providerVideoId: string;
+    signature: string;
+    expires: number;
+  };
+}
+
+/**
+ * ვიდეოს ატვირთვის ნებართვა.
+ *
+ * ფაილი აქ არ მოდის — მხოლოდ მისი ტიპი და ზომა. server action 1MB-ზე
+ * მეტს არ იღებს, ამიტომ ბაიტებს ბრაუზერი პირდაპირ Bunny-ს უგზავნის;
+ * ჩვენ მხოლოდ ჩანაწერს ვქმნით და ხელს ვაწერთ.
+ */
+export async function requestVideoTicket(input: {
+  title: string;
+  mimeType: string;
+  sizeBytes: number;
+}): Promise<{ ticket?: VideoTicket; error?: string }> {
+  try {
+    const ticket = await apiMutate<VideoTicket>('/media/video/ticket', 'POST', input);
+    return { ticket };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'ატვირთვის ნებართვა ვერ მივიღეთ' };
+  }
+}
+
 /**
  * სიახლის გამოქვეყნება.
  *
- * ვიდეო ჯერ იტვირთება და მხოლოდ შემდეგ იქმნება სიახლე: ატვირთვის
- * ჩავარდნისას ნახევრად შევსებული ჩანაწერი არ უნდა გამოქვეყნდეს.
+ * ვიდეო ამ დროისთვის უკვე ატვირთულია ბრაუზერიდან — აქ მხოლოდ მისი
+ * `videoId` მოდის. ატვირთვის ჩავარდნისას ფორმა აქამდე არ მოდის, ასე
+ * რომ ნახევრად შევსებული სიახლე არ გამოქვეყნდება.
  * ვიდეო არასავალდებულოა — ტექსტიც საკმარისია.
  */
 export async function createNews(_prev: NewsState, formData: FormData): Promise<NewsState> {
@@ -21,23 +54,12 @@ export async function createNews(_prev: NewsState, formData: FormData): Promise<
   const notify = formData.get('notify') === 'on';
   const visibleFrom = String(formData.get('visibleFrom') ?? '').trim();
   const visibleUntil = String(formData.get('visibleUntil') ?? '').trim();
-  const video = formData.get('video');
+  const videoId = String(formData.get('videoId') ?? '').trim() || undefined;
 
   if (!title) return { error: 'შეიყვანეთ სათაური' };
   if (!body) return { error: 'შეიყვანეთ ტექსტი' };
 
   try {
-    let videoId: string | undefined;
-
-    if (video instanceof File && video.size > 0) {
-      const uploaded = await apiUpload<{ videoId?: string; id?: string }>(
-        '/media/video',
-        video,
-        { title },
-      );
-      videoId = uploaded.videoId ?? uploaded.id;
-    }
-
     const post = await apiMutate<{ publishAfterVideo?: boolean }>('/admin/news', 'POST', {
       title,
       body,

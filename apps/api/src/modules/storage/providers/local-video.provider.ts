@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { mkdirSync, renameSync, rmSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
@@ -8,6 +8,7 @@ import type {
   UploadedVideo,
   VideoDetails,
   VideoStorageProvider,
+  VideoUploadTicket,
 } from '../storage.types';
 import { UPLOAD_DIR } from './local-file.provider';
 
@@ -41,6 +42,16 @@ export class LocalVideoProvider implements VideoStorageProvider {
       // ხანგრძლივობის დასადგენად ffprobe დაგვჭირდებოდა — ლოკალურად ღირს
       durationSec: 0,
     };
+  }
+
+  /**
+   * ლოკალურად პირდაპირი ატვირთვა არ არსებობს — TUS სერვერი არ გვაქვს.
+   * ცხადი შეცდომა სჯობს ჩუმად გატეხილ ატვირთვას.
+   */
+  async createUploadTicket(): Promise<VideoUploadTicket> {
+    throw new NotImplementedException(
+      'პირდაპირი ატვირთვა მხოლოდ Bunny-ზე მუშაობს — VIDEO_STORAGE_DRIVER=bunny',
+    );
   }
 
   async remove(assetId: string): Promise<void> {

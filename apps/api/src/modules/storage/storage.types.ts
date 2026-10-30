@@ -85,9 +85,32 @@ export interface VideoDetails {
   ready: boolean;
 }
 
+/**
+ * ბრაუზერიდან პირდაპირი ატვირთვის ნებართვა.
+ *
+ * ფაილი ჩვენს სერვერებზე აღარ გადის: Next.js-ის server action 1MB-ზე
+ * მეტს არ იღებს, ვიდეო კი ასობით მეგაბაიტია. სერვერი მხოლოდ ხელს
+ * აწერს — API გასაღები ბრაუზერამდე არასდროს მიდის.
+ */
+export interface VideoUploadTicket {
+  /** TUS endpoint, სადაც ბრაუზერი ფაილს პირდაპირ ტვირთავს */
+  endpoint: string;
+  libraryId: string;
+  /** პროვაიდერის GUID — ის, რაც storageKey-ში ინახება */
+  providerVideoId: string;
+  signature: string;
+  /** ხელმოწერის ვადა, UNIX წამებში */
+  expires: number;
+}
+
 export interface VideoStorageProvider {
   readonly name: string;
   upload(input: UploadVideoInput): Promise<UploadedVideo>;
+  /**
+   * ჩანაწერი პროვაიდერთან და ხელმოწერა პირდაპირი ატვირთვისთვის.
+   * ბაიტები ამ დროს ჯერ არ არსებობს — მათ ბრაუზერი თავად გაგზავნის.
+   */
+  createUploadTicket(title: string, expiresInSec: number): Promise<VideoUploadTicket>;
   remove(assetId: string): Promise<void>;
 
   /**
