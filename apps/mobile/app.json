@@ -36,7 +36,8 @@
         "CAMERA",
         "MODIFY_AUDIO_SETTINGS",
         "RECORD_AUDIO"
-      ]
+      ],
+      "versionCode": 1
     },
     "plugins": [
       "expo-router",
@@ -48,7 +49,8 @@
           "photosPermission": "აპლიკაციას ბავშვის ფოტოს ასარჩევად სჭირდება გალერეაზე წვდომა."
         }
       ],
-      "./plugins/withoutAppleSignIn"
+      "./plugins/withoutAppleSignIn",
+      "./plugins/withAndroidReleaseSigning"
     ],
     "extra": {
       "apiUrl": "https://api.askdrteo.com/api/v1",

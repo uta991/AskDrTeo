@@ -13,6 +13,7 @@
     "@askdrteo/dosing": "*",
     "@askdrteo/milestones": "*",
     "@expo/metro-runtime": "~57.0.9",
+    "@expo/ui": "~57.0.26",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "^57.0.12",
     "expo-apple-authentication": "~57.0.1",

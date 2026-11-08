@@ -17,8 +17,22 @@ interface GoogleClientIds {
 
 const googleIds = (Constants.expoConfig?.extra?.googleClientIds ?? {}) as GoogleClientIds;
 
-/** Google-ის კონფიგურაცია ჯერ არ არის შევსებული → ღილაკს ვმალავთ. */
-export const isGoogleConfigured = !!(googleIds.ios || googleIds.android || googleIds.web);
+/**
+ * ამ პლატფორმის Google client ID.
+ *
+ * ცარიელი სტრიქონი undefined-ად იქცევა: expo-auth-session `??`-ით ირჩევს
+ * მნიშვნელობას და "" მის თვალში შევსებულია — ცარიელ ID-ზე კი hook
+ * exception-ს აგდებს და შესვლის ეკრანი გახსნისთანავე ვარდება.
+ */
+const platformClientId =
+  Platform.select({ ios: googleIds.ios, android: googleIds.android, default: googleIds.web }) ||
+  undefined;
+
+/** Google ამ პლატფორმაზე ჯერ არ არის კონფიგურირებული → ღილაკს ვმალავთ. */
+export const isGoogleConfigured = !!platformClientId;
+
+/** სოციალური შესვლის რომელიმე ვარიანტი ხელმისაწვდომია თუ არა. */
+export const hasSocialLogin = isGoogleConfigured || Platform.OS === 'ios';
 
 export type SocialProvider = 'google' | 'apple';
 
@@ -37,9 +51,12 @@ export function useSocialAuth() {
   }, []);
 
   const [, googleResponse, promptGoogle] = Google.useIdTokenAuthRequest({
-    iosClientId: googleIds.ios,
-    androidClientId: googleIds.android,
-    webClientId: googleIds.web,
+    iosClientId: googleIds.ios || undefined,
+    androidClientId: googleIds.android || undefined,
+    webClientId: googleIds.web || undefined,
+    // hook-ი პირობით ვერ გამოიძახება — ID-ის გარეშე ჩანაცვლება სჭირდება,
+    // რომ არ ჩავარდეს. ღილაკი დამალულია, ამიტომ მოთხოვნა არასდროს გაიგზავნება.
+    clientId: isGoogleConfigured ? undefined : 'unconfigured',
   });
 
   // Google პასუხს asynchronously აბრუნებს — შედეგს effect-ში ვიჭერთ

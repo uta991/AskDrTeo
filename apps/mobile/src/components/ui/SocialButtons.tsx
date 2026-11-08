@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { colors, shadows, spacing } from '@/theme';
 import { AppleLogo, GoogleLogo } from './Icon';
+import { isGoogleConfigured } from '@/features/auth/useSocialAuth';
 
 const SIZE = 46;
 // ლოგოები ორჯერ შემცირდა (26/27 → 13/14).
@@ -34,9 +35,11 @@ export function SocialButtons({
 }: SocialButtonsProps) {
   return (
     <View style={styles.row}>
-      <CircleButton onPress={onGoogle} loading={googleLoading} label="შესვლა Google-ით">
-        <GoogleLogo size={GOOGLE_LOGO} />
-      </CircleButton>
+      {isGoogleConfigured && (
+        <CircleButton onPress={onGoogle} loading={googleLoading} label="შესვლა Google-ით">
+          <GoogleLogo size={GOOGLE_LOGO} />
+        </CircleButton>
+      )}
 
       {Platform.OS === 'ios' && (
         <CircleButton onPress={onApple} loading={appleLoading} label="შესვლა Apple ID-ით">

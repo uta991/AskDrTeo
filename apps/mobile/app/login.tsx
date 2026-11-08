@@ -21,7 +21,7 @@ import { LanguageSwitch } from '@/components/ui/LanguageSwitch';
 import { useT } from '@/i18n';
 import { colors, spacing, typography } from '@/theme';
 import { useAuth } from '@/features/auth/auth.store';
-import { useSocialAuth } from '@/features/auth/useSocialAuth';
+import { hasSocialLogin, useSocialAuth } from '@/features/auth/useSocialAuth';
 import { ApiError } from '@/api/client';
 
 export default function LoginScreen() {
@@ -161,24 +161,28 @@ export default function LoginScreen() {
               style={styles.submit}
             />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{t('common', 'or')}</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            {hasSocialLogin && (
+              <>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>{t('common', 'or')}</Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <SocialButtons
-              googleLoading={social.pending === 'google'}
-              appleLoading={social.pending === 'apple'}
-              onGoogle={() => {
-                setFormError(null);
-                void social.signInWithGoogle();
-              }}
-              onApple={() => {
-                setFormError(null);
-                void social.signInWithApple();
-              }}
-            />
+                <SocialButtons
+                  googleLoading={social.pending === 'google'}
+                  appleLoading={social.pending === 'apple'}
+                  onGoogle={() => {
+                    setFormError(null);
+                    void social.signInWithGoogle();
+                  }}
+                  onApple={() => {
+                    setFormError(null);
+                    void social.signInWithApple();
+                  }}
+                />
+              </>
+            )}
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>{t('auth', 'noAccount')}</Text>
