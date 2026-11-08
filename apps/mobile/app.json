@@ -50,7 +50,8 @@
         }
       ],
       "./plugins/withoutAppleSignIn",
-      "./plugins/withAndroidReleaseSigning"
+      "./plugins/withAndroidReleaseSigning",
+      "./plugins/withoutScreenSharing"
     ],
     "extra": {
       "apiUrl": "https://api.askdrteo.com/api/v1",

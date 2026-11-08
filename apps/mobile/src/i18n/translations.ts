@@ -103,6 +103,12 @@ export const ka = {
     noChildren: 'ჯერ არ არის',
     language: 'ენა',
     logout: 'გასვლა',
+    deleteAccount: 'ანგარიშის წაშლა',
+    deleteTitle: 'წავშალოთ ანგარიში?',
+    deleteBody: 'სამუდამოდ წაიშლება ანგარიში, ბავშვების პროფილები, ჩატები და ატვირთული ფოტოები. აღდგენა შეუძლებელია.',
+    deleteConfirm: 'წაშლა',
+    deleteCancel: 'გაუქმება',
+    deleteFailed: 'ანგარიში ვერ წაიშალა. სცადეთ თავიდან.',
   },
 
   stages: {
@@ -360,6 +366,12 @@ export const en: Loose<Translations> = {
     noChildren: 'None yet',
     language: 'Language',
     logout: 'Log out',
+    deleteAccount: 'Delete account',
+    deleteTitle: 'Delete your account?',
+    deleteBody: 'Your account, child profiles, chats and uploaded photos will be permanently deleted. This cannot be undone.',
+    deleteConfirm: 'Delete',
+    deleteCancel: 'Cancel',
+    deleteFailed: 'Could not delete the account. Please try again.',
   },
 
   stages: {
@@ -612,6 +624,12 @@ export const ru: Loose<Translations> = {
     noChildren: 'Пока нет',
     language: 'Язык',
     logout: 'Выйти',
+    deleteAccount: 'Удалить аккаунт',
+    deleteTitle: 'Удалить аккаунт?',
+    deleteBody: 'Аккаунт, профили детей, чаты и загруженные фото будут удалены навсегда. Восстановление невозможно.',
+    deleteConfirm: 'Удалить',
+    deleteCancel: 'Отмена',
+    deleteFailed: 'Не удалось удалить аккаунт. Попробуйте ещё раз.',
   },
 
   stages: {

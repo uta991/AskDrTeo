@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyBackground } from '@/components/SkyBackground';
@@ -24,7 +24,7 @@ export function ProfileTab() {
   const insets = useSafeAreaInsets();
   const t = useT();
 
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const { children, reset: resetChildren } = useChildren();
   const { snapshot, reset: resetEntitlements } = useEntitlements();
   const loadPlans = usePlans((state) => state.load);
@@ -42,6 +42,30 @@ export function ProfileTab() {
     resetEntitlements();
     await logout();
     router.replace('/login');
+  };
+
+  /**
+   * წაშლა სისტემური დიალოგით დასტურდება — ღილაკზე შემთხვევითი შეხება
+   * ანგარიშს არ უნდა შლიდეს. Google Play და App Store ამ შესაძლებლობას
+   * აპის შიგნით მოითხოვს.
+   */
+  const handleDeleteAccount = () => {
+    Alert.alert(t('profile', 'deleteTitle'), t('profile', 'deleteBody'), [
+      { text: t('profile', 'deleteCancel'), style: 'cancel' },
+      {
+        text: t('profile', 'deleteConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void deleteAccount()
+            .then(() => {
+              resetChildren();
+              resetEntitlements();
+              router.replace('/login');
+            })
+            .catch(() => Alert.alert(t('profile', 'deleteFailed')));
+        },
+      },
+    ]);
   };
 
   /** პაკეტის სახელი კოდიდან — backend-ის ქართული სახელი ენას არ მიჰყვება */
@@ -107,6 +131,12 @@ export function ProfileTab() {
             onPress={handleLogout}
             style={styles.logout}
           />
+
+          {!isStaff && (
+            <Pressable onPress={handleDeleteAccount} hitSlop={8} style={styles.deleteLink}>
+              <Text style={styles.deleteText}>{t('profile', 'deleteAccount')}</Text>
+            </Pressable>
+          )}
         </AuthCard>
 
         {/* სწრაფი გადასვლა — ყველა ფუნქცია ერთ ადგილას, მენიუს გაბერვის გარეშე */}
@@ -204,4 +234,6 @@ const styles = StyleSheet.create({
   valueDanger: { ...typography.bodyMedium, color: colors.danger },
   switch: { marginTop: spacing.xs },
   logout: { marginTop: spacing.xl },
+  deleteLink: { alignSelf: 'center', marginTop: spacing.lg },
+  deleteText: { ...typography.small, color: colors.danger },
 });

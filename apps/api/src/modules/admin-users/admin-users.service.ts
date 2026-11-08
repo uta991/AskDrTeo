@@ -457,7 +457,48 @@ export class AdminUsersService {
       await this.assertNotLastSuperAdmin(id);
     }
 
+    await this.erase(user, actorId, 'ანგარიში სამუდამოდ წაშლილია');
+
+    return { message: 'ანგარიში სამუდამოდ წაშლილია', id };
+  }
+
+  /**
+   * მშობლის მიერ საკუთარი ანგარიშის წაშლა.
+   *
+   * Google Play და App Store ამას მოითხოვს: ვინც აპში ანგარიშს ქმნის,
+   * იქვე უნდა შეეძლოს მისი წაშლა, ადმინისთვის მიწერის გარეშე.
+   *
+   * მხოლოდ მშობლისთვისაა — თანამშრომლის ანგარიში სამუშაო ჩანაწერია
+   * (ჩატები, დასკვნები), მას ადმინი შლის. ასევე ასე ბოლო super admin-ის
+   * შემთხვევით დაკარგვა გამორიცხულია.
+   */
+  async deleteOwnAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { ...USER_SELECT, deletedAt: true },
+    });
+    if (!user) throw new NotFoundException('მომხმარებელი ვერ მოიძებნა');
+
+    if (user.role !== UserRole.PARENT) {
+      throw new ForbiddenException('თანამშრომლის ანგარიშს ადმინისტრატორი შლის');
+    }
+
+    await this.erase(user, userId, 'მომხმარებელმა საკუთარი ანგარიში წაშალა');
+
+    return { message: 'ანგარიში წაშლილია' };
+  }
+
+  /** წაშლის საერთო ნაწილი — ადმინისა და მომხმარებლის გზა ერთნაირად შლის. */
+  private async erase(
+    user: { id: string; firstName: string; lastName: string; email: string | null; phone: string | null; role: UserRole; status: UserStatus },
+    actorId: string,
+    description: string,
+  ): Promise<void> {
+    const id = user.id;
+
     // ისტორია წაშლამდე ვწერთ — შემდეგ მონაცემები აღარ იარსებებს.
+    // თვითწაშლისას actorId თავად მომხმარებელია; კავშირი SetNull-ია,
+    // ჩანაწერი რჩება, უბრალოდ ავტორის გარეშე.
     await this.audit.record({
       actorId,
       action: AuditAction.DELETE,
@@ -471,7 +512,7 @@ export class AdminUsersService {
         role: user.role,
         status: user.status,
       },
-      description: 'ანგარიში სამუდამოდ წაშლილია',
+      description,
     });
 
     await this.prisma.$transaction(async (tx) => {
@@ -499,8 +540,6 @@ export class AdminUsersService {
 
       await tx.user.delete({ where: { id } });
     });
-
-    return { message: 'ანგარიში სამუდამოდ წაშლილია', id };
   }
 
   private async assertNotLastSuperAdmin(excludeId: string): Promise<void> {

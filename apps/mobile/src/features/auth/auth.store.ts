@@ -59,6 +59,8 @@ interface AuthState {
   loginWithApple: (input: AppleLoginInput) => Promise<void>;
   forgotPassword: (identifier: string) => Promise<{ destination: string }>;
   logout: () => Promise<void>;
+  /** საკუთარი ანგარიშის სამუდამო წაშლა — მხოლოდ მშობლისთვის */
+  deleteAccount: () => Promise<void>;
 }
 
 export type OtpPurpose = 'PHONE_VERIFICATION' | 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'LOGIN';
@@ -196,6 +198,14 @@ export const useAuth = create<AuthState>((set) => {
     async logout() {
       // სერვერზე სესიის გაუქმება სასურველია, მაგრამ ლოკალურ გასვლას არ უნდა შეაფერხოს
       await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
+      await tokenStore.clear();
+      set({ user: null });
+    },
+
+    async deleteAccount() {
+      // აქ შეცდომა არ იყლაპება: თუ სერვერმა არ წაშალა, მომხმარებელი
+      // სისტემიდან არ უნდა გავიდეს და ეგონოს, რომ ანგარიში აღარ არსებობს
+      await api('/account', { method: 'DELETE', body: { confirm: 'DELETE' } });
       await tokenStore.clear();
       set({ user: null });
     },
