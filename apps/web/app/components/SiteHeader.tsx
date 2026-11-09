@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
+import { aiAssistantEnabled } from '@/lib/ai';
 import { SunLogo } from './Brand';
 import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
@@ -13,6 +14,7 @@ import styles from './site-header.module.css';
  */
 export async function SiteHeader() {
   const user = await getSessionUser();
+  const showAssistant = !!user && (await aiAssistantEnabled());
   const isStaff = !!user && user.role !== 'PARENT';
 
   return (
@@ -34,7 +36,8 @@ export async function SiteHeader() {
           {!!user && <Link href="/development">განვითარება</Link>}
           {!!user && <Link href="/videos">ვიდეოები</Link>}
           {!!user && <Link href="/calculator">კალკულატორი</Link>}
-          {!!user && <Link href="/assistant">ასისტენტი</Link>}
+          {showAssistant && <Link href="/assistant">ასისტენტი</Link>}
+          {!!user && <Link href="/medications">მედიკამენტი</Link>}
           {!!user && <Link href={isStaff ? '/admin/chat' : '/chat'}>ჩატი</Link>}
         </nav>
 

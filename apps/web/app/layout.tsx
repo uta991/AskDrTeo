@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { getSessionUser } from '@/lib/session';
+import { aiAssistantEnabled } from '@/lib/ai';
 import { ChatDock } from './components/ChatDock';
 import './globals.css';
 
@@ -24,12 +25,13 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // საუბრის ღილაკები მხოლოდ მშობელს — პერსონალი პანელიდან პასუხობს
   const user = await getSessionUser();
+  const showAssistant = user?.role === 'PARENT' && (await aiAssistantEnabled());
 
   return (
     <html lang="ka">
       <body>
         {children}
-        {user?.role === 'PARENT' && <ChatDock />}
+        {user?.role === 'PARENT' && <ChatDock showAssistant={showAssistant} />}
       </body>
     </html>
   );

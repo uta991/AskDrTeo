@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { apiFetch, getSessionUser } from '@/lib/session';
 import { can, getEntitlements } from '@/lib/entitlements';
+import { aiAssistantEnabled } from '@/lib/ai';
 import { SunLogo } from '../components/Brand';
 import { Chat, type ChatChild } from './Chat';
 import styles from './assistant.module.css';
@@ -11,6 +12,9 @@ export const metadata = { title: 'AI ასისტენტი — AskDrTeo' }
 export default async function AssistantPage() {
   const user = await getSessionUser();
   if (!user) redirect('/login');
+
+  // დაპაუზებულია — ძველი ბმულით შემოსული მშობელი ცნობარზე გადადის
+  if (!(await aiAssistantEnabled())) redirect('/medications');
 
   const entitlements = await getEntitlements();
 

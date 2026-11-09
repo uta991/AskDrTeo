@@ -14,19 +14,22 @@ const HIDDEN_ON = ['/chat', '/assistant'];
  * გვერდთან ერთად ჩამოყვება (fixed), რომ დახმარება ყოველთვის ხელთ
  * იყოს და მშობელი თავში დასაბრუნებლად სქროლს არ ეწეოდეს.
  */
-export function ChatDock() {
+export function ChatDock({ showAssistant }: { showAssistant: boolean }) {
   const pathname = usePathname();
 
   if (HIDDEN_ON.some((path) => pathname.startsWith(path))) return null;
 
   return (
     <div className={styles.dock}>
-      <Link href="/assistant" className={styles.button} aria-label="AI ასისტენტი">
-        <span className={styles.iconWrap} style={{ background: '#7C5CFF' }}>
-          <FeatureIcon name="robot" size={26} color="#ffffff" />
-        </span>
-        <span className={styles.label}>AI ასისტენტი</span>
-      </Link>
+      {/* AI ასისტენტი დაპაუზებულია — სერვერის გადამრთველი წყვეტს */}
+      {showAssistant && (
+        <Link href="/assistant" className={styles.button} aria-label="AI ასისტენტი">
+          <span className={styles.iconWrap} style={{ background: '#7C5CFF' }}>
+            <FeatureIcon name="robot" size={26} color="#ffffff" />
+          </span>
+          <span className={styles.label}>AI ასისტენტი</span>
+        </Link>
+      )}
 
       <Link href="/chat" className={styles.button} aria-label="ჩატი პედიატრთან">
         {/* eslint-disable-next-line @next/next/no-img-element */}

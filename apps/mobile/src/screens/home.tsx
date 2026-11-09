@@ -72,6 +72,15 @@ export function HomeTab() {
       .catch(() => setVisitsOn(false));
   }, []);
 
+  // AI ასისტენტი დაპაუზებულია — იგივე პრინციპით, სერვერი წყვეტს
+  const [assistantOn, setAssistantOn] = useState(false);
+
+  useEffect(() => {
+    void api<{ enabled: boolean }>('/ai/health')
+      .then((health) => setAssistantOn(health.enabled))
+      .catch(() => setAssistantOn(false));
+  }, []);
+
   return (
     <SkyBackground showDoves={false}>
       <ScrollView
@@ -129,6 +138,8 @@ export function HomeTab() {
                 color: '#E5484D',
                 label: 'სიმპტომები',
                 onPress: () => router.push('/assistant'),
+                // სიმპტომებს ასისტენტი პასუხობს — მასთან ერთად იმალება
+                hidden: !assistantOn,
               },
               {
                 key: 'development',
@@ -158,12 +169,21 @@ export function HomeTab() {
                 label: 'კალკულატორი',
                 onPress: () => (canUseCalculator ? goToTab('calculator') : router.push('/plans')),
               },
+              // AI-ს ადგილას სიმპტომების ცნობარია; ასისტენტის ჩართვისას ორივე ჩანს
+              {
+                key: 'medications',
+                icon: 'pill' as const,
+                color: '#E8A400',
+                label: 'მედიკამენტი',
+                onPress: () => router.push('/medications'),
+              },
               {
                 key: 'assistant',
                 icon: 'robot' as const,
                 color: '#7C5CFF',
                 label: 'AI ასისტენტი',
                 onPress: () => router.push(canUseAssistant ? '/assistant' : '/plans'),
+                hidden: !assistantOn,
               },
               {
                 key: 'chat',
@@ -200,7 +220,9 @@ export function HomeTab() {
                 label: 'პატარა მოგზაური',
                 onPress: () => router.push('/travel'),
               },
-            ].map((item) => (
+            ]
+              .filter((item) => !('hidden' in item && item.hidden))
+              .map((item) => (
               <Pressable key={item.key} style={styles.gridItem} onPress={item.onPress}>
                 <Icon name={item.icon} size={28} color={item.color} strokeWidth={1.9} />
                 <Text style={styles.gridLabel} numberOfLines={2}>

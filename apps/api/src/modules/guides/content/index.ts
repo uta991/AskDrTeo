@@ -1,5 +1,6 @@
 import type { Guide } from '../types';
 import { EMERGENCY_GUIDE } from './emergency';
+import { MEDICATIONS_GUIDE } from './medications';
 import { NEWBORN_GUIDE } from './newborn';
 import { NUTRITION_GUIDE } from './nutrition';
 import { SLEEP_GUIDE } from './sleep';
@@ -12,4 +13,5 @@ export const GUIDES: Record<string, Guide> = {
   [TRAVEL_GUIDE.slug]: TRAVEL_GUIDE,
   [NUTRITION_GUIDE.slug]: NUTRITION_GUIDE,
   [SLEEP_GUIDE.slug]: SLEEP_GUIDE,
+  [MEDICATIONS_GUIDE.slug]: MEDICATIONS_GUIDE,
 };

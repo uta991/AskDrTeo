@@ -52,6 +52,7 @@ export class GuidesService {
       slug: guide.slug,
       title: guide.title,
       intro: guide.intro,
+      collapsible: guide.collapsible ?? false,
       cards: guide.cards,
       checklist: guide.checklist?.map((group) => ({
         ...group,

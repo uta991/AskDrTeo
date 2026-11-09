@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { goBack } from '@/navigation/goBack';
 import { api, ApiError } from '@/api/client';
+import { useTabs } from '@/features/tabs';
+import { useEntitlements } from '@/features/entitlements/entitlements.store';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface ChecklistItem {
@@ -21,6 +23,7 @@ interface Guide {
   slug: string;
   title: string;
   intro: string;
+  collapsible?: boolean;
   cards: { key: string; title: string; meta?: string; body: string }[];
   checklist?: { key: string; title: string; items: ChecklistItem[] }[];
   vaccines?: { key: string; name: string; note: string }[];
@@ -192,13 +195,17 @@ export default function GuideScreen({
           </AuthCard>
         )}
 
-        {guide.cards.map((card) => (
-          <AuthCard key={card.key} style={styles.card}>
-            <Text style={[styles.cardTitle, { color: tone }]}>{card.title}</Text>
-            {!!card.meta && <Text style={styles.meta}>{card.meta}</Text>}
-            <Text style={styles.body}>{card.body}</Text>
-          </AuthCard>
-        ))}
+        {guide.cards.map((card) =>
+          guide.collapsible ? (
+            <FoldCard key={card.key} title={card.title} meta={card.meta} body={card.body} tone={tone} />
+          ) : (
+            <AuthCard key={card.key} style={styles.card}>
+              <Text style={[styles.cardTitle, { color: tone }]}>{card.title}</Text>
+              {!!card.meta && <Text style={styles.meta}>{card.meta}</Text>}
+              <GuideBody text={card.body} />
+            </AuthCard>
+          ),
+        )}
 
         {!!guide.vaccines?.length && (
           <AuthCard style={styles.card}>
@@ -235,7 +242,97 @@ export default function GuideScreen({
   );
 }
 
+/**
+ * ჩამოსაშლელი ბარათი — სიმპტომების ცნობარისთვის: ჯერ მხოლოდ სათაური,
+ * დაჭერისას ტექსტი.
+ */
+function FoldCard({
+  title,
+  meta,
+  body,
+  tone,
+}: {
+  title: string;
+  meta?: string;
+  body: string;
+  tone: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <AuthCard style={styles.card}>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        style={styles.rowBetween}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
+        <Text style={[styles.cardTitle, { color: tone }]}>{title}</Text>
+        <View style={open ? styles.chevronOpen : undefined}>
+          <Icon name="chevron-right" size={18} color={colors.textMuted} />
+        </View>
+      </Pressable>
+
+      {open && (
+        <>
+          {!!meta && <Text style={styles.meta}>{meta}</Text>}
+          <GuideBody text={body} />
+        </>
+      )}
+    </AuthCard>
+  );
+}
+
+/** `{{calculator:სიტყვა}}` — იხ. API-ის GuideCard.body */
+const CALC_LINK = /\{\{calculator:([^}]+)\}\}/g;
+
+/**
+ * ბარათის ტექსტი: აბზაცები და ჩაშენებული ყვითელი ბმული კალკულატორზე.
+ *
+ * კალკულატორი მთავარი ეკრანის ტაბია — ჯერ იქ ვბრუნდებით და ტაბს
+ * ვითხოვთ. პაკეტის გარეშე პაკეტების გვერდი იხსნება, როგორც მთავარ
+ * ეკრანზე.
+ */
+function GuideBody({ text }: { text: string }) {
+  const goToTab = useTabs((state) => state.goTo);
+  const canUseCalculator = useEntitlements((state) => state.can('dose_calculator'));
+
+  const openCalculator = () => {
+    if (!canUseCalculator) {
+      router.push('/plans');
+      return;
+    }
+    goToTab('calculator');
+    router.dismissTo('/home');
+  };
+
+  return (
+    <>
+      {text.split('\n\n').map((paragraph, i) => (
+        <Text key={i} style={styles.body}>
+          {paragraph.split(CALC_LINK).map((part, j) =>
+            // split-ის კენტი ინდექსები ჯგუფებია — ბმულის ტექსტი
+            j % 2 === 1 ? (
+              <Text key={j} style={styles.inlineLink} onPress={openCalculator}>
+                {` ${part} `}
+              </Text>
+            ) : (
+              part
+            ),
+          )}
+        </Text>
+      ))}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
+  inlineLink: {
+    backgroundColor: colors.primary,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  chevronOpen: { transform: [{ rotate: '90deg' }] },
   loader: { marginTop: spacing.xl },
   content: { padding: spacing.xl, gap: spacing.sm, paddingBottom: spacing.xl },
   lockedWrap: { padding: spacing.xl },

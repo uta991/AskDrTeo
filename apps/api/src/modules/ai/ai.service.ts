@@ -52,14 +52,23 @@ export class AiService {
     private readonly tools: AiToolsService,
   ) {}
 
-  /** ასისტენტი ჩართულია თუ არა — გასაღების გარეშე ღილაკიც არ უნდა ჩანდეს. */
+  /**
+   * ასისტენტი ჩართულია თუ არა — გასაღების გარეშე ღილაკიც არ უნდა ჩანდეს.
+   *
+   * `AI_ASSISTANT_ENABLED=true` გარეშე გამორთულია (დროებით დაპაუზებულია):
+   * საიტი და აპლიკაცია `/ai/health`-ს ეკითხებიან და ღილაკებს მალავენ,
+   * ახალი შეკითხვა კი აქაც ჩერდება — მოდელთან მოთხოვნა ფულია.
+   * დაბრუნება ცვლადის შეცვლაა, აპლიკაციის ხელახალი ატვირთვის გარეშე.
+   */
   get enabled(): boolean {
-    return !!this.config.get<string>('ai.apiKey');
+    return (
+      process.env.AI_ASSISTANT_ENABLED === 'true' && !!this.config.get<string>('ai.apiKey')
+    );
   }
 
   async ask(dto: AskDto, userId: string) {
     if (!this.enabled) {
-      throw new ServiceUnavailableException('AI ასისტენტი ჯერ არ არის ჩართული');
+      throw new ServiceUnavailableException('AI ასისტენტი დროებით მიუწვდომელია');
     }
 
     await this.assertWithinDailyLimit(userId);

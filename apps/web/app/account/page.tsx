@@ -88,7 +88,8 @@ export default async function AccountPage() {
               { href: '/growth', icon: 'chart', color: '#2E9E5B', label: 'ზრდის დღიური' },
               { href: '/vaccinations', icon: 'syringe', color: '#E5484D', label: 'ვაქცინაცია' },
               { href: '/calculator', icon: 'syrup', color: '#0EA5A5', label: 'დოზის კალკულატორი' },
-              { href: '/assistant', icon: 'robot', color: '#7C5CFF', label: 'AI ასისტენტი' },
+              // AI ასისტენტი დაპაუზებულია — მის ადგილას სიმპტომების ცნობარია
+              { href: '/medications', icon: 'pill', color: '#E8A400', label: 'მედიკამენტი' },
               { href: '/chat', icon: 'chat', color: '#2F6FED', label: 'ჩატი' },
               { href: '/videos', icon: 'play', color: '#E8A400', label: 'ვიდეოთეკა' },
               { href: '/nutrition', icon: 'nutrition', color: '#57A63A', label: 'კვება' },

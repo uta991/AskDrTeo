@@ -4,6 +4,7 @@ export type FeatureIconName =
   | 'chart'
   | 'syringe'
   | 'syrup'
+  | 'pill'
   | 'robot'
   | 'chat'
   | 'play'
@@ -101,6 +102,14 @@ export function FeatureIcon({
           <circle cx="16.4" cy="14.6" r="2.6" {...common} />
           <path d="M14.6 12.8 18.2 16.4" {...common} />
           <circle cx="19.4" cy="19.6" r="2.2" {...common} />
+        </>
+      )}
+
+      {/* აბი — მედიკამენტი */}
+      {name === 'pill' && (
+        <>
+          <rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-40 12 12)" {...common} />
+          <path d="M9.2 8.8 14.8 15.2" {...common} />
         </>
       )}
 

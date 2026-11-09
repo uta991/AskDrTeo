@@ -110,7 +110,7 @@ export default async function ProfilePage({
                 <Link href="/videos">ვიდეო ბიბლიოთეკა</Link>
                 <Link href="/calculator">დოზის კალკულატორი</Link>
                 <Link href="/chat">ჩატი კონსულტანტთან</Link>
-                <Link href="/assistant">AI ასისტენტი</Link>
+                <Link href="/medications">მედიკამენტი</Link>
                 <Link href="/booking">ვიზიტის ჯავშანი</Link>
                 <Link href="/plans">პაკეტები</Link>
               </div>

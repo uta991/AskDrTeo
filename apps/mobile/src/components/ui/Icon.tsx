@@ -35,6 +35,7 @@ export type IconName =
   | 'robot'
   | 'pill'
   | 'syrup'
+  | 'pill'
   | 'traveler'
   | 'nutrition'
   | 'sleep'
@@ -260,6 +261,14 @@ export function Icon({
       )}
 
       {/* წამლის ბოთლი გამოყრილი აბებით — დოზის კალკულატორი */}
+      {/* აბი — მედიკამენტი */}
+      {name === 'pill' && (
+        <>
+          <Rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-40 12 12)" {...common} />
+          <Path d="M9.2 8.8 14.8 15.2" {...common} />
+        </>
+      )}
+
       {name === 'syrup' && (
         <>
           <Rect x="4.6" y="2.4" width="6.6" height="2.6" rx="0.9" {...common} />

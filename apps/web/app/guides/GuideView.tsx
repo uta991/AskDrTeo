@@ -3,12 +3,14 @@ import { apiFetch } from '@/lib/session';
 import { getEntitlements, can } from '@/lib/entitlements';
 import { FeatureIcon, type FeatureIconName } from '../components/FeatureIcon';
 import { Checklist } from './Checklist';
+import { GuideBody } from './GuideBody';
 import styles from './guide.module.css';
 
 export interface Guide {
   slug: string;
   title: string;
   intro: string;
+  collapsible?: boolean;
   cards: { key: string; title: string; meta?: string; body: string }[];
   checklist?: {
     key: string;
@@ -28,7 +30,7 @@ export interface Guide {
  * გვერდები ოთხჯერ იმეორებდნენ ერთსა და იმავე განლაგებას.
  */
 /** SOS პაკეტს არ ითხოვს — სასწრაფო ინფორმაცია ყველას სჭირდება. */
-const FREE_SLUGS = ['emergency'];
+const FREE_SLUGS = ['emergency', 'medications'];
 
 export async function GuideView({
   slug,
@@ -104,17 +106,32 @@ export async function GuideView({
         />
       )}
 
-      <div className={styles.cards}>
-        {guide.cards.map((card) => (
-          <article key={card.key} className={styles.card}>
-            <h2 className={styles.cardTitle} style={{ color: accent }}>
-              {card.title}
-            </h2>
-            {!!card.meta && <span className={styles.cardMeta}>{card.meta}</span>}
-            <p className={styles.cardBody}>{card.body}</p>
-          </article>
-        ))}
-      </div>
+      {guide.collapsible ? (
+        // სიმპტომების ცნობარი — ჯერ სათაურები, დაჭერისას ტექსტი
+        <div className={styles.accordion}>
+          {guide.cards.map((card) => (
+            <details key={card.key} className={styles.fold}>
+              <summary style={{ color: accent }}>{card.title}</summary>
+              <div className={styles.foldBody}>
+                {!!card.meta && <span className={styles.cardMeta}>{card.meta}</span>}
+                <GuideBody text={card.body} />
+              </div>
+            </details>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.cards}>
+          {guide.cards.map((card) => (
+            <article key={card.key} className={styles.card}>
+              <h2 className={styles.cardTitle} style={{ color: accent }}>
+                {card.title}
+              </h2>
+              {!!card.meta && <span className={styles.cardMeta}>{card.meta}</span>}
+              <GuideBody text={card.body} />
+            </article>
+          ))}
+        </div>
+      )}
 
       {!!guide.vaccines?.length && (
         <section className={styles.section}>

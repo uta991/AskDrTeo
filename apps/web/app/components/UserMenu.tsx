@@ -172,8 +172,9 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
             ჩატი კონსულტანტთან
           </Link>
 
-          <Link href="/assistant" className={styles.item} role="menuitem">
-            AI ასისტენტი
+          {/* AI ასისტენტი დაპაუზებულია — ჩართვისას ბმული აქ დაბრუნდება */}
+          <Link href="/medications" className={styles.item} role="menuitem">
+            მედიკამენტი
           </Link>
 
           <Link href="/plans" className={styles.item} role="menuitem">

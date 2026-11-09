@@ -296,3 +296,65 @@
     padding: 12px 14px;
   }
 }
+
+/* ── ჩამოსაშლელი ბარათები (სიმპტომების ცნობარი) ───────────── */
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fold {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.fold summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  font-size: 16.5px;
+  font-weight: 600;
+}
+
+.fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.fold summary::after {
+  content: '›';
+  font-size: 22px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.fold[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.foldBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+/* ტექსტში ჩაშენებული ბმული — ბრენდის ყვითელი */
+.inlineLink {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--text-on-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.inlineLink:hover {
+  background: var(--primary-dark);
+}
