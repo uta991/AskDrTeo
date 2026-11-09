@@ -112,9 +112,9 @@ export class MediaWebhookService {
     }
 
     if (READY_STATUSES.includes(payload.Status)) {
-      await this.markReady(asset.id, payload.VideoGuid);
+      const won = await this.markReady(asset.id, payload.VideoGuid);
       await this.markProcessed(event.id);
-      return { status: 'ready' };
+      return { status: won ? 'ready' : 'already-final' };
     }
 
     if (FAILED_STATUSES.includes(payload.Status)) {
@@ -138,12 +138,18 @@ export class MediaWebhookService {
    *
    * webhook მხოლოდ სტატუსს შეიცავს; ხანგრძლივობა, გარჩევადობა და
    * thumbnail ცალკე მოთხოვნით მოდის.
+   *
+   * Bunny „დასრულდა"-ს (3) და „ხარისხები მზადაა"-ს (4) წამების სხვაობით
+   * აგზავნის. TERMINAL-ის შემოწმებასა და ჩაწერას შორის details()-ის HTTP
+   * მოთხოვნაა — ორივე მოვლენა გაივლიდა და მშობლები სიახლის შეტყობინებას
+   * ორჯერ მიიღებდნენ. ამიტომ READY პირობითად იწერება: გადასვლას მხოლოდ
+   * ერთი იგებს, დანარჩენები false-ს იღებენ და არაფერს აკეთებენ.
    */
-  private async markReady(assetId: string, providerAssetId: string): Promise<void> {
+  private async markReady(assetId: string, providerAssetId: string): Promise<boolean> {
     const details = await this.videos.details(providerAssetId).catch(() => null);
 
-    await this.prisma.mediaAsset.update({
-      where: { id: assetId },
+    const claimed = await this.prisma.mediaAsset.updateMany({
+      where: { id: assetId, status: { notIn: TERMINAL } },
       data: {
         status: MediaStatus.READY,
         duration: details?.durationSec || null,
@@ -153,6 +159,7 @@ export class MediaWebhookService {
         failureReason: null,
       },
     });
+    if (claimed.count === 0) return false;
 
     // ვიდეო ახლა დაკვრადია — thumbnail-იც ხელმისაწვდომია
     if (details?.thumbnailUrl) {
@@ -185,6 +192,8 @@ export class MediaWebhookService {
         this.logger.error(`სიახლეების გამოქვეყნება ჩავარდა: ${error}`);
       });
     }
+
+    return true;
   }
 
   private async markFailed(assetId: string, reason: string): Promise<void> {

@@ -59,13 +59,16 @@ export class AdminNewsController {
     return this.news.create(dto, actor.id, actor.role);
   }
 
+  // გლობალური guard-ები დეკორატორის გარეშე ნებისმიერ შესულ მომხმარებელს
+  // უშვებს — უფლების გარეშე მშობელიც შეცვლიდა ყველასთვის ნაჩვენებ სიახლეს
   @Patch(':id')
+  @RequirePermission('notification.send')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateNewsDto,
-    @CurrentUser('id') actorId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ) {
-    return this.news.update(id, dto, actorId);
+    return this.news.update(id, dto, actor.id, actor.role);
   }
 
   @Patch(':id/publish')
@@ -86,6 +89,7 @@ export class AdminNewsController {
   }
 
   @Patch(':id/archive')
+  @RequirePermission('notification.send')
   archive(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
     return this.news.archive(id, actorId);
   }

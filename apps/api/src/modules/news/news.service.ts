@@ -208,7 +208,13 @@ export class NewsService {
     return waiting.length;
   }
 
-  async update(id: string, dto: UpdateNewsDto, actorId: string) {
+  async update(id: string, dto: UpdateNewsDto, actorId: string, actorRole: UserRole) {
+    // იგივე წესი, რაც create()-ში — თორემ ოპერატორი შექმნის შემდეგ
+    // რედაქტირებით მიაბამდა ვიდეოს, რაც მას შექმნისას ეკრძალება
+    if (actorRole === UserRole.OPERATOR && (dto.videoId || dto.coverUrl)) {
+      throw new ForbiddenException('ვიდეოს ან ქავერის მიბმა ოპერატორს არ შეუძლია');
+    }
+
     const before = await this.findOne(id);
 
     const post = await this.prisma.newsPost.update({
